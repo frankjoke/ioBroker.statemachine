@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='utf-8' />
+        <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css"/>
+        <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.structure.min.css"/>
+        <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.theme.min.css"/>
+        <link rel="stylesheet" type="text/css" href="lib/css/bootstrap.min.css"/>
+        <link rel="stylesheet" type="text/css" href="lib/css/font-awesome.min.css"/>
+        <link rel="stylesheet" type="text/css" href="lib/css/info.css"/>
+
+        <script type="text/javascript" src="../../lib/js/jquery-1.11.1.min.js"></script>
+        <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
+        <script type="text/javascript" src="../../lib/js/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="lib/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="lib/js/bootbox.min.js"></script>
+        <script type="text/javascript" src="lib/js/showdown.min.js"></script>
+
+        <script type="text/javascript" src="../../lib/js/translate.js"></script>
+        <script type="text/javascript" src="../../lib/js/selectID.js"></script>
+        <script type="text/javascript" src="../../lib/js/loStorage.js"></script>
+
+        <script type="text/javascript" src="lib/js/words.js"></script>
+        <script type="text/javascript" src="lib/js/info.js"></script>
+
+    </head>
+    <body>
+
+        <div id="homeTemplate"> 
+            <div class="page-title">
+                <div class="title_left">
+
+                </div>       
+                <div class="title_right">
+
+                </div>
+            </div>
+            <div class="clearfix"></div>
+
+            <div id="home-container">
+
+                <div class="row justify-content-start">
+
+                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12 clock">
+                        <div class="tile-stats">                            
+                            <ul id="cssClock">
+                                <li id="cssSec"></li>
+                                <li id="cssHour"></li>
+                                <li id="cssMin"></li>
+                            </ul>
+                            <h3 class="specialclock" id="weekday_now">-</h3>
+                            <div class="count specialclock col-lg-8 col-md-3 col-sm-6 col-xs-6" id="date_now">-</div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                        <div class="tile-stats">
+
+                        </div>
+                    </div>      
+
+                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                        <div class="tile-stats">
+
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                        <div class="tile-stats">
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="row">
+
+                <div id="homeUpdateListTab" class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>
+                                <span class="translate">Updates</span> <small class="translate">can be done here</small>
+                            </h2>
+                            <ul class="nav navbar-right panel_toolbox">
+                                <li>
+                                    <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                                </li>
+                            </ul>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content height_320">
+                            <div class="">
+                                <ul id="updateHomeList"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="homeNewAdapterTab" class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>
+                                <span class="translate">New adapters</span> <small class="translate">are listed here</small>
+                            </h2>
+                            <ul class="nav navbar-right panel_toolbox">
+                                <li>
+                                    <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                                </li>
+                            </ul>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content height_150">
+                            <div class="">
+                                <ul id="newHomeList"></ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                            <div class="tile-stats">
+
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                            <div class="tile-stats">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="systemInfoTab" class="col-lg-4 col-md-12 col-sm-12 col-xs-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>
+                                <span class="translate">System informations</span> <small class="translate">about the server</small>
+                            </h2>
+                            <ul class="nav navbar-right panel_toolbox">
+                                <li>
+                                    <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                                </li>
+                            </ul>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content height_320">
+                            <div id="systemInfoList">                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-6" id="newsBlock">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2 id="newsTitle">ioBroker News <small id="newsTime"></small></h2>
+                            <ul class="nav navbar-right panel_toolbox">
+                                <li>
+                                    <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                                </li>
+                                <li>
+                                    <a id="news-link" target="_blank"><i class="fa fa-globe"></i></a>
+                                </li>
+                            </ul>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <ul class="list-unstyled timeline" id="newsList">
+
+                            </ul>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-6" id="forumBlock">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2 id="forumTitle">ioBroker Forum <small id="forumTime"></small></h2>
+                            <ul class="nav navbar-right panel_toolbox">
+                                <li>
+                                    <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                                </li>
+                                <li>
+                                    <a id="forum-link" target="_blank"><i class="fa fa-globe"></i></a>
+                                </li>
+                            </ul>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <ul class="list-unstyled timeline" id="forumList">
+
+                            </ul>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Forum Entry -->
+        <ul id="forumEntryTemplate" class="hidden">
+            <li>
+                <div class="block">
+                    <div class="tags hidden-xs">
+                        <a href="" class="tag">
+                            <span class="forumClass"></span>
+                        </a>
+                    </div>
+                    <div class="block_content">
+                        <h2 class="title">
+                            <a target="_blank" class="titleLink">Who Needs Sundance When You’ve Got&nbsp;Crowdfunding?</a>
+                        </h2>
+                        <div class="byline"></div>
+                        <br/>
+                        <p class="description">Film festivals used to be do-or-die moments for movie makers. They were where you met the producers that could fund your project, and if the buyers liked your flick, they’d pay to Fast-forward and… <a>Read&nbsp;More</a>
+                        </p>
+                    </div>
+                </div>
+            </li>
+        </ul>
+        <!-- / Forum Entry -->
+
+        <!-- UpdateList -->
+        <ul id="updateHomeListTemplate" class="hidden">
+            <li>
+                <p>
+                    <a class="btn btn-default adapter-update-submit"><i class="fa fa-refresh"></i></a>&nbsp;
+                    <span class="title">fronius adapter</span>&nbsp;
+                    <span class="version">0.0.6</span>&nbsp;
+                    <i class="fa fa-arrow-right"></i>&nbsp;
+                    <strong class="newVersion">0.1.0</strong>&nbsp;
+                    <a href="javascript:;" class="adapter-readme-submit show-md">
+                        <i class="fa fa-file-text text-info"></i>
+                    </a>
+                    <a class="notesVersion" title="infos">
+                        <i class="fa fa-info-circle text-info"></i>
+                    </a>
+                </p> 
+            </li>
+        </ul>
+        <!-- / UpdateList -->
+
+        <!-- NewList -->
+        <ul id="newHomeListTemplate" class="hidden">
+            <li>
+                <p>
+                    <a class="btn btn-default adapter-install-submit"><i class="fa fa-plus"></i></a>&nbsp;
+                    <span class="title">fronius adapter</span>&nbsp;
+                    <span class="version">0.0.6</span>&nbsp;
+                    <a href="javascript:;" class="adapter-readme-submit show-md">
+                        <i class="fa fa-file-text text-info"></i>
+                    </a>
+                </p> 
+            </li>
+        </ul>
+        <!-- / NewList --> 
+
+        <!-- Install/Update -->
+        <div id="modal-command" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modal-command" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">
+                            <i class="fa fa-window-minimize"></i>
+                        </button>
+                        <h4 class="modal-title" id="modal-command-label">Modal title</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div id="adapter-meter" class="meter">
+                            <span style="width: 1%;"></span>
+                        </div>
+                        <p id="adapter-install-message-on-end">&nbsp;</p>
+                        <a data-toggle="collapse" href="#collapseApadpterInstallDetails" aria-expanded="false" aria-controls="collapseApadpterInstallDetails">
+                            <span data-i18n="details">Details</span> ...
+                        </a>
+                        <div class="collapse" id="collapseApadpterInstallDetails">
+                            <textarea class="command" id="stdout" disabled="disabled" cols="120" rows="30"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default translate" id="adapter-install-close-btn" data-dismiss="modal">Run on background</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- / Install/Update -->
+    </body>
+</html>

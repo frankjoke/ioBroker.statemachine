@@ -1,0 +1,53 @@
+{
+    "common": {
+        "name": "statemachine",
+        "version": "0.0.1",
+        "news": {
+            "0.0.2": {
+                "en": "install and update function",
+                "de": "Funtionen für Install + Upsate implementiert"
+            },
+            "0.0.1": {
+                "en": "initial adapter",
+                "de": "Initiale Version",
+                "ru": "Первоначальный адаптер",
+                "pt": "Versão inicial",
+                "fr": "Version initiale",
+                "nl": "Eerste release"
+            }
+        },
+        "title": "ioBroker state & timer scripting machine",
+        "desc": {
+            "en": "ioBroker state & timer scripting machine",
+            "de": "ioBroker State & Timer Programmsystem",
+            "ru": "ioBroker state & timer scripting machine",
+            "pt": "Adaptador de state & timer scripting machine",
+            "fr": "ioBroker state & timer scripting machine",
+            "nl": "ioBroker state & timer scripting machine"
+        },
+        "authors": [
+            "Frankjoke <frankjoke@hotmail.com.de>"
+        ],
+        "platform": "Javascript/Node.js",
+        "mode": "daemon",
+        "icon": "statemachine.png",
+        "enabled": true,
+        "singleton": true,
+        "extIcon": "https://raw.githubusercontent.com/frankjoke/ioBroker.statemachine/master/admin/statemachine.png",
+        "keywords": ["statemachine", "timer, scripts, programming"],
+        "readme": "https://github.com/frankjoke/ioBroker.info/blob/master/README.md",
+        "loglevel": "info",
+        "type": "script",
+        "adminTab": {
+            "singleton": true,
+            "name": "Info",
+            "fa-icon": "fa-statemachine-circle"
+        }
+    },
+    "native": {
+        "news": true,
+        "forum": true
+    },
+    "objects": [
+    ]
+}
