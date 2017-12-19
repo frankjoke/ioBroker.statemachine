@@ -1,4 +1,4 @@
-![Logo](./admin/statemachine.png) Reads (and writes) informationen from System(s)
+![Logo](./admin/statemachine.png) Implements a state or timing machine
 ---
 [![NPM version](http://img.shields.io/npm/v/iobroker.statemachine.svg)](https://www.npmjs.com/package/iobroker.statemachine)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.statemachine.svg)](https://www.npmjs.com/package/iobroker.statemachine)
