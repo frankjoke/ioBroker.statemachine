@@ -1,45 +1,29 @@
-![Logo](admin/info.png)
-ioBroker.info
-=============
+![Logo](./admin/statemachine.png) Reads (and writes) informationen from System(s)
+---
+[![NPM version](http://img.shields.io/npm/v/iobroker.statemachine.svg)](https://www.npmjs.com/package/iobroker.statemachine)
+[![Downloads](https://img.shields.io/npm/dm/iobroker.statemachine.svg)](https://www.npmjs.com/package/iobroker.statemachine)
+**Tests:** Linux/Mac: [![Travis-CI Build Status](https://travis-ci.org/frankjoke/ioBroker.statemachine.svg?branch=master)](https://travis-ci.org/frankjoke/ioBroker.statemachine)
+Windows: [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/pil6266rrtw6l5c0?svg=true)](https://ci.appveyor.com/project/frankjoke/iobroker-statemachine)
+[![NPM](https://nodei.co/npm/iobroker.statemachine.png?downloads=true)](https://nodei.co/npm/iobroker.statemachine/)
 
-[![NPM version](http://img.shields.io/npm/v/iobroker.info.svg)](https://www.npmjs.com/package/iobroker.info)
-[![Downloads](https://img.shields.io/npm/dm/iobroker.info.svg)](https://www.npmjs.com/package/iobroker.info)
-[![Dependency Status](https://img.shields.io/david/ldittmar81/iobroker.info.svg)](https://david-dm.org/ldittmar81/iobroker.info)
-[![Known Vulnerabilities](https://snyk.io/test/github/ldittmar81/ioBroker.info/badge.svg)](https://snyk.io/test/github/ldittmar81/ioBroker.info)
-[![bitHound Overall Score](https://www.bithound.io/github/ldittmar81/ioBroker.info/badges/score.svg)](https://www.bithound.io/github/ldittmar81/ioBroker.info)
+## Adapter implements a state or timing machine to act on states and executes commands
+* The adapter uses an admin tab for configuration 
 
-[![NPM](https://nodei.co/npm/iobroker.info.png?downloads=true)](https://nodei.co/npm/iobroker.info/)
-
-**Tests:** Linux/Mac: [![Travis-CI](http://img.shields.io/travis/ldittmar81/ioBroker.info/master.svg)](https://travis-ci.org/ldittmar81/ioBroker.info)
-Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/ldittmar81/ioBroker.info?branch=master&svg=true)](https://ci.appveyor.com/project/ldittmar81/ioBroker-info/)
-
-
-### Information adapter for ioBroker
-=================
-
-This is an ioBroker adapter to get informations about your system and some news about ioBroker.
+## Installation
+* Usual iobroker via git, npm or ioBroker admin
 
 ## Changelog
 
-#### 0.0.6
-* (ldittmar) some fixes / install and update implemented
-
-#### 0.0.4
-* (ldittmar) some fixes and design correction
-
-#### 0.0.3
-* (ldittmar) show informations about adapters (update/new)
-
 #### 0.0.2
-* (ldittmar) show system informations
+* after first successful run
 
 #### 0.0.1
-* (ldittmar) initial commit
+* initial commit
 
 ## License
 The MIT License (MIT)
 
-Copyright (c) 2017 ldittmar <iobroker@lmdsoft.de>
+Copyright (c) 2017 frankjoke <frankjoke@hotmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
