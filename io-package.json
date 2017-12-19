@@ -40,7 +40,7 @@
         "type": "script",
         "adminTab": {
             "singleton": true,
-            "name": "Info",
+            "name": "StateMachine",
             "fa-icon": "fa-statemachine-circle"
         }
     },
