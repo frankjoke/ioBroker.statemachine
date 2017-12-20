@@ -20,7 +20,8 @@
   },
   "dependencies": {
     "moment": "^2.20.1",
-    "node-schedule": "^1.2.5"
+    "node-schedule": "^1.2.5",
+    "vis": "^4.21.0"
   },
   "devDependencies": {
     "grunt": "^1.0.1",

@@ -100,69 +100,6 @@ $(function () {
         });
     });
 
-    //------------------------------------------------------- CLOCK FUNCTIONS -----------------------------------------------------------------
-    var secInterval, hourInterval, minInterval, isClockOn = false;
-
-    /** 
-     * Start clock
-     */
-    function startClock() {
-        isClockOn = true;
-        secInterval = setInterval(function () {
-            var seconds = new Date().getSeconds();
-            var sdegree = seconds * 6;
-            var srotate = "rotate(" + sdegree + "deg)";
-
-            $("#cssSec").css({"-moz-transform": srotate, "-webkit-transform": srotate});
-
-        }, 1000);
-
-
-        hourInterval = setInterval(function () {
-            var hours = new Date().getHours();
-            if (hours === 0) {
-                getActualDate();
-            }
-            var mins = new Date().getMinutes();
-            var hdegree = hours * 30 + (mins / 2);
-            var hrotate = "rotate(" + hdegree + "deg)";
-
-            $("#cssHour").css({"-moz-transform": hrotate, "-webkit-transform": hrotate});
-
-        }, 1000);
-
-
-        minInterval = setInterval(function () {
-            var mins = new Date().getMinutes();
-            var mdegree = mins * 6;
-            var mrotate = "rotate(" + mdegree + "deg)";
-
-            $("#cssMin").css({"-moz-transform": mrotate, "-webkit-transform": mrotate});
-
-        }, 1000);
-
-        getActualDate();
-    }
-
-    /** 
-     * Get actual local date
-     */
-    function getActualDate() {
-        var date = new Date();
-        $('#date_now').text(date.toLocaleString(systemLang, {"year": "numeric", "month": "long", "day": "2-digit"}));
-        $('#weekday_now').text(date.toLocaleString(systemLang, {weekday: "long"}));
-    }
-
-    /** 
-     * Stop clock
-     */
-    function stopClock() {
-        isClockOn = false;
-        clearInterval(secInterval);
-        clearInterval(hourInterval);
-        clearInterval(minInterval);
-        $(window).off('resize');
-    }
 
     //------------------------------------------------------ NEWS & FORUM FUNCTIONS -----------------------------------------------------------
 
@@ -171,7 +108,7 @@ $(function () {
      * @param {type} site
      * @param {type} callback
      * @returns {Boolean}
-     */
+     *
     function requestCrossDomain(site, callback) {
         if (!site) {
             alert('No site was passed.');
@@ -196,7 +133,7 @@ $(function () {
     /** 
      * Format the newest forum threads
      * @param {type} data
-     */
+     *
     var getForumData = function (data) {
         if (data.results && data.results[0]) {
             var $forumContent = $($.parseXML(data.results[0]));
@@ -222,7 +159,7 @@ $(function () {
     /** 
      * Format RSS Stream from iobroker.net
      * @param {type} data
-     */
+     *
     var getNewsData = function (data) {
         if (data.results && data.results[0]) {
             var $newsContent = $($.parseXML(data.results[0]));
@@ -293,7 +230,7 @@ $(function () {
      * Get adapter informations
      * @param {type} host
      * @param {type} callback
-     */
+     *
     var getAdaptersInfo = function (host, callback) {
         if (!host) {
             return;
@@ -374,7 +311,7 @@ $(function () {
      * @param {type} _new
      * @param {type} old
      * @returns {Boolean}
-     */
+     *
     var upToDate = function (_new, old) {
         _new = _new.split('.');
         old = old.split('.');
@@ -405,7 +342,7 @@ $(function () {
      * @param {Array} list
      * @param {Object} repository
      * @param {Object} installedList
-     */
+     *
     function fillList(type, list, repository, installedList) {
         var $ul = $('#' + type + 'HomeList');
         $ul.empty();
@@ -580,7 +517,7 @@ $(function () {
     /** 
      * Get all ioBroker hosts
      * @param {type} callback
-     */
+     *
     var getHosts = function (callback) {
         socket.emit('getObjectView', 'system', 'host', {startkey: 'system.host.', endkey: 'system.host.\u9999'}, function (err, res) {
             if (!err && res) {
@@ -599,7 +536,7 @@ $(function () {
      * Get host informations
      * @param {type} host
      * @param {type} callback
-     */
+     *
     var getHostInfo = function (host, callback) {
         if (!host) {
             return;
@@ -626,7 +563,7 @@ $(function () {
      * Format number in seconds to time text
      * @param {!number} seconds
      * @returns {String}
-     */
+     *
     function formatSeconds(seconds) {
         var days = Math.floor(seconds / (3600 * 24));
         seconds %= 3600 * 24;
@@ -657,7 +594,7 @@ $(function () {
      * Format bytes to MB or GB
      * @param {!number} bytes
      * @returns {String}
-     */
+     *
     function formatRam(bytes) {
         var GB = Math.floor(bytes / (1024 * 1024 * 1024) * 10) / 10;
         bytes %= (1024 * 1024 * 1024);
@@ -683,7 +620,7 @@ $(function () {
     /** 
      * FormatObject for host informations
      * @type type
-     */
+     *
     var formatInfo = {
         'Uptime': formatSeconds,
         'System uptime': formatSeconds,
@@ -803,7 +740,7 @@ $(function () {
     });
 
 });
-
+*/
 jQuery.fn.progressbar = function (a, b) {
     var $this = $(this);
     if ($this.hasClass('meter')) {
