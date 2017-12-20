@@ -155,157 +155,158 @@
                             springLength: 180
                         },
                     },
-                    interaction: {
-                        hover: true,
-                        navigationButtons: true,
-                        tooltipDelay: 250
+                },
+                interaction: {
+                    hover: true,
+                    navigationButtons: true,
+                    tooltipDelay: 250
+                },
+                configure: true,
+                nodes: {
+                    borderWidthSelected: 6,
+                    color: {
+                        highlight: {},
+                        hover: {}
                     },
-                    configure: true,
-                    nodes: {
-                        borderWidthSelected: 6,
-                        color: {
-                            highlight: {},
-                            hover: {}
-                        },
-                        font: {
-                            size: 27,
-                            face: "verdana",
-                            strokeWidth: null
-                        },
-                        scaling: {
-                            min: 5,
-                            max: null
-                        },
-                        shapeProperties: {
-                            borderRadius: null
-                        },
-                        size: 24
+                    font: {
+                        size: 27,
+                        face: "verdana",
+                        strokeWidth: null
                     },
-                    edges: {
-                        arrows: {
-                            to: {
-                                enabled: true
-                            }
-                        },
-                        color: {
-                            inherit: false
-                        },
-                        font: {
-                            color: "rgba(15,52,21,1)"
-                        },
-                        selfReferenceSize: 35,
-                        shadow: {
+                    scaling: {
+                        min: 5,
+                        max: null
+                    },
+                    shapeProperties: {
+                        borderRadius: null
+                    },
+                    size: 24
+                },
+                edges: {
+                    arrows: {
+                        to: {
                             enabled: true
-                        },
-                        smooth: {
-                            forceDirection: "none",
-                            roundness: 0.75
                         }
                     },
-                    layout: {
-                        randomSeed: seed
-                    }, // just to make sure the layout is the same when the locale is changed
-                    locale: document.getElementById('locale').value,
-                    manipulation: {
-                        enabled: true,
-                        initiallyActive: true,
-                        addNode: function (data, callback) {
-                            // filling in the popup DOM elements
-                            document.getElementById('node-operation').innerHTML = "Add Node";
-                            editNode(data, clearNodePopUp, callback);
-                        },
-                        editNode: function (data, callback) {
-                            // filling in the popup DOM elements
-                            document.getElementById('node-operation').innerHTML = "Edit Node";
-                            editNode(data, cancelNodeEdit, callback);
-                        },
-                        addEdge: function (data, callback) {
-                            if (data.from == data.to) {
-                                var r = confirm("Do you want to connect the node to itself?");
-                                if (r != true) {
-                                    callback(null);
-                                    return;
-                                }
+                    color: {
+                        inherit: false
+                    },
+                    font: {
+                        color: "rgba(15,52,21,1)"
+                    },
+                    selfReferenceSize: 35,
+                    shadow: {
+                        enabled: true
+                    },
+                    smooth: {
+                        forceDirection: "none",
+                        roundness: 0.75
+                    }
+                },
+                layout: {
+                    randomSeed: seed
+                }, // just to make sure the layout is the same when the locale is changed
+                locale: document.getElementById('locale').value,
+                manipulation: {
+                    enabled: true,
+                    initiallyActive: true,
+                    addNode: function (data, callback) {
+                        // filling in the popup DOM elements
+                        document.getElementById('node-operation').innerHTML = "Add Node";
+                        editNode(data, clearNodePopUp, callback);
+                    },
+                    editNode: function (data, callback) {
+                        // filling in the popup DOM elements
+                        document.getElementById('node-operation').innerHTML = "Edit Node";
+                        editNode(data, cancelNodeEdit, callback);
+                    },
+                    addEdge: function (data, callback) {
+                        if (data.from == data.to) {
+                            var r = confirm("Do you want to connect the node to itself?");
+                            if (r != true) {
+                                callback(null);
+                                return;
                             }
-                            document.getElementById('edge-operation').innerHTML = "Add Edge";
+                        }
+                        document.getElementById('edge-operation').innerHTML = "Add Edge";
+                        editEdgeWithoutDrag(data, callback);
+                    },
+                    editEdge: {
+                        editWithoutDrag: function (data, callback) {
+                            document.getElementById('edge-operation').innerHTML = "Edit Edge";
                             editEdgeWithoutDrag(data, callback);
-                        },
-                        editEdge: {
-                            editWithoutDrag: function (data, callback) {
-                                document.getElementById('edge-operation').innerHTML = "Edit Edge";
-                                editEdgeWithoutDrag(data, callback);
-                            }
                         }
                     }
-                };
-                network = new vis.Network(container, data, options);
-                network.on("configChange", function () {
-                    // this will immediately fix the height of the configuration
-                    // wrapper to prevent unecessary scrolls in chrome.
-                    // see https://github.com/almende/vis/issues/1568
-                    var div = container.getElementsByClassName('vis-configuration-wrapper')[0];
-                    div.style["height"] = div.getBoundingClientRect().height + "px";
-                });
-            }
+                }
+            };
+            network = new vis.Network(container, data, options);
+            network.on("configChange", function () {
+                // this will immediately fix the height of the configuration
+                // wrapper to prevent unecessary scrolls in chrome.
+                // see https://github.com/almende/vis/issues/1568
+                var div = container.getElementsByClassName('vis-configuration-wrapper')[0];
+                div.style["height"] = div.getBoundingClientRect().height + "px";
+            });
+        }
 
-            function editNode(data, cancelAction, callback) {
-                document.getElementById('node-label').value = data.label;
-                document.getElementById('node-saveButton').onclick = saveNodeData.bind(this, data, callback);
-                document.getElementById('node-cancelButton').onclick = cancelAction.bind(this, callback);
-                document.getElementById('node-popUp').style.display = 'block';
-            }
+        function editNode(data, cancelAction, callback) {
+            document.getElementById('node-label').value = data.label;
+            document.getElementById('node-saveButton').onclick = saveNodeData.bind(this, data, callback);
+            document.getElementById('node-cancelButton').onclick = cancelAction.bind(this, callback);
+            document.getElementById('node-popUp').style.display = 'block';
+        }
 
-            // Callback passed as parameter is ignored
-            function clearNodePopUp() {
-                document.getElementById('node-saveButton').onclick = null;
-                document.getElementById('node-cancelButton').onclick = null;
-                document.getElementById('node-popUp').style.display = 'none';
-            }
+        // Callback passed as parameter is ignored
+        function clearNodePopUp() {
+            document.getElementById('node-saveButton').onclick = null;
+            document.getElementById('node-cancelButton').onclick = null;
+            document.getElementById('node-popUp').style.display = 'none';
+        }
 
-            function cancelNodeEdit(callback) {
-                clearNodePopUp();
-                callback(null);
-            }
+        function cancelNodeEdit(callback) {
+            clearNodePopUp();
+            callback(null);
+        }
 
-            function saveNodeData(data, callback) {
-                data.label = document.getElementById('node-label').value;
-                clearNodePopUp();
-                callback(data);
-            }
+        function saveNodeData(data, callback) {
+            data.label = document.getElementById('node-label').value;
+            clearNodePopUp();
+            callback(data);
+        }
 
-            function editEdgeWithoutDrag(data, callback) {
-                // filling in the popup DOM elements
-                document.getElementById('edge-label').value = data.label;
-                document.getElementById('edge-saveButton').onclick = saveEdgeData.bind(this, data, callback);
-                document.getElementById('edge-cancelButton').onclick = cancelEdgeEdit.bind(this, callback);
-                document.getElementById('edge-popUp').style.display = 'block';
-            }
+        function editEdgeWithoutDrag(data, callback) {
+            // filling in the popup DOM elements
+            document.getElementById('edge-label').value = data.label;
+            document.getElementById('edge-saveButton').onclick = saveEdgeData.bind(this, data, callback);
+            document.getElementById('edge-cancelButton').onclick = cancelEdgeEdit.bind(this, callback);
+            document.getElementById('edge-popUp').style.display = 'block';
+        }
 
-            function clearEdgePopUp() {
-                document.getElementById('edge-saveButton').onclick = null;
-                document.getElementById('edge-cancelButton').onclick = null;
-                document.getElementById('edge-popUp').style.display = 'none';
-            }
+        function clearEdgePopUp() {
+            document.getElementById('edge-saveButton').onclick = null;
+            document.getElementById('edge-cancelButton').onclick = null;
+            document.getElementById('edge-popUp').style.display = 'none';
+        }
 
-            function cancelEdgeEdit(callback) {
-                clearEdgePopUp();
-                callback(null);
-            }
+        function cancelEdgeEdit(callback) {
+            clearEdgePopUp();
+            callback(null);
+        }
 
-            function saveEdgeData(data, callback) {
-                if (typeof data.to === 'object')
-                    data.to = data.to.id
-                if (typeof data.from === 'object')
-                    data.from = data.from.id
-                data.label = document.getElementById('edge-label').value;
-                clearEdgePopUp();
-                callback(data);
-            }
+        function saveEdgeData(data, callback) {
+            if (typeof data.to === 'object')
+                data.to = data.to.id
+            if (typeof data.from === 'object')
+                data.from = data.from.id
+            data.label = document.getElementById('edge-label').value;
+            clearEdgePopUp();
+            callback(data);
+        }
 
-            function init() {
-                setDefaultLocale();
-                draw();
-            }
+        function init() {
+            setDefaultLocale();
+            draw();
+        }
     </script>
 </head>
 
