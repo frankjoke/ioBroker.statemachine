@@ -6,18 +6,11 @@
     <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css" />
     <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.structure.min.css" />
     <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.theme.min.css" />
-    <link rel="stylesheet" type="text/css" href="lib/css/bootstrap.min.css" />
-    <link rel="stylesheet" type="text/css" href="lib/css/font-awesome.min.css" />
-    <link rel="stylesheet" type="text/css" href="lib/css/statemachine.css" />
     <link rel="stylesheet" type="text/css" href="lib/css/vis.min.css" />
-    <!--link rel="stylesheet" type="text/css" href="lib/css/vis-network.min.css" /-->
 
     <script type="text/javascript" src="../../lib/js/jquery-1.11.1.min.js"></script>
     <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
     <script type="text/javascript" src="../../lib/js/jquery-ui.min.js"></script>
-    <script type="text/javascript" src="lib/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="lib/js/bootbox.min.js"></script>
-    <script type="text/javascript" src="lib/js/showdown.min.js"></script>
     <script type="text/javascript" src="lib/js/vis.min.js"></script>
 
     <script type="text/javascript" src="../../lib/js/translate.js"></script>
@@ -25,7 +18,6 @@
     <script type="text/javascript" src="../../lib/js/loStorage.js"></script>
 
     <script type="text/javascript" src="lib/js/words.js"></script>
-    <script type="text/javascript" src="lib/js/statemachine.js"></script>
 
     <style type="text/css">
         body,
@@ -34,8 +26,9 @@
         }
 
         #mynetwork {
+            box-sizing: border-box;
             position: relative;
-            width: 1000px;
+            width: 100%;
             height: 800px;
             border: 2px solid lightgray;
         }
@@ -49,6 +42,47 @@
         p {
             font-size: 16px;
             max-width: 700px;
+        }
+
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+
+        .column25 {
+            float: left;
+            box-sizing: border-box;
+            width: 25%;
+            padding: 10px;
+        }
+
+        .column33 {
+            float: left;
+            box-sizing: border-box;
+            width: 33%;
+            padding: 10px;
+        }
+
+        .column50 {
+            float: left;
+            box-sizing: border-box;
+            width: 50%;
+            padding: 10px;
+        }
+
+        .column40 {
+            float: left;
+            box-sizing: border-box;
+            width: 40%;
+            padding: 10px;
+        }
+
+        .column20 {
+            float: left;
+            box-sizing: border-box;
+            width: 20%;
+            padding: 10px;
         }
 
         table.legend_table {
@@ -113,23 +147,377 @@
     </style>
 
     <script type="text/javascript">
+        const socket = io.connect();
+        var hosts = [];
+        var mainHost = '';
+        var systemLang = 'en';
+        var systemConfig = {};
+        var adapterConfig = {};
+        var uptimeMap = {};
+        var dateOptions = {
+            "weekday": "short",
+            "year": "numeric",
+            "month": "long",
+            "day": "2-digit",
+            "hour": "2-digit",
+            "minute": "2-digit",
+            "second": "2-digit"
+        };
+        var installMsg = {};
+        var cmdCallback = null;
+        var activeCmdId = null;
+        var $stdout = $('#stdout');
+        var stdout = '';
+
+        //--------------------------------------------------------- COMMONS -----------------------------------------------------------------------
+        /** 
+         * Read the settings for adapter
+         * @param {type} callback
+         */
+        function readInstanceConfig(callback) {
+            socket.emit('getObject', 'system.config', function (err, data) {
+                systemConfig = data;
+                if (!err && systemConfig && systemConfig.common) {
+                    systemLang = systemConfig.common.language;
+                } else {
+                    systemLang = window.navigator.userLanguage || window.navigator.language;
+
+                    if (systemLang !== 'en' && systemLang !== 'de' && systemLang !== 'ru') {
+                        systemConfig.common.language = 'en';
+                        systemLang = 'en';
+                    }
+                }
+
+                socket.emit('getObject', 'system.adapter.info.0', function (err, res) {
+                    if (!err && res && res.native) {
+                        adapterConfig = res.native;
+                    }
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
+                });
+            });
+        }
+
+        /** 
+         * Translate word
+         * @param {type} word
+         * @returns {String}
+         */
+        function _(word) {
+            var text = translateWord(word, systemLang, systemDictionary);
+
+            for (var i = 1; i < arguments.length; i++) {
+                var pos = text.indexOf('%s');
+                if (pos !== -1) {
+                    text = text.replace('%s', arguments[i]);
+                }
+            }
+
+            return text;
+        }
         var nodes = null;
         var edges = null;
         var network = null;
         // randomly create some nodes and edges
-        var data = getScaleFreeNetwork(25);
-        var seed = 2;
 
-        function setDefaultLocale() {
-            var defaultLocal = navigator.language;
-            var select = document.getElementById('locale');
-            select.selectedIndex = 0; // set fallback value
-            for (var i = 0, j = select.options.length; i < j; ++i) {
-                if (select.options[i].getAttribute('value') === defaultLocal) {
-                    select.selectedIndex = i;
-                    break;
+        var nodes = [{
+                id: "test.Aus",
+                machine: 'test',
+                name: 'Aus',
+                label: 'Aus',
+                connections: [
+                    "test.Ein"
+                ]
+            },
+            {
+                id: "test.@",
+                label: '@=1m',
+                machine: 'test',
+                name: '@',
+                shape: 'box',
+                color: {
+                    background: 'orange',
+                    border: 'purple'
+                },
+                connections: [
+                    "test.Aus"
+                ]
+            },
+            {
+                id: "test.Ein",
+                machine: 'test',
+                name: 'Ein',
+                label: 'Ein',
+                connections: [
+                    "test.Aus"
+                ]
+            },
+            {
+                id: "test.*",
+                machine: 'test',
+                name: '*',
+                shape: 'star',
+                //                font: {
+                //                    size: 25
+                //                },
+                //                label: ' ',
+                size: 30,
+                color: {
+                    background: 'pink',
+                    border: 'purple'
+                },
+                connections: [
+                    "test.@",
+                    "test.Ein",
+                    "test.Aus"
+                ]
+            },
+            {
+                id: "rest.Aus",
+                machine: 'rest',
+                name: 'Aus',
+                label: 'Aus',
+                connections: []
+            },
+            {
+                id: "rest.*",
+                machine: 'rest',
+                name: '*',
+                shape: 'star',
+                font: {
+                    size: 25
+                },
+                label: ' ',
+                size: 30,
+                color: {
+                    background: 'pink',
+                    border: 'purple'
+                },
+                connections: [
+                    "rest.Aus"
+                ]
+            },
+        ];
+
+        // create connections between people
+        // value corresponds with the amount of contact between two people
+        var data;
+        var options = {
+            physics: {
+                stabilization: false,
+                barnesHut: {
+                    gravitationalConstant: -20000,
+                    centralGravity: 2,
+                    springLength: 225,
+                    avoidOverlap: 0.8
+                    //                        springLength: 180
+                },
+            },
+            locales: {
+                de: {
+                    edit: 'Edit',
+                    del: 'Lösche Auswahl',
+                    back: 'Zurück',
+                    addNode: 'State hinzufügen',
+                    addEdge: 'Übergang hinzufügen',
+                    editNode: 'Edit State',
+                    editEdge: 'Edit Übergang',
+                    addDescription: 'Auf freien Platz klicken um State zu positionieren!',
+                    edgeDescription: 'Klicke auf von-State und ziehe Cursor zu auf-State',
+                    editEdgeDescription: 'Click on the control points and drag them to a node to connect to it.',
+                    createEdgeError: 'Kann keie Übergänge auf Cluster einfügen!',
+                    deleteClusterError: 'Clusters können hier nicht gelöscht werden!',
+                    editClusterError: 'Clusters können hier nicht editiert werden!'
+                }
+            },
+            interaction: {
+                hover: true,
+                navigationButtons: true,
+                tooltipDelay: 250
+            },
+            configure: false,
+            nodes: {
+                borderWidthSelected: 6,
+                color: {
+                    highlight: {},
+                    hover: {}
+                },
+                font: {
+                    size: 25,
+                    face: "verdana",
+                    strokeWidth: 2
+                },
+                scaling: {
+                    min: 5,
+                    //                    max: null
+                },
+                shapeProperties: {
+                    borderRadius: 10
+                },
+                size: 24
+            },
+            edges: {
+                arrowStrikethrough: false,
+                arrows: {
+                    to: {
+                        enabled: true,
+                        scaleFactor: 0.5
+                    }
+                },
+                color: {
+                    inherit: false
+                },
+                font: {
+                    color: "rgba(15,52,21,1)"
+                },
+                selfReferenceSize: 35,
+                shadow: {
+                    enabled: true
+                },
+                smooth: {
+                    forceDirection: "none",
+                    roundness: 0.75
+                }
+            },
+            layout: {
+                randomSeed: 2
+            }, // just to make sure the layout is the same when the locale is changed
+            manipulation: {
+                enabled: true,
+                initiallyActive: true,
+                addNode: function (data, callback) {
+                    // filling in the popup DOM elements
+                    document.getElementById('node-operation').innerHTML = "Add Node";
+                    editNode(data, clearNodePopUp, callback);
+                },
+                editNode: function (data, callback) {
+                    // filling in the popup DOM elements
+                    document.getElementById('node-operation').innerHTML = "Edit Node";
+                    editNode(data, cancelNodeEdit, callback);
+                },
+                addEdge: function (data, callback) {
+                    if (data.from == data.to) {
+                        var r = confirm("Do you want to connect the node to itself?");
+                        if (r != true) {
+                            callback(null);
+                            return;
+                        }
+                    }
+                    document.getElementById('edge-operation').innerHTML = "Add Edge";
+                    saveEdgeData(data, callback);
+                    //                    editEdgeWithoutDrag(data, callback);
+                },
+                editEdge: {
+                    editWithoutDrag: function (data, callback) {
+                        document.getElementById('edge-operation').innerHTML = "Edit Edge";
+                        editEdgeWithoutDrag(data, callback);
+                    }
                 }
             }
+        };
+        var network;
+        var container;
+        var exportArea;
+        var importButton;
+        var exportButton;
+
+        function addConnections(elem, index) {
+            // need to replace this with a tree of the network, then get child direct children of the element
+            elem.connections = network.getConnectedNodes(index);
+        }
+
+        function getEdges(nodeId) {
+
+        }
+
+        function exportNetwork() {
+            exportArea.value = "";
+            //            var nodes = objectToArray(network.getPositions());
+            var nodes = [];
+            data.nodes.forEach(function (elem) {
+//                var conns = network.getConnectedNodes(elem.id, 'to');
+                var edges = network.getConnectedEdges(elem.id);
+                var conns = [];
+                edges.forEach(function (eid) {
+                    var e = data.edges.get(eid);
+                    if (e.from == elem.id)
+                        conns.push(e);
+                });
+                elem.connections = conns;
+                nodes.push(elem);
+            });
+            exportArea.value = JSON.stringify(nodes, undefined, 2);;
+            resizeExportArea();
+        }
+
+        function importNetwork() {
+            function getNodeData(data) {
+                var networkNodes = [];
+
+                data.forEach(function (elem, index, array) {
+                    networkNodes.push({
+                        id: elem.id,
+                        label: elem.id,
+                        x: elem.x,
+                        y: elem.y
+                    });
+                });
+
+                return new vis.DataSet(networkNodes);
+            }
+
+            function getNodeById(data, id) {
+                for (var n = 0; n < data.length; n++) {
+                    if (data[n].id == id) { // double equals since id can be numeric or string
+                        return data[n];
+                    }
+                };
+
+                throw 'Can not find id \'' + id + '\' in data';
+            }
+
+            function getEdgeData(data) {
+                var networkEdges = [];
+
+                data.forEach(function (node) {
+                    // add the connection
+                    node.connections.forEach(function (connId, cIndex, conns) {
+                        networkEdges.push({
+                            from: node.id,
+                            to: connId
+                        });
+                        let cNode = getNodeById(data, connId);
+
+                        var elementConnections = cNode.connections;
+
+                        // remove the connection from the other node to prevent duplicate connections
+                        var duplicateIndex = elementConnections.findIndex(function (connection) {
+                            return connection == node.id; // double equals since id can be numeric or string
+                        });
+
+                        if (duplicateIndex != -1) {
+                            elementConnections.splice(duplicateIndex, 1);
+                        };
+                    });
+                });
+
+                return new vis.DataSet(networkEdges);
+            }
+            var inputData = JSON.parse(exportArea.value);
+
+            var data = {
+                nodes: getNodeData(inputData),
+                edges: getEdgeData(inputData)
+            }
+
+            network = new vis.Network(container, data, {});
+
+            resizeExportArea();
+        }
+
+        function resizeExportArea() {
+            exportArea.style.height = (1 + exportArea.scrollHeight) + "px";
         }
 
         function destroy() {
@@ -139,106 +527,73 @@
             }
         }
 
+        function createData(nodes) {
+
+            function getLabel(node) {
+                if (!node)
+                    return 'N/A';
+                if (node.label && node.label != ' ')
+                    return node.label;
+                if (node.shape == 'star')
+                    return '*';
+                return '!' + node.id;
+            }
+            const data = {},
+                ln = {},
+                edges = [];
+            for (let n of nodes)
+                ln[n.id] = n;
+            for (let n of nodes) {
+                if (n && n.connections)
+                    for (let c of n.connections) {
+                        if (typeof c === 'object') {
+                            edges.push(c);
+                        } else {
+                            const fn = ln[n.id];
+                            const cn = ln[c];
+                            let l = getLabel(fn) + '>' + getLabel(cn);
+                            const edge = {
+                                from: n.id,
+                                to: cn.id,
+                                label: l,
+                                id: fn.machine + ':' + l,
+                                machine: fn.machine
+                            };
+                            edges.push(edge);
+                        }
+                    }
+                    if (n.shape == 'star' && n.machine)
+                        n.label = n.machine;
+            }
+            data.nodes = new vis.DataSet(nodes);
+            data.nodes.on('*', function (event, properties, senderId) {
+                console.log('Nodes ', event, {
+                    prop: properties.items[0],
+                    node: data.nodes.get(properties.items[0])
+                });
+            });
+            data.edges = new vis.DataSet(edges);
+            data.edges.on('*', function (event, properties, senderId) {
+                console.log('Edges ', event, {
+                    prop: properties.items[0],
+                    node: data.edges.get(properties.items[0])
+                });
+            });
+            return data;
+        }
+
+        function changeOnSelect(params, type) {
+            var n = params.nodes;
+            var e = [];
+            params.edges.forEach(function(edge) {e.push(data.edges.get(edge))});
+            document.getElementById('eventSpan').innerHTML = '<h2>select' + type + ' event:</h2>' + JSON.stringify({
+                nodes: n,
+                edges: e
+            }, null, 4);
+        }
+
         function draw() {
             destroy();
-            nodes = [];
-            edges = [];
-
-            // create a network
-            var container = document.getElementById('mynetwork');
-            var options = {
-                physics: {
-                    stabilization: false,
-                    physics: {
-                        barnesHut: {
-                            centralGravity: 0.05,
-                            springLength: 180
-                        },
-                    },
-                },
-                interaction: {
-                    hover: true,
-                    navigationButtons: true,
-                    tooltipDelay: 250
-                },
-                configure: true,
-                nodes: {
-                    borderWidthSelected: 6,
-                    color: {
-                        highlight: {},
-                        hover: {}
-                    },
-                    font: {
-                        size: 27,
-                        face: "verdana",
-                        strokeWidth: null
-                    },
-                    scaling: {
-                        min: 5,
-                        max: null
-                    },
-                    shapeProperties: {
-                        borderRadius: null
-                    },
-                    size: 24
-                },
-                edges: {
-                    arrows: {
-                        to: {
-                            enabled: true
-                        }
-                    },
-                    color: {
-                        inherit: false
-                    },
-                    font: {
-                        color: "rgba(15,52,21,1)"
-                    },
-                    selfReferenceSize: 35,
-                    shadow: {
-                        enabled: true
-                    },
-                    smooth: {
-                        forceDirection: "none",
-                        roundness: 0.75
-                    }
-                },
-                layout: {
-                    randomSeed: seed
-                }, // just to make sure the layout is the same when the locale is changed
-                locale: document.getElementById('locale').value,
-                manipulation: {
-                    enabled: true,
-                    initiallyActive: true,
-                    addNode: function (data, callback) {
-                        // filling in the popup DOM elements
-                        document.getElementById('node-operation').innerHTML = "Add Node";
-                        editNode(data, clearNodePopUp, callback);
-                    },
-                    editNode: function (data, callback) {
-                        // filling in the popup DOM elements
-                        document.getElementById('node-operation').innerHTML = "Edit Node";
-                        editNode(data, cancelNodeEdit, callback);
-                    },
-                    addEdge: function (data, callback) {
-                        if (data.from == data.to) {
-                            var r = confirm("Do you want to connect the node to itself?");
-                            if (r != true) {
-                                callback(null);
-                                return;
-                            }
-                        }
-                        document.getElementById('edge-operation').innerHTML = "Add Edge";
-                        editEdgeWithoutDrag(data, callback);
-                    },
-                    editEdge: {
-                        editWithoutDrag: function (data, callback) {
-                            document.getElementById('edge-operation').innerHTML = "Edit Edge";
-                            editEdgeWithoutDrag(data, callback);
-                        }
-                    }
-                }
-            };
             network = new vis.Network(container, data, options);
             network.on("configChange", function () {
                 // this will immediately fix the height of the configuration
@@ -247,10 +602,53 @@
                 var div = container.getElementsByClassName('vis-configuration-wrapper')[0];
                 div.style["height"] = div.getBoundingClientRect().height + "px";
             });
+            network.on("selectNode", function (params) {
+                changeOnSelect(params, "Node");
+            });
+
+            network.on("doubleClick", function (params) {
+                changeOnSelect(params, "DoubleClick");
+                if (params.nodes.length == 1) {
+                    var nid = params.nodes[0];
+                    if (network.isCluster(nid)) {
+                        network.openCluster(nid);
+                        return;
+                    }
+                    var machine = data.nodes.get(nid);
+                    if (!machine) return;
+                    machine = machine.machine;
+                    clusterOptionsByData = {
+                        joinCondition: function (childOptions) {
+                            return childOptions.machine == machine;
+                        },
+                        processProperties: function (clusterOptions, childNodes, childEdges) {
+                            var totalMass = 0;
+                            for (var i = 0; i < childNodes.length; i++) {
+                                totalMass += childNodes[i].mass;
+                            }
+                            clusterOptions.mass = totalMass;
+                            return clusterOptions;
+                        },
+                        clusterNodeProperties: {
+                            id: 'cluster:' + machine,
+                            borderWidth: 3,
+                            shape: 'database',
+                            color: 'green',
+                            label: machine
+                        }
+                    };
+                    network.cluster(clusterOptionsByData);
+                }
+            });
+            network.on("selectEdge", function (params) {
+                changeOnSelect(params, "Edge");
+            });
+            exportArea.value = "";
         }
 
         function editNode(data, cancelAction, callback) {
             document.getElementById('node-label').value = data.label;
+            document.getElementById('node-id').value = data.machine ? data.machine : 'newMachine';
             document.getElementById('node-saveButton').onclick = saveNodeData.bind(this, data, callback);
             document.getElementById('node-cancelButton').onclick = cancelAction.bind(this, callback);
             document.getElementById('node-popUp').style.display = 'block';
@@ -269,43 +667,119 @@
         }
 
         function saveNodeData(data, callback) {
-            data.label = document.getElementById('node-label').value;
+            var l = document.getElementById('node-label').value.trim();
+            var m = document.getElementById('node-id').value.trim();
+            var match = l.match(/@(.?)\s*=\s*(.+?)$/);
+            data.machine = m;
+            if (match) {
+                data.shape = 'box';
+                data.timeout = match[2];
+                data.name = data.id = '@' + match[1];
+                data.label = l;
+                data.id = data.machine + '.' + data.name;
+                data.color = {
+                    background: 'orange',
+                    border: 'purple'
+                };
+            } else if (/^\*$/.test(l)) {
+                data.size = 30;
+                data.shape = 'star';
+                data.name = '*';
+                //                data.font = {
+                //                    size: 25
+                //                };
+                data.color = {
+                    background: 'pink',
+                    border: 'purple'
+                };
+                data.label = data.machine;
+                data.id = data.machine + '.' + data.name;
+            } else {
+                //                data.id = data.label.trim();
+                data.label = l;
+                data.name = l;
+                data.id = data.machine + '.' + data.name;
+            }
             clearNodePopUp();
             callback(data);
         }
+        /*
+                function editEdgeWithoutDrag(data, callback) {
+                    // filling in the popup DOM elements
+                    document.getElementById('edge-label').value = data.label;
+                    document.getElementById('edge-saveButton').onclick = saveEdgeData.bind(this, data, callback);
+                    document.getElementById('edge-cancelButton').onclick = cancelEdgeEdit.bind(this, callback);
+                    document.getElementById('edge-popUp').style.display = 'block';
+                }
 
-        function editEdgeWithoutDrag(data, callback) {
-            // filling in the popup DOM elements
-            document.getElementById('edge-label').value = data.label;
-            document.getElementById('edge-saveButton').onclick = saveEdgeData.bind(this, data, callback);
-            document.getElementById('edge-cancelButton').onclick = cancelEdgeEdit.bind(this, callback);
-            document.getElementById('edge-popUp').style.display = 'block';
+                function clearEdgePopUp() {
+                    document.getElementById('edge-saveButton').onclick = null;
+                    document.getElementById('edge-cancelButton').onclick = null;
+                    document.getElementById('edge-popUp').style.display = 'none';
+                }
+
+                function cancelEdgeEdit(callback) {
+                    clearEdgePopUp();
+                    callback(null);
+                }
+        */
+        function saveEdgeData(edge, callback) {
+            if (typeof edge.to === 'object')
+                edge.to = edge.to.id
+            if (typeof edge.from === 'object')
+                edge.from = edge.from.id
+            var nf = data.nodes.get(edge.from);
+            var nt = data.nodes.get(edge.to);
+
+            if (nf.machine != nt.machine) {
+                alert(`cannot connect states from different machines! "${nf.machine}" and "${nt.machine}"`);
+                return callback(null);
+            }
+
+            if (nf.name.startsWith('@') && network.getConnectedNodes(nf.id, 'to').length > 0) {
+                alert(`cannot connect more than ONE state to timer-states like "${nf.id}"!`);
+                return callback(null);
+            }
+            if (network.getConnectedNodes(nf.id, 'to').indexOf(nt.id) >= 0) {
+                alert(`cannot connect more than ONE time to the SAME state:"${nf.id}" > "${nt.id}"!`);
+                return callback(null);
+            }
+
+            if (nt.name == '*') {
+                alert(`cannot connect states to * ('Stars')!`);
+                return callback(null);
+            }
+            if (nf.name.startsWith('@')) {
+                nf.name;
+            }
+            edge.machine = nf.machine;
+            edge.label = nf.name + '>' + nt.name;
+            edge.id = edge.machine + ':' + edge.label;
+            //            clearEdgePopUp();
+            callback(edge);
         }
 
-        function clearEdgePopUp() {
-            document.getElementById('edge-saveButton').onclick = null;
-            document.getElementById('edge-cancelButton').onclick = null;
-            document.getElementById('edge-popUp').style.display = 'none';
-        }
-
-        function cancelEdgeEdit(callback) {
-            clearEdgePopUp();
-            callback(null);
-        }
-
-        function saveEdgeData(data, callback) {
-            if (typeof data.to === 'object')
-                data.to = data.to.id
-            if (typeof data.from === 'object')
-                data.from = data.from.id
-            data.label = document.getElementById('edge-label').value;
-            clearEdgePopUp();
-            callback(data);
+        function changeOptions() {
+            //            var div = container.getElementsByClassName('vis-configuration-wrapper')[0];
+            options.configure = !options.configure;
+            network.setOptions({
+                configure: options.configure
+            });
+            //            div.style["height"] = options.configure ? div.getBoundingClientRect().height + "px" : '1px';            
+            //            draw();
         }
 
         function init() {
-            setDefaultLocale();
-            draw();
+            readInstanceConfig(function () {
+                options.locale = systemLang;
+                data = createData(nodes);
+                draw();
+            });
+
+            container = document.getElementById('mynetwork');
+            exportArea = document.getElementById('input_output');
+            importButton = document.getElementById('import_button');
+            exportButton = document.getElementById('export_button');
         }
     </script>
 </head>
@@ -314,84 +788,81 @@
 
     <div id="homeTemplate">
         <div class="page-title">
-            <div class="title_left">
+            <div class="column50">
+                <h1>StateMachine Adapter</h1>
+                <input type="button" onclick="changeOptions()" value="options"></input>
 
             </div>
-            <div class="title_right">
-
+            <div class="column25">
+                <h3>import/export</h3>
+            </div>
+            <div class="column25">
+                <h3>Options</h3>
             </div>
         </div>
         <div class="clearfix"></div>
 
         <div id="home-container">
+            <div class="column50">
+                <div id="mynetwork"></div>
+            </div>
 
-            <div class="row justify-content-start">
-
-                <div class="col-lg-2 col-md-2 col-sm-4 col-xs-8">
-                    <div class="tile-stats">
-                        <p>
-                            <label for="locale">Select a locale:</label>
-                            <select id="locale" onchange="draw();">
-                                <option value="en">en</option>
-                                <option value="de">de</option>
-                                <option value="es">es</option>
-                                <option value="it">it</option>
-                                <option value="nl">nl</option>
-                                <option value="pt-br">pt</option>
-                                <option value="ru">ru</option>
-                            </select>
-                        </p>
-                        <div class="tile-stats">
-                            <div id="node-popUp">
-                                <span id="node-operation">node</span>
-                                <br>
-                                <table style="margin:auto;">
-                                    <tr>
-                                        <td>id</td>
-                                        <td>
-                                            <input id="node-id" value="new value" />
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>label</td>
-                                        <td>
-                                            <input id="node-label" value="new value" />
-                                        </td>
-                                    </tr>
-                                </table>
-                                <input type="button" value="save" id="node-saveButton" />
-                                <input type="button" value="cancel" id="node-cancelButton" />
-                            </div>
-                        </div>
-                        <div id="edge-popUp">
-                            <span id="edge-operation">edge</span>
-                            <br>
-                            <table style="margin:auto;">
-                                <tr>
-                                    <td>label</td>
-                                    <td>
-                                        <input id="edge-label" value="new value" />
-                                    </td>
-                                </tr>
-                            </table>
-                            <input type="button" value="save" id="edge-saveButton" />
-                            <input type="button" value="cancel" id="edge-cancelButton" />
-                        </div>
-
-                        <br />
-                        <div id="mynetwork"></div>
-                        <p id="selection"></p>
-                    </div>
-                </div>
-
-                <div class="col-lg-2 col-md-2 col-sm-4 col-xs-8">
-                </div>
+            <div class="column25">
+                <input type="button" id="import_button" onclick="importNetwork()" value="import"></input>
+                <input type="button" id="export_button" onclick="exportNetwork()" value="export"></input>
+                <input type="button" id="destroy_button" onclick="destroy()" value="destroy"></input>
+                <br>
+                <br>
+                <textarea cols="40" rows="50" id=input_output></textarea>
+            </div>
+            <div class="column25">
+                <pre id="eventSpan"></pre>
+            </div>
+            <div class="clearfix"></div>
+            <div class="tile-stats">
+            </div>
+            <div id="node-popUp">
+                <span id="node-operation">node</span>
+                <br>
+                <table style="margin:auto;">
+                    <tr>
+                        <td>Machine</td>
+                        <td>
+                            <input id="node-id" value="newMachine" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>label</td>
+                        <td>
+                            <input id="node-label" value="new value" />
+                        </td>
+                    </tr>
+                </table>
+                <input type="button" value="save" id="node-saveButton" />
+                <input type="button" value="cancel" id="node-cancelButton" />
             </div>
         </div>
+        <div id="edge-popUp">
+            <span id="edge-operation">edge</span>
+            <br>
+            <table style="margin:auto;">
+                <tr>
+                    <td>label</td>
+                    <td>
+                        <input id="edge-label" value="new value" />
+                    </td>
+                </tr>
+            </table>
+            <input type="button" value="save" id="edge-saveButton" />
+            <input type="button" value="cancel" id="edge-cancelButton" />
+        </div>
 
-        <div class="row">
 
-            <!--div id="homeUpdateListTab" class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
+    </div>
+
+    <!--div class="row">
+
+        <div id="homeUpdateListTab" class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
                 <div class="x_panel">
                     <div class="x_title">
                         <h2>
@@ -535,104 +1006,11 @@
 
                     </div>
                 </div>
-            </div-->
+            </div>
 
-        </div>
+    </div-->
     </div>
 
-    <!-- Forum Entry -->
-    <ul id="forumEntryTemplate" class="hidden">
-        <li>
-            <div class="block">
-                <div class="tags hidden-xs">
-                    <a href="" class="tag">
-                        <span class="forumClass"></span>
-                    </a>
-                </div>
-                <div class="block_content">
-                    <h2 class="title">
-                        <a target="_blank" class="titleLink">Who Needs Sundance When You’ve Got&nbsp;Crowdfunding?</a>
-                    </h2>
-                    <div class="byline"></div>
-                    <br/>
-                    <p class="description">Film festivals used to be do-or-die moments for movie makers. They were where you met the producers that
-                        could fund your project, and if the buyers liked your flick, they’d pay to Fast-forward and…
-                        <a>Read&nbsp;More</a>
-                    </p>
-                </div>
-            </div>
-        </li>
-    </ul>
-    <!-- / Forum Entry -->
-
-    <!-- UpdateList -->
-    <ul id="updateHomeListTemplate" class="hidden">
-        <li>
-            <p>
-                <a class="btn btn-default adapter-update-submit">
-                    <i class="fa fa-refresh"></i>
-                </a>&nbsp;
-                <span class="title">fronius adapter</span>&nbsp;
-                <span class="version">0.0.6</span>&nbsp;
-                <i class="fa fa-arrow-right"></i>&nbsp;
-                <strong class="newVersion">0.1.0</strong>&nbsp;
-                <a href="javascript:;" class="adapter-readme-submit show-md">
-                    <i class="fa fa-file-text text-info"></i>
-                </a>
-                <a class="notesVersion" title="infos">
-                    <i class="fa fa-info-circle text-info"></i>
-                </a>
-            </p>
-        </li>
-    </ul>
-    <!-- / UpdateList -->
-
-    <!-- NewList -->
-    <ul id="newHomeListTemplate" class="hidden">
-        <li>
-            <p>
-                <a class="btn btn-default adapter-install-submit">
-                    <i class="fa fa-plus"></i>
-                </a>&nbsp;
-                <span class="title">fronius adapter</span>&nbsp;
-                <span class="version">0.0.6</span>&nbsp;
-                <a href="javascript:;" class="adapter-readme-submit show-md">
-                    <i class="fa fa-file-text text-info"></i>
-                </a>
-            </p>
-        </li>
-    </ul>
-    <!-- / NewList -->
-
-    <!-- Install/Update -->
-    <div id="modal-command" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modal-command" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">
-                        <i class="fa fa-window-minimize"></i>
-                    </button>
-                    <h4 class="modal-title" id="modal-command-label">Modal title</h4>
-                </div>
-                <div class="modal-body">
-                    <div id="adapter-meter" class="meter">
-                        <span style="width: 1%;"></span>
-                    </div>
-                    <p id="adapter-install-message-on-end">&nbsp;</p>
-                    <a data-toggle="collapse" href="#collapseApadpterInstallDetails" aria-expanded="false" aria-controls="collapseApadpterInstallDetails">
-                        <span data-i18n="details">Details</span> ...
-                    </a>
-                    <div class="collapse" id="collapseApadpterInstallDetails">
-                        <textarea class="command" id="stdout" disabled="disabled" cols="120" rows="30"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default translate" id="adapter-install-close-btn" data-dismiss="modal">Run on background</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- / Install/Update -->
 </body>
 
 </html>

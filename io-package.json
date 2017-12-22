@@ -45,9 +45,46 @@
         }
     },
     "native": {
-        "news": true,
-        "forum": true
+        "nodes": [{
+            "id": 1,
+            "value": 2,
+            "label": "Aus"
+        }, {
+            "id": 2,
+            "value": 31,
+            "label": "Timer",
+            "shape": "box",
+            "color": {
+                "background": "orange",
+                "border": "purple"
+            },
+            "connections": [
+                4,
+                2,
+                3
+            ]
+        }, {
+            "id": 3,
+            "value": 12,
+            "label": "Ein",
+            "connections": [
+                4,
+                1
+            ]
+        }, {
+            "id": 4,
+            "value": 12,
+            "shape": "star",
+            "size": 40,
+            "color": {
+                "background": "pink",
+                "border": "purple"
+            },
+            "connections": [
+                4,
+                1
+            ]
+        }]
     },
-    "objects": [
-    ]
+    "objects": []
 }
