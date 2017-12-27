@@ -4,8 +4,8 @@
 <head>
     <meta charset='utf-8' />
     <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css" />
-    <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.structure.min.css" />
-    <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.theme.min.css" />
+    <!--link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.structure.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.theme.min.css" /-->
     <link rel="stylesheet" type="text/css" href="lib/css/vis.min.css" />
 
     <script type="text/javascript" src="../../lib/js/jquery-1.11.1.min.js"></script>
@@ -78,6 +78,20 @@
             padding: 10px;
         }
 
+        .column60 {
+            float: left;
+            box-sizing: border-box;
+            width: 60%;
+            padding: 10px;
+        }
+
+        .column80 {
+            float: left;
+            box-sizing: border-box;
+            width: 80%;
+            padding: 10px;
+        }
+
         .column20 {
             float: left;
             box-sizing: border-box;
@@ -143,6 +157,30 @@
             border-color: #5394ed;
             padding: 10px;
             text-align: center;
+        }
+
+        input.text {
+            margin-bottom: 12px;
+            width: 95%;
+            padding: .4em;
+        }
+
+        fieldset {
+            padding: 0;
+            border: 0;
+            margin-top: 25px;
+        }
+
+        h1 {
+            margin: .6em 0;
+        }
+
+        label {
+            display: block;
+            width: 40%;
+            height: 18px;
+            text-align: right;
+            padding: 1px;
         }
     </style>
 
@@ -237,8 +275,13 @@
                 name: '@',
                 shape: 'box',
                 color: {
-                    background: 'orange',
-                    border: 'purple'
+                    background: 'yellow',
+                    hover: {
+                        //                        background: 'orange'
+                    },
+                    highlight: {
+                        //                        background: 'orange'
+                    }
                 },
                 connections: [
                     "test.Aus"
@@ -254,18 +297,22 @@
                 ]
             },
             {
-                id: "test.*",
+                id: "test",
                 machine: 'test',
                 name: '*',
                 shape: 'star',
-                //                font: {
-                //                    size: 25
-                //                },
-                //                label: ' ',
                 size: 30,
+                font: {
+                    size: 30
+                },
                 color: {
                     background: 'pink',
-                    border: 'purple'
+                    hover: {
+                        background: 'pink'
+                    },
+                    highlight: {
+                        background: 'pink'
+                    }
                 },
                 connections: [
                     "test.@",
@@ -281,15 +328,15 @@
                 connections: []
             },
             {
-                id: "rest.*",
+                id: "rest",
                 machine: 'rest',
                 name: '*',
                 shape: 'star',
+                size: 30,
                 font: {
-                    size: 25
+                    size: 30
                 },
                 label: ' ',
-                size: 30,
                 color: {
                     background: 'pink',
                     border: 'purple'
@@ -309,6 +356,7 @@
                 barnesHut: {
                     gravitationalConstant: -20000,
                     centralGravity: 2,
+                    damping: 0.5,
                     springLength: 225,
                     avoidOverlap: 0.8
                     //                        springLength: 180
@@ -326,7 +374,7 @@
                     addDescription: 'Auf freien Platz klicken um State zu positionieren!',
                     edgeDescription: 'Klicke auf von-State und ziehe Cursor zu auf-State',
                     editEdgeDescription: 'Click on the control points and drag them to a node to connect to it.',
-                    createEdgeError: 'Kann keie Übergänge auf Cluster einfügen!',
+                    createEdgeError: 'Kann keine Übergänge auf Cluster einfügen!',
                     deleteClusterError: 'Clusters können hier nicht gelöscht werden!',
                     editClusterError: 'Clusters können hier nicht editiert werden!'
                 }
@@ -334,17 +382,16 @@
             interaction: {
                 hover: true,
                 navigationButtons: true,
+                selectConnectedEdges: false,
                 tooltipDelay: 250
             },
             configure: false,
             nodes: {
-                borderWidthSelected: 6,
-                color: {
-                    highlight: {},
-                    hover: {}
-                },
+                borderWidth: 2,
+                borderWidthSelected: 10,
+                color: createColor(),
                 font: {
-                    size: 25,
+                    size: 20,
                     face: "verdana",
                     strokeWidth: 2
                 },
@@ -352,17 +399,19 @@
                     min: 5,
                     //                    max: null
                 },
+                shadow: {
+                    enabled: true
+                },
                 shapeProperties: {
                     borderRadius: 10
                 },
-                size: 24
+                size: 20
             },
             edges: {
                 arrowStrikethrough: false,
                 arrows: {
                     to: {
                         enabled: true,
-                        scaleFactor: 0.5
                     }
                 },
                 color: {
@@ -387,33 +436,19 @@
                 enabled: true,
                 initiallyActive: true,
                 addNode: function (data, callback) {
-                    // filling in the popup DOM elements
-                    document.getElementById('node-operation').innerHTML = "Add Node";
-                    editNode(data, clearNodePopUp, callback);
+                    stDialogOpen(data, 'Create State', callback);
                 },
-                editNode: function (data, callback) {
-                    // filling in the popup DOM elements
-                    document.getElementById('node-operation').innerHTML = "Edit Node";
-                    editNode(data, cancelNodeEdit, callback);
-                },
-                addEdge: function (data, callback) {
-                    if (data.from == data.to) {
-                        var r = confirm("Do you want to connect the node to itself?");
-                        if (r != true) {
-                            callback(null);
-                            return;
-                        }
-                    }
-                    document.getElementById('edge-operation').innerHTML = "Add Edge";
-                    saveEdgeData(data, callback);
-                    //                    editEdgeWithoutDrag(data, callback);
-                },
-                editEdge: {
-                    editWithoutDrag: function (data, callback) {
-                        document.getElementById('edge-operation').innerHTML = "Edit Edge";
-                        editEdgeWithoutDrag(data, callback);
-                    }
-                }
+                editNode: stEditNode,
+                editEdge: stEditEdge,
+                deleteNode: stDeleteNode,
+                addEdge: saveEdgeData
+                /* ,
+                               editEdge: {
+                                   editWithoutDrag: function (data, callback) {
+                                       document.getElementById('edge-operation').innerHTML = "Edit Edge";
+                                       editEdgeWithoutDrag(data, callback);
+                                   }
+                               } */
             }
         };
         var network;
@@ -422,21 +457,12 @@
         var importButton;
         var exportButton;
 
-        function addConnections(elem, index) {
-            // need to replace this with a tree of the network, then get child direct children of the element
-            elem.connections = network.getConnectedNodes(index);
-        }
-
-        function getEdges(nodeId) {
-
-        }
-
         function exportNetwork() {
             exportArea.value = "";
             //            var nodes = objectToArray(network.getPositions());
             var nodes = [];
             data.nodes.forEach(function (elem) {
-//                var conns = network.getConnectedNodes(elem.id, 'to');
+                //                var conns = network.getConnectedNodes(elem.id, 'to');
                 var edges = network.getConnectedEdges(elem.id);
                 var conns = [];
                 edges.forEach(function (eid) {
@@ -452,72 +478,17 @@
         }
 
         function importNetwork() {
-            function getNodeData(data) {
-                var networkNodes = [];
-
-                data.forEach(function (elem, index, array) {
-                    networkNodes.push({
-                        id: elem.id,
-                        label: elem.id,
-                        x: elem.x,
-                        y: elem.y
-                    });
-                });
-
-                return new vis.DataSet(networkNodes);
-            }
-
-            function getNodeById(data, id) {
-                for (var n = 0; n < data.length; n++) {
-                    if (data[n].id == id) { // double equals since id can be numeric or string
-                        return data[n];
-                    }
-                };
-
-                throw 'Can not find id \'' + id + '\' in data';
-            }
-
-            function getEdgeData(data) {
-                var networkEdges = [];
-
-                data.forEach(function (node) {
-                    // add the connection
-                    node.connections.forEach(function (connId, cIndex, conns) {
-                        networkEdges.push({
-                            from: node.id,
-                            to: connId
-                        });
-                        let cNode = getNodeById(data, connId);
-
-                        var elementConnections = cNode.connections;
-
-                        // remove the connection from the other node to prevent duplicate connections
-                        var duplicateIndex = elementConnections.findIndex(function (connection) {
-                            return connection == node.id; // double equals since id can be numeric or string
-                        });
-
-                        if (duplicateIndex != -1) {
-                            elementConnections.splice(duplicateIndex, 1);
-                        };
-                    });
-                });
-
-                return new vis.DataSet(networkEdges);
-            }
             var inputData = JSON.parse(exportArea.value);
-
-            var data = {
-                nodes: getNodeData(inputData),
-                edges: getEdgeData(inputData)
-            }
-
-            network = new vis.Network(container, data, {});
-
-            resizeExportArea();
+            if (Array.isArray(inputData) && inputData.length > 0) {}
+            data = createData(inputData);
+            draw({
+                manipulation: options.manipulation
+            });
         }
 
         function resizeExportArea() {
-            exportArea.style.height = (1 + exportArea.scrollHeight) + "px";
+            //            exportArea.style.height = (1 + exportArea.scrollHeight) + "px";
+            exportArea.style.height = exportArea.scrollHeight + "px";
         }
 
         function destroy() {
@@ -525,6 +496,25 @@
                 network.destroy();
                 network = null;
             }
+        }
+
+        function createColor(background, border, node) {
+            node = node || {};
+            border = border || (node.color ? node.color.border : false) || 'blue';
+            background = background || (node.color ? node.color.background : false) || 'lightblue';
+            node.color = {
+                border: border,
+                background: background,
+                highlight: {
+                    border: border,
+                    background: background
+                },
+                hover: {
+                    border: border,
+                    background: background
+                }
+            };
+            return node.color;
         }
 
         function createData(nodes) {
@@ -562,39 +552,45 @@
                             edges.push(edge);
                         }
                     }
-                    if (n.shape == 'star' && n.machine)
-                        n.label = n.machine;
+                if (n.shape == 'star' && n.machine) {
+                    n.label = n.machine;
+                    n.color = createColor('pink');
+                } else if (n.label.startsWith('@'))
+                    n.color = createColor('yellow');
             }
             data.nodes = new vis.DataSet(nodes);
             data.nodes.on('*', function (event, properties, senderId) {
-                console.log('Nodes ', event, {
+                addEvent({
                     prop: properties.items[0],
                     node: data.nodes.get(properties.items[0])
-                });
+                }, 'Node changed');
             });
             data.edges = new vis.DataSet(edges);
             data.edges.on('*', function (event, properties, senderId) {
-                console.log('Edges ', event, {
+                addEvent({
                     prop: properties.items[0],
-                    node: data.edges.get(properties.items[0])
-                });
+                    edge: data.edges.get(properties.items[0])
+                }, 'Edge changed');
             });
             return data;
         }
 
-        function changeOnSelect(params, type) {
-            var n = params.nodes;
-            var e = [];
-            params.edges.forEach(function(edge) {e.push(data.edges.get(edge))});
-            document.getElementById('eventSpan').innerHTML = '<h2>select' + type + ' event:</h2>' + JSON.stringify({
-                nodes: n,
-                edges: e
-            }, null, 4);
+        var events = [];
+
+        function addEvent(obj, type) {
+            if (events.length > 4)
+                events.pop();
+            events.unshift('<h2>' + type + ' event:</h2>' + JSON.stringify(obj, null, 4));
+            var s = '';
+            events.forEach(function (x) {
+                s += x;
+            });
+            document.getElementById('eventSpan').innerHTML = s;
         }
 
-        function draw() {
+        function draw(opt) {
             destroy();
-            network = new vis.Network(container, data, options);
+            network = new vis.Network(container, data, opt || options);
             network.on("configChange", function () {
                 // this will immediately fix the height of the configuration
                 // wrapper to prevent unecessary scrolls in chrome.
@@ -602,128 +598,207 @@
                 var div = container.getElementsByClassName('vis-configuration-wrapper')[0];
                 div.style["height"] = div.getBoundingClientRect().height + "px";
             });
-            network.on("selectNode", function (params) {
-                changeOnSelect(params, "Node");
+            //            network.on("selectNode", function (params) {
+            //                changeOnSelect(params, "Node");
+            //            });
+            network.on('zoom', function (params) {
+                addEvent({
+                    scale: params.scale
+                }, 'Zoom ' + params.direction);
             });
 
+            network.once('stabilized', function () {
+                network.setOptions({
+                    physics: {
+                        stabilization: {
+                            fit: false
+                        }
+                    }
+                });
+                network.stabilize();
+            });
+            clusterPositions = {};
+            network.on("click", function (params) {
+                if (params.nodes.length == 1 && params.nodes[0].startsWith('cluster:')) {
+                    addEvent(getParams(params), "Select Cluster");
+                }
+            });
             network.on("doubleClick", function (params) {
-                changeOnSelect(params, "DoubleClick");
+                addEvent(getParams(params), "DoubleClick");
                 if (params.nodes.length == 1) {
                     var nid = params.nodes[0];
                     if (network.isCluster(nid)) {
-                        network.openCluster(nid);
+                        network.openCluster(nid, {
+                            releaseFunction: function (clusterPosition, containedNodesPositions) {
+                                var newPositions = {};
+                                // clusterPosition = {x:clusterX, y:clusterY};
+                                // containedNodesPositions = {nodeId:{x:nodeX,y:nodeY}, nodeId2....}
+                                for (nodeId in containedNodesPositions)
+                                    newPositions[nodeId] = {
+                                        x: containedNodesPositions[nodeId].x,
+                                        y: containedNodesPositions[nodeId].y
+                                    };
+                                return newPositions;
+                            }
+                        });
+                        var m = nid.split(':')[1];
+                        data.edges.forEach(function (edge) {
+                            data.edges.update(edge);
+                        }, {
+                            filter: function (item) {
+                                return item.machine == m;
+                            }
+                        });
                         return;
                     }
                     var machine = data.nodes.get(nid);
                     if (!machine) return;
                     machine = machine.machine;
+                    //                  mass = 0;
                     clusterOptionsByData = {
                         joinCondition: function (childOptions) {
                             return childOptions.machine == machine;
                         },
-                        processProperties: function (clusterOptions, childNodes, childEdges) {
-                            var totalMass = 0;
-                            for (var i = 0; i < childNodes.length; i++) {
-                                totalMass += childNodes[i].mass;
-                            }
-                            clusterOptions.mass = totalMass;
-                            return clusterOptions;
-                        },
+                        /*                        
+                                                processProperties: function (clusterOptions, childNodes, childEdges) {
+                                                    var totalMass = 0;
+                                                    for (var i = 0; i < childNodes.length; i++) {
+                                                        totalMass += childNodes[i].mass;
+                                                    }
+                                                    clusterOptions.mass = totalMass;
+                                                    return clusterOptions;
+                                                },
+                        */
                         clusterNodeProperties: {
                             id: 'cluster:' + machine,
                             borderWidth: 3,
                             shape: 'database',
-                            color: 'green',
-                            label: machine
+                            color: 'lightgreen',
+                            label: machine,
+                            //                            mass: 1,
+                            font: {
+                                size: 30
+                            }
                         }
                     };
+                    network.storePositions();
                     network.cluster(clusterOptionsByData);
                 }
             });
+
             network.on("selectEdge", function (params) {
-                changeOnSelect(params, "Edge");
+                //               if (params.nodes.length==0)
+                addEvent(getParams(params), "Select Edge");
+            });
+            network.on("selectNode", function (params) {
+                //               if (params.nodes.length==0)
+                params = getParams(params);
+                if (params.nid) {
+                    var node = params[params.nid];
+                    tabMachineName.val(node.machine).show();
+                    tabStateName.val(node.label).show();
+                } else
+                    tabStateName.hide();
+
+                addEvent(params, "Select Node");
             });
             exportArea.value = "";
+            resizeExportArea();
         }
 
-        function editNode(data, cancelAction, callback) {
-            document.getElementById('node-label').value = data.label;
-            document.getElementById('node-id').value = data.machine ? data.machine : 'newMachine';
-            document.getElementById('node-saveButton').onclick = saveNodeData.bind(this, data, callback);
-            document.getElementById('node-cancelButton').onclick = cancelAction.bind(this, callback);
-            document.getElementById('node-popUp').style.display = 'block';
+        function cloneObject(obj) {
+            return JSON.parse(JSON.stringify(obj));
         }
 
-        // Callback passed as parameter is ignored
-        function clearNodePopUp() {
-            document.getElementById('node-saveButton').onclick = null;
-            document.getElementById('node-cancelButton').onclick = null;
-            document.getElementById('node-popUp').style.display = 'none';
-        }
+        function getParams(par) {
+            var params = cloneObject(par);
+            var n = params.nodes;
+            var e = [];
+            delete params.pointer;
+            delete params.event;
+            params.edges.forEach(function (edge) {
+                e.push(data.edges.get(edge))
+            });
+            if (n.length === 0 && e.length == 1) {
+                params.eid = params.edges[0];
+                params[params.eid] = e[0];
+            } else
+                params.edges = e;
 
-        function cancelNodeEdit(callback) {
-            clearNodePopUp();
-            callback(null);
-        }
-
-        function saveNodeData(data, callback) {
-            var l = document.getElementById('node-label').value.trim();
-            var m = document.getElementById('node-id').value.trim();
-            var match = l.match(/@(.?)\s*=\s*(.+?)$/);
-            data.machine = m;
-            if (match) {
-                data.shape = 'box';
-                data.timeout = match[2];
-                data.name = data.id = '@' + match[1];
-                data.label = l;
-                data.id = data.machine + '.' + data.name;
-                data.color = {
-                    background: 'orange',
-                    border: 'purple'
-                };
-            } else if (/^\*$/.test(l)) {
-                data.size = 30;
-                data.shape = 'star';
-                data.name = '*';
-                //                data.font = {
-                //                    size: 25
-                //                };
-                data.color = {
-                    background: 'pink',
-                    border: 'purple'
-                };
-                data.label = data.machine;
-                data.id = data.machine + '.' + data.name;
-            } else {
-                //                data.id = data.label.trim();
-                data.label = l;
-                data.name = l;
-                data.id = data.machine + '.' + data.name;
+            var nid = n.length == 1 && n[0];
+            if (nid) {
+                params.nid = nid;
+                var node = data.nodes.get(nid);
+                if (node)
+                    params[nid] = node;
+                else if (network.isCluster(nid))
+                    params[nid] = network.getNodesInCluster(nid);
             }
-            clearNodePopUp();
-            callback(data);
+            if (typeof params.to === 'object')
+                params.to = params.to.id
+            if (typeof params.from === 'object')
+                params.from = params.from.id
+            return params;
         }
-        /*
-                function editEdgeWithoutDrag(data, callback) {
-                    // filling in the popup DOM elements
-                    document.getElementById('edge-label').value = data.label;
-                    document.getElementById('edge-saveButton').onclick = saveEdgeData.bind(this, data, callback);
-                    document.getElementById('edge-cancelButton').onclick = cancelEdgeEdit.bind(this, callback);
-                    document.getElementById('edge-popUp').style.display = 'block';
-                }
 
-                function clearEdgePopUp() {
-                    document.getElementById('edge-saveButton').onclick = null;
-                    document.getElementById('edge-cancelButton').onclick = null;
-                    document.getElementById('edge-popUp').style.display = 'none';
+        function getMachineStates(machine) {
+            return data.nodes.get({
+                filter: function (item) {
+                    return (item.machine == machine);
                 }
+            });
+        }
 
-                function cancelEdgeEdit(callback) {
-                    clearEdgePopUp();
-                    callback(null);
+        function checkStarState(state) {
+            var pos = network.getPositions();
+            if (state && state.id) {
+                var nst = JSON.parse(JSON.stringify(state));
+                var p = pos[nst.id];
+                if (p) {
+                    nst.x = p.x;
+                    nst.y = p.y;
                 }
-        */
+                if (!data.nodes.get(nst.machine)) {
+                    nst.size = 30;
+                    nst.shape = 'star';
+                    nst.name = '*';
+                    nst.font = {
+                        size: 30
+                    };
+                    nst.color = createColor('pink');
+                    nst.label = nst.machine;
+                    nst.id = nst.machine;
+                    data.nodes.add(nst);
+                } else
+                    nst = data.nodes.get(nst.machine);
+
+                var conn = network.getConnectedNodes(nst.id, 'to');
+                if (conn.indexOf(state.id) < 0) {
+                    var edge = {
+                        to: state.id,
+                        from: nst.id,
+                        machine: nst.machine,
+                        label: nst.name + '>' + state.name
+                    };
+                    edge.id = edge.machine + ':' + edge.label;
+                    data.edges.add(edge);
+                }
+            }
+
+        }
+
+        function stEditEdge(edge, callback) {
+            if (typeof edge.from === 'object')
+                edge.from = edge.from.id
+        }
+
         function saveEdgeData(edge, callback) {
+            if (edge.from == edge.to) {
+                var r = confirm("Do you want to connect the node to itself?");
+                if (r != true)
+                    return callback(null);
+            }
+
             if (typeof edge.to === 'object')
                 edge.to = edge.to.id
             if (typeof edge.from === 'object')
@@ -781,16 +856,194 @@
             importButton = document.getElementById('import_button');
             exportButton = document.getElementById('export_button');
         }
+        var stDialog;
+
+        function stDeleteNode(data, callback) {
+            if (data.name == '*') {
+                alert("Cannot delete '*'- (Machine-) States,\nyou need to delete machine!");
+                return callback(null);
+            } else if (getMachineStates(data.machine).length <= 2) {
+                alert("Cannot delete last state from lachine,\nyou need to delete machhine!");
+                return callback(null);
+            }
+            stDialogOpen(data, 'Delete State', callback);
+        }
+
+        function stEditNode(data, callback) {
+            if (data.name == '*') {
+                alert("Cannot edit '*'- (Machine-) States!");
+                return callback(null);
+            }
+            stDialogOpen(data, 'Edit State', callback);
+        }
+
+        function stDialogOpen(item, action, callback) {
+            //            var $dialog = $("#state-dialog-form"); 
+            stDialog.find('.state-dialog-field').removeClass("ui-state-error");
+            stDialog._$machine = stDialog.find('#machine');
+            stDialog._$tips = stDialog.find(".validateTips");
+            stDialog._$name = stDialog.find('#name');
+            stDialog._$item = item;
+            stDialog._$create = action.startsWith('Create ');
+            stDialog._$callback = callback;
+            if (item && item.machine) {
+                stDialog._$machine.val(item.machine);
+            }
+            if (item && item.name) {
+                stDialog._$name.val(item.name);
+            } else if (!stDialog._$create && item.label)
+                stDialog._$name.val(item.label);
+
+            stDialog._$machine.prop('disabled', !stDialog._$create);
+
+            stDialog._$tips.text("All form fields are required");
+            stDialog.dialog('option', 'title', action);
+            stDialog.dialog("open");
+        }
+
+        function addState() {
+            function verify(item, text, regexp, max) {
+                var v = item.val();
+                var r = typeof regexp === 'number' ? v.length >= regexp && (typeof max === 'number' ? v.length <= max :
+                    true) : regexp.test(v);
+                if (r)
+                    return true;
+                item.addClass("ui-state-error");
+                stDialog._$tips.text(text);
+            }
+
+            var ok = true;
+            ok = ok && verify(stDialog._$machine, "Länge muss zwischen 3 und 20 sein", 3, 20);
+            ok = ok && verify(stDialog._$machine, "Text darf nur '$_A-Za-z0-9' enthalten", /^\s*[$\w]+\s*$/);
+            ok = ok && verify(stDialog._$name, "Länge muss zwischen 3 und 20 sein", 3, 20);
+            ok = ok && verify(stDialog._$name, "Text darf nur '$_A-Za-z0-9' enthalten oder @(x)=(*h)(*m)(*s)",
+                /^\s*([$\w]+|@(.?)\s*=\s*(.+?))\s*$/);
+            if (ok) {
+                var m = stDialog._$machine.val().trim();
+                var l = stDialog._$name.val().trim();
+                var match = l.match(/^@(.?)\s*=\s*(.+)$/);
+                var node = stDialog._$item;
+                node.machine = m;
+                if (match) {
+                    node.shape = 'box';
+                    node.timeout = match[2];
+                    node.name = node.id = '@' + match[1];
+                    node.label = l;
+                    node.id = node.machine + '.' + node.name;
+                    node.color = createColor('yellow');
+                } else {
+                    //                node.id = node.label.trim();
+                    node.label = l;
+                    node.name = l;
+                    node.id = node.machine + '.' + node.name;
+                }
+                if (data.nodes.get(node.id)) {
+                    alert(`A state with this name exist already and cannot be added multiple times!`);
+                    return false;
+                }
+                stDialog._$tips.text("All form fields are required");
+                stDialog.find('.state-dialog-field').removeClass("ui-state-error");
+                stDialog._$item.name = l;
+                stDialog._$item = node;
+                stDialog._$item.machine = m;
+                if (stDialog._$callback) {
+                    stDialog._$callback(node);
+                    stDialog._$callback = null;
+                }
+                stDialog.dialog("close");
+                setTimeout(checkStarState, 100, node);
+            }
+            return ok;
+        }
+        var tabMachineName, tabStateName, tabPhysics;
+        $(function () {
+            //            alert('Selection length:' + $("#node-popUp").length + ', ' + $("#nodepopUp").length+ ', ' + $("#nodePopUp").length)
+            tabMachineName = $('#tab-machine-name').prop('disabled', true);
+            tabStateName = $('#tab-state-name');
+            tabPhysics = $('#st-physics').checkboxradio();
+//            $(".st-control").controlgroup({
+//                "direction": "vertical"
+//            });
+            stDialog = $("#state-dialog-form").dialog({
+                autoOpen: false,
+                //                dialogClass: "no-close",
+                height: 300,
+                width: 500,
+                modal: true,
+                buttons: [{
+                        text: 'Save State',
+                        click: addState
+                    },
+                    {
+                        text: 'Cancel',
+                        click: function (event) {
+                            $(this).dialog('close');
+                        }
+                    }
+                ],
+                close: function () {
+                    form[0].reset();
+                    if (stDialog._$callback)
+                        stDialog._$callback(null);
+                    stDialog._$callback = null;
+                }
+            });
+
+            form = stDialog.find("form").on("submit", function (event) {
+                event.preventDefault();
+                addState();
+            });
+            $('.myButtons').button({
+                icon: "ui-icon-star"
+            });
+            $('#create-state').button({
+                icon: "ui-icon-star"
+            });
+            $('#importButton').click(function (event) {
+                importNetwork();
+            });
+            $('#exportButton').click(function (event) {
+                exportNetwork();
+            });
+            $('#destroyButton').click(function (event) {
+                destroy();
+            });
+            $('#endcreate').click(function (event) {
+                network.disableEditMode();
+            });
+            $('#create-state').click(function (event) {
+                network.addNodeMode();
+            });
+            $('#createStateButton').click(function (event) {
+                stDialogOpen({
+                    machine: tabMachineName.val(),
+                    name: 'newName'
+                }, "Create State", null);
+            });
+            $('#changeOptions').click(function (event) {
+                options.configure = !options.configure;
+                $(this).text(options.configure ? "Hide Options" : "Show Options");
+                network.setOptions({
+                    configure: options.configure
+                });
+            });
+            init();
+        });
     </script>
 </head>
 
-<body onload="init();">
-
+<body>
     <div id="homeTemplate">
+
+
         <div class="page-title">
             <div class="column50">
+                <!--a href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css">../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css</a>
+                <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.structure.min.css" />
+                    <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.theme.min.css" />
+                <a href="lib/css/vis.min.css">lib/css/vis.min.css</a-->
                 <h1>StateMachine Adapter</h1>
-                <input type="button" onclick="changeOptions()" value="options"></input>
+                <button id="changeOptions" class="myButtons">Show Options</button>
 
             </div>
             <div class="column25">
@@ -807,11 +1060,24 @@
                 <div id="mynetwork"></div>
             </div>
 
-            <div class="column25">
-                <input type="button" id="import_button" onclick="importNetwork()" value="import"></input>
-                <input type="button" id="export_button" onclick="exportNetwork()" value="export"></input>
-                <input type="button" id="destroy_button" onclick="destroy()" value="destroy"></input>
+            <div class="column25 st-control">
+                <button id="importButton" class="myButtons">import</button>
+                <button id="exportButton" class="myButtons">export</button>
+                <button id="destroyButton" class="myButtons">destroy</button>
                 <br>
+                <button id="createStateButton" class="myButtons">CreateState</button>
+                <button id="create-state" class="myButtons">create-state</button>
+                <div class="clearfix"></div>
+                <button id="endcreate" class="myButtons">EndCreate</button>
+                <div class="clearfix"></div>
+                <label class="column25" for="machineName">Machine Name</label>
+                <input class="column75" type="text" name="machineName" id="tab-machine-name" value="newMachine" class="text ui-widget-content ui-corner-all">
+                <div class="clearfix"></div>
+                <label class="column25" for="stateName">State Name</label>
+                <input class="column75" type="text" name="stateName" id="tab-state-name" value="newState" class="text ui-widget-content ui-corner-all">
+                <div class="clearfix"></div>
+                <label for="physics">Insurance</label>
+                <input type="checkbox" name="physics" id="st-physics">
                 <br>
                 <textarea cols="40" rows="50" id=input_output></textarea>
             </div>
@@ -821,194 +1087,24 @@
             <div class="clearfix"></div>
             <div class="tile-stats">
             </div>
-            <div id="node-popUp">
-                <span id="node-operation">node</span>
-                <br>
-                <table style="margin:auto;">
-                    <tr>
-                        <td>Machine</td>
-                        <td>
-                            <input id="node-id" value="newMachine" />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>label</td>
-                        <td>
-                            <input id="node-label" value="new value" />
-                        </td>
-                    </tr>
-                </table>
-                <input type="button" value="save" id="node-saveButton" />
-                <input type="button" value="cancel" id="node-cancelButton" />
-            </div>
         </div>
-        <div id="edge-popUp">
-            <span id="edge-operation">edge</span>
-            <br>
-            <table style="margin:auto;">
-                <tr>
-                    <td>label</td>
-                    <td>
-                        <input id="edge-label" value="new value" />
-                    </td>
-                </tr>
-            </table>
-            <input type="button" value="save" id="edge-saveButton" />
-            <input type="button" value="cancel" id="edge-cancelButton" />
+        <div id="state-dialog-form" title="...State">
+            <p class="validateTips">All form fields are required.</p>
+            <form>
+                <fieldset>
+                    <label class="column40 ui-font" for="machine">Machine Name</label>
+                    <input class="column60" type="text" name="machine" id="machine" value="thisMachine" class="text ui-widget-content ui-corner-all state-dialog-field">
+                    <div class="clearfix"></div>
+                    <label class="column40 ui-font" for="name">State Name</label>
+                    <input class="column60" type="text" name="name" id="name" value="newState" class="text ui-widget-content ui-corner-all state-dialog-field">
+                    <!-- Allow form submission with keyboard without duplicating the dialog button -->
+                    <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+                </fieldset>
+            </form>
         </div>
-
 
     </div>
 
-    <!--div class="row">
-
-        <div id="homeUpdateListTab" class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
-                <div class="x_panel">
-                    <div class="x_title">
-                        <h2>
-                            <span class="translate">Updates</span>
-                            <small class="translate">can be done here</small>
-                        </h2>
-                        <ul class="nav navbar-right panel_toolbox">
-                            <li>
-                                <a class="collapse-link">
-                                    <i class="fa fa-chevron-up"></i>
-                                </a>
-                            </li>
-                        </ul>
-                        <div class="clearfix"></div>
-                    </div>
-                    <div class="x_content height_320">
-                        <div class="">
-                            <ul id="updateHomeList"></ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="homeNewAdapterTab" class="col-lg-4 col-md-6 col-sm-6 col-xs-12">
-                <div class="x_panel">
-                    <div class="x_title">
-                        <h2>
-                            <span class="translate">New adapters</span>
-                            <small class="translate">are listed here</small>
-                        </h2>
-                        <ul class="nav navbar-right panel_toolbox">
-                            <li>
-                                <a class="collapse-link">
-                                    <i class="fa fa-chevron-up"></i>
-                                </a>
-                            </li>
-                        </ul>
-                        <div class="clearfix"></div>
-                    </div>
-                    <div class="x_content height_150">
-                        <div class="">
-                            <ul id="newHomeList"></ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
-                        <div class="tile-stats">
-
-                        </div>
-                    </div>
-
-                    <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
-                        <div class="tile-stats">
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="systemInfoTab" class="col-lg-4 col-md-12 col-sm-12 col-xs-12">
-                <div class="x_panel">
-                    <div class="x_title">
-                        <h2>
-                            <span class="translate">System informations</span>
-                            <small class="translate">about the server</small>
-                        </h2>
-                        <ul class="nav navbar-right panel_toolbox">
-                            <li>
-                                <a class="collapse-link">
-                                    <i class="fa fa-chevron-up"></i>
-                                </a>
-                            </li>
-                        </ul>
-                        <div class="clearfix"></div>
-                    </div>
-                    <div class="x_content height_320">
-                        <div id="systemInfoList">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="row">
-
-            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-6" id="newsBlock">
-                <div class="x_panel">
-                    <div class="x_title">
-                        <h2 id="newsTitle">ioBroker News
-                            <small id="newsTime"></small>
-                        </h2>
-                        <ul class="nav navbar-right panel_toolbox">
-                            <li>
-                                <a class="collapse-link">
-                                    <i class="fa fa-chevron-up"></i>
-                                </a>
-                            </li>
-                            <li>
-                                <a id="news-link" target="_blank">
-                                    <i class="fa fa-globe"></i>
-                                </a>
-                            </li>
-                        </ul>
-                        <div class="clearfix"></div>
-                    </div>
-                    <div class="x_content">
-                        <ul class="list-unstyled timeline" id="newsList">
-
-                        </ul>
-
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-6" id="forumBlock">
-                <div class="x_panel">
-                    <div class="x_title">
-                        <h2 id="forumTitle">ioBroker Forum
-                            <small id="forumTime"></small>
-                        </h2>
-                        <ul class="nav navbar-right panel_toolbox">
-                            <li>
-                                <a class="collapse-link">
-                                    <i class="fa fa-chevron-up"></i>
-                                </a>
-                            </li>
-                            <li>
-                                <a id="forum-link" target="_blank">
-                                    <i class="fa fa-globe"></i>
-                                </a>
-                            </li>
-                        </ul>
-                        <div class="clearfix"></div>
-                    </div>
-                    <div class="x_content">
-                        <ul class="list-unstyled timeline" id="forumList">
-
-                        </ul>
-
-                    </div>
-                </div>
-            </div>
-
-    </div-->
     </div>
 
 </body>
