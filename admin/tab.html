@@ -3,14 +3,21 @@
 
 <head>
     <meta charset='utf-8' />
-    <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/default/jquery-ui.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../lib/css/fancytree/ui.fancytree.min.css" />
+    <!--link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css" /-->
+    <!--link rel="stylesheet" type="text/css" href="lib/css/jquery-ui.min.css" />
     <!--link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.structure.min.css" />
     <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.theme.min.css" /-->
     <link rel="stylesheet" type="text/css" href="lib/css/vis.min.css" />
 
-    <script type="text/javascript" src="../../lib/js/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="../../lib/js/jquery-1.11.2.min.js"></script>
+    <script type="text/javascript" src="../../lib/js/jquery-ui-1.11.4.full.min.js"></script>
+    <!--script type="text/javascript" src="../../lib/js/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="../../lib/js/jquery-ui.min.js"></script-->
+    <script type="text/javascript" src="../../lib/js/jquery.fancytree-all.min.js"></script>
     <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
-    <script type="text/javascript" src="../../lib/js/jquery-ui.min.js"></script>
+    <!--script type="text/javascript" src="lib/js/jquery-ui.min.js"></script-->
     <script type="text/javascript" src="lib/js/vis.min.js"></script>
 
     <script type="text/javascript" src="../../lib/js/translate.js"></script>
@@ -22,7 +29,7 @@
     <style type="text/css">
         body,
         select {
-            font: 10pt sans;
+            font: 12pt sans;
         }
 
         #mynetwork {
@@ -45,58 +52,75 @@
         }
 
         .clearfix::after {
-            content: "";
+            visibility: hidden;
+            font-size: 0;
+            content: " ";
             clear: both;
+            height: 0;
             display: table;
+        }
+
+        .column15 {
+            float: left;
+            box-sizing: border-box;
+            width: 15%;
+            padding: 3px;
         }
 
         .column25 {
             float: left;
             box-sizing: border-box;
             width: 25%;
-            padding: 10px;
+            padding: 3px;
         }
 
         .column33 {
             float: left;
             box-sizing: border-box;
             width: 33%;
-            padding: 10px;
+            padding: 3px;
+        }
+
+        .column45 {
+            float: left;
+            box-sizing: border-box;
+            width: 45%;
+            padding: 3px;
         }
 
         .column50 {
             float: left;
             box-sizing: border-box;
             width: 50%;
-            padding: 10px;
+            padding: 3px;
         }
 
         .column40 {
             float: left;
             box-sizing: border-box;
             width: 40%;
-            padding: 10px;
+            padding: 3px;
         }
 
         .column60 {
             float: left;
             box-sizing: border-box;
             width: 60%;
-            padding: 10px;
+            padding: 3px;
         }
 
         .column80 {
             float: left;
             box-sizing: border-box;
             width: 80%;
-            padding: 10px;
+            padding: 3px;
         }
 
         .column20 {
             float: left;
             box-sizing: border-box;
             width: 20%;
-            padding: 10px;
+            padding: 3px;
         }
 
         table.legend_table {
@@ -127,38 +151,6 @@
             font-size: 28px;
         }
 
-        #node-popUp {
-            display: none;
-            position: absolute;
-            top: 350px;
-            left: 170px;
-            z-index: 299;
-            width: 300px;
-            height: 150px;
-            background-color: #f9f9f9;
-            border-style: solid;
-            border-width: 3px;
-            border-color: #5394ed;
-            padding: 10px;
-            text-align: center;
-        }
-
-        #edge-popUp {
-            display: none;
-            position: absolute;
-            top: 350px;
-            left: 170px;
-            z-index: 299;
-            width: 300px;
-            height: 120px;
-            background-color: #f9f9f9;
-            border-style: solid;
-            border-width: 3px;
-            border-color: #5394ed;
-            padding: 10px;
-            text-align: center;
-        }
-
         input.text {
             margin-bottom: 12px;
             width: 95%;
@@ -175,19 +167,23 @@
             margin: .6em 0;
         }
 
-        label {
-            display: block;
-            width: 40%;
-            height: 18px;
+        label.text-label {
+            line-height: 2;
+            vertical-align: middle;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            font-size: 0.8em;
             text-align: right;
-            padding: 1px;
         }
     </style>
 
     <script type="text/javascript">
-        const socket = io.connect();
-        var hosts = [];
-        var mainHost = '';
+        //            font-weight: bold;
+        //                        font: bold 12pt sans;
+        //            display: block;
+        //            height: 18px;
+        //            line-height: 18px;
+        //        const socket = io.connect();
         var systemLang = 'en';
         var systemConfig = {};
         var adapterConfig = {};
@@ -208,35 +204,6 @@
         var stdout = '';
 
         //--------------------------------------------------------- COMMONS -----------------------------------------------------------------------
-        /** 
-         * Read the settings for adapter
-         * @param {type} callback
-         */
-        function readInstanceConfig(callback) {
-            socket.emit('getObject', 'system.config', function (err, data) {
-                systemConfig = data;
-                if (!err && systemConfig && systemConfig.common) {
-                    systemLang = systemConfig.common.language;
-                } else {
-                    systemLang = window.navigator.userLanguage || window.navigator.language;
-
-                    if (systemLang !== 'en' && systemLang !== 'de' && systemLang !== 'ru') {
-                        systemConfig.common.language = 'en';
-                        systemLang = 'en';
-                    }
-                }
-
-                socket.emit('getObject', 'system.adapter.info.0', function (err, res) {
-                    if (!err && res && res.native) {
-                        adapterConfig = res.native;
-                    }
-                    if (typeof callback === 'function') {
-                        callback();
-                    }
-                });
-            });
-        }
-
         /** 
          * Translate word
          * @param {type} word
@@ -260,87 +227,43 @@
         // randomly create some nodes and edges
 
         var nodes = [{
-                id: "test.Aus",
                 machine: 'test',
-                name: 'Aus',
                 label: 'Aus',
                 connections: [
                     "test.Ein"
                 ]
             },
             {
-                id: "test.@",
                 label: '@=1m',
                 machine: 'test',
-                name: '@',
-                shape: 'box',
-                color: {
-                    background: 'yellow',
-                    hover: {
-                        //                        background: 'orange'
-                    },
-                    highlight: {
-                        //                        background: 'orange'
-                    }
-                },
                 connections: [
                     "test.Aus"
                 ]
             },
             {
-                id: "test.Ein",
                 machine: 'test',
-                name: 'Ein',
                 label: 'Ein',
                 connections: [
                     "test.Aus"
                 ]
             },
             {
-                id: "test",
                 machine: 'test',
-                name: '*',
-                shape: 'star',
-                size: 30,
-                font: {
-                    size: 30
-                },
-                color: {
-                    background: 'pink',
-                    hover: {
-                        background: 'pink'
-                    },
-                    highlight: {
-                        background: 'pink'
-                    }
-                },
+                label: 'test',
                 connections: [
-                    "test.@",
+                    "test.Aus",
                     "test.Ein",
-                    "test.Aus"
+                    "test.@"
                 ]
             },
             {
-                id: "rest.Aus",
                 machine: 'rest',
-                name: 'Aus',
                 label: 'Aus',
                 connections: []
             },
             {
-                id: "rest",
                 machine: 'rest',
-                name: '*',
-                shape: 'star',
-                size: 30,
-                font: {
-                    size: 30
-                },
-                label: ' ',
-                color: {
-                    background: 'pink',
-                    border: 'purple'
-                },
+                label: 'rest',
                 connections: [
                     "rest.Aus"
                 ]
@@ -352,6 +275,7 @@
         var data;
         var options = {
             physics: {
+                enabled: true,
                 stabilization: false,
                 barnesHut: {
                     gravitationalConstant: -20000,
@@ -436,11 +360,24 @@
                 enabled: true,
                 initiallyActive: true,
                 addNode: function (data, callback) {
-                    stDialogOpen(data, 'Create State', callback);
+                    stDialogOpen({
+                        machine: curMachine,
+                        label: curState
+                    }, 'Create State', function (res) {
+                        callback(res);
+                        if (!res) {
+                            network.disableEditMode();
+                            network.enableEditMode();
+                        } else {
+                            $tabStateName.val(curState = res.label);
+                            $tabMachineName.val(curMachine = res.machine);
+                        }
+                    });
                 },
                 editNode: stEditNode,
                 editEdge: stEditEdge,
                 deleteNode: stDeleteNode,
+                deleteEdge: stDeleteEdge,
                 addEdge: saveEdgeData
                 /* ,
                                editEdge: {
@@ -458,19 +395,36 @@
         var exportButton;
 
         function exportNetwork() {
+            network.storePositions();
             exportArea.value = "";
             //            var nodes = objectToArray(network.getPositions());
             var nodes = [];
-            data.nodes.forEach(function (elem) {
-                //                var conns = network.getConnectedNodes(elem.id, 'to');
+            data.nodes.forEach(function (el) {
+                var elem = cloneObject(el);
+                delete elem.color;
+                delete elem.font;
+                delete elem.size;
+                delete elem.name;
+                delete elem.shape;
+                var conns = network.getConnectedNodes(elem.id, 'to');
                 var edges = network.getConnectedEdges(elem.id);
                 var conns = [];
                 edges.forEach(function (eid) {
-                    var e = data.edges.get(eid);
-                    if (e.from == elem.id)
+                    var e = cloneObject(data.edges.get(eid));
+                    var f = e.from;
+                    delete e.from;
+                    delete e.machine;
+                    delete e.label;
+                    delete e.id;
+                    if (f == elem.id) {
+                        k = Object.keys(e);
+                        if (k.length == 1 && k[0] == 'to')
+                            e = e[k];
                         conns.push(e);
+                    }
                 });
                 elem.connections = conns;
+                delete elem.id;
                 nodes.push(elem);
             });
             exportArea.value = JSON.stringify(nodes, undefined, 2);;
@@ -522,18 +476,27 @@
             function getLabel(node) {
                 if (!node)
                     return 'N/A';
-                if (node.label && node.label != ' ')
+                if (node.label && node.label != ' ' && node.machine != node.label)
                     return node.label;
-                if (node.shape == 'star')
+                if (node.machine == node.label)
                     return '*';
                 return '!' + node.id;
             }
             const data = {},
                 ln = {},
-                edges = [];
-            for (let n of nodes)
-                ln[n.id] = n;
+                edges = [],
+                nn = [];
             for (let n of nodes) {
+                var node = cloneObject(n);
+                node.name = node.label.startsWith('@') ? node.label.match(/^(@.?)\=/)[1] : node.label == node.machine ?
+                    '*' : node.label;
+                node.id = node.machine;
+                if (node.machine != node.label)
+                    node.id += '.' + node.name;
+                ln[node.id] = node;
+            }
+            for (let k in ln) {
+                var n = ln[k];
                 if (n && n.connections)
                     for (let c of n.connections) {
                         if (typeof c === 'object') {
@@ -552,13 +515,23 @@
                             edges.push(edge);
                         }
                     }
-                if (n.shape == 'star' && n.machine) {
-                    n.label = n.machine;
+                if (n.machine == n.label) {
                     n.color = createColor('pink');
-                } else if (n.label.startsWith('@'))
+                    n.shape = 'star';
+                    n.name = '*';
+                    n.font = {
+                        size: 30
+                    };
+                    n.size = 30;
+                } else if (n.label.startsWith('@')) {
                     n.color = createColor('yellow');
+                    var m = n.label.match(/^(\@.?)\=/)[1];
+                    n.shape = 'box';
+                    n.name = "@" + m ? m : '';
+                }
+                nn.push(n);
             }
-            data.nodes = new vis.DataSet(nodes);
+            data.nodes = new vis.DataSet(nn);
             data.nodes.on('*', function (event, properties, senderId) {
                 addEvent({
                     prop: properties.items[0],
@@ -580,7 +553,7 @@
         function addEvent(obj, type) {
             if (events.length > 4)
                 events.pop();
-            events.unshift('<h2>' + type + ' event:</h2>' + JSON.stringify(obj, null, 4));
+            events.unshift('<h3>' + type + ' event:' + new Date().toISOString() + '</h3>' + JSON.stringify(obj, null, 4));
             var s = '';
             events.forEach(function (x) {
                 s += x;
@@ -619,9 +592,16 @@
             });
             clusterPositions = {};
             network.on("click", function (params) {
+                var m = {
+                    manipulation: {
+                        enabled: true
+                    }
+                };
                 if (params.nodes.length == 1 && params.nodes[0].startsWith('cluster:')) {
                     addEvent(getParams(params), "Select Cluster");
-                }
+                    m.manipulation.enabled = false;
+                } 
+                network.setOptions(m);
             });
             network.on("doubleClick", function (params) {
                 addEvent(getParams(params), "DoubleClick");
@@ -688,18 +668,49 @@
 
             network.on("selectEdge", function (params) {
                 //               if (params.nodes.length==0)
-                addEvent(getParams(params), "Select Edge");
+                params = getParams(params);
+                var edge = params[params.eid];
+                var isstar = edge.from == edge.machine;
+                network.setOptions({
+                    manipulation: {
+                        editEdge: isstar ? false : stEditEdge
+                    }
+                });
+                network.setOptions({
+                    manipulation: {
+                        deleteEdge: isstar ? false : stDeleteEdge
+                    }
+                });
+
+                addEvent(params, "Select Edge");
             });
             network.on("selectNode", function (params) {
                 //               if (params.nodes.length==0)
                 params = getParams(params);
                 if (params.nid) {
                     var node = params[params.nid];
-                    tabMachineName.val(node.machine).show();
-                    tabStateName.val(node.label).show();
+                    if (node) {
+                        curMachine = node.machine;
+                        $tabMachineName.val(curMachine).show();
+                        if (node.label != node.machine) {
+                            curState = node.label
+                            $tabStateName.val(curState).prop('disabled', false).show();
+                        } else $tabStateName.val(curState).prop('disabled', true).show();
+                    }
                 } else
-                    tabStateName.hide();
-
+                    $tabStateName.hide();
+                var isstar = params.nid == params[params.nid].machine;
+                var machs = getMachineStates(params[params.nid].machine);
+                network.setOptions({
+                    manipulation: {
+                        editNode: isstar ? false : stEditNode
+                    }
+                });
+                network.setOptions({
+                    manipulation: {
+                        deleteNode: isstar || machs.length <= 2 ? false : stDeleteNode
+                    }
+                });
                 addEvent(params, "Select Node");
             });
             exportArea.value = "";
@@ -729,9 +740,12 @@
             if (nid) {
                 params.nid = nid;
                 var node = data.nodes.get(nid);
-                if (node)
-                    params[nid] = node;
-                else if (network.isCluster(nid))
+                if (node) {
+                    var cn = cloneObject(node);
+                    delete cn.color;
+                    delete cn.font;
+                    params[nid] = cn;
+                } else if (network.isCluster(nid))
                     params[nid] = network.getNodesInCluster(nid);
             }
             if (typeof params.to === 'object')
@@ -790,6 +804,15 @@
         function stEditEdge(edge, callback) {
             if (typeof edge.from === 'object')
                 edge.from = edge.from.id
+            if (typeof edge.to === 'object')
+                edge.to = edge.to.id
+        }
+
+        function stDeleteEdge(edge, callback) {
+            if (typeof edge.from === 'object')
+                edge.from = edge.from.id
+            if (typeof edge.to === 'object')
+                edge.to = edge.to.id
         }
 
         function saveEdgeData(edge, callback) {
@@ -806,27 +829,20 @@
             var nf = data.nodes.get(edge.from);
             var nt = data.nodes.get(edge.to);
 
-            if (nf.machine != nt.machine) {
-                alert(`cannot connect states from different machines! "${nf.machine}" and "${nt.machine}"`);
-                return callback(null);
-            }
+            if (nf.machine != nt.machine)
+                return main.showError(
+                    `cannot connect states from different machines! "${nf.machine}" and "${nt.machine}"`, callback);
 
-            if (nf.name.startsWith('@') && network.getConnectedNodes(nf.id, 'to').length > 0) {
-                alert(`cannot connect more than ONE state to timer-states like "${nf.id}"!`);
-                return callback(null);
-            }
-            if (network.getConnectedNodes(nf.id, 'to').indexOf(nt.id) >= 0) {
-                alert(`cannot connect more than ONE time to the SAME state:"${nf.id}" > "${nt.id}"!`);
-                return callback(null);
-            }
+            if (nt.label == nt.machine || nf.label == nf.machine) // this are '*' states!
+                return main.showError(`cannot connect states to Machines ('Stars'/*)!`, callback);
 
-            if (nt.name == '*') {
-                alert(`cannot connect states to * ('Stars')!`);
-                return callback(null);
-            }
-            if (nf.name.startsWith('@')) {
-                nf.name;
-            }
+            if (nf.name.startsWith('@') && network.getConnectedNodes(nf.id, 'to').length > 0)
+                return main.showError(`cannot connect more than ONE state to timer-states like "${nf.id}"!`, callback);
+
+            if (network.getConnectedNodes(nf.id, 'to').indexOf(nt.id) >= 0)
+                return main.showError(`cannot connect more than ONE time to the SAME state:"${nf.id}" > "${nt.id}"!`,
+                    callback);
+
             edge.machine = nf.machine;
             edge.label = nf.name + '>' + nt.name;
             edge.id = edge.machine + ':' + edge.label;
@@ -844,37 +860,30 @@
             //            draw();
         }
 
-        function init() {
-            readInstanceConfig(function () {
-                options.locale = systemLang;
-                data = createData(nodes);
-                draw();
-            });
-
-            container = document.getElementById('mynetwork');
-            exportArea = document.getElementById('input_output');
-            importButton = document.getElementById('import_button');
-            exportButton = document.getElementById('export_button');
-        }
         var stDialog;
 
-        function stDeleteNode(data, callback) {
-            if (data.name == '*') {
-                alert("Cannot delete '*'- (Machine-) States,\nyou need to delete machine!");
-                return callback(null);
-            } else if (getMachineStates(data.machine).length <= 2) {
-                alert("Cannot delete last state from lachine,\nyou need to delete machhine!");
-                return callback(null);
-            }
-            stDialogOpen(data, 'Delete State', callback);
+
+        function stDeleteNode(params, callback) {
+            var node = data.nodes.get(params.nodes[0]);
+            if (!node)
+                return;
+            if (node.name == '*')
+                return main.showError("Cannot delete '*'- (Machine-) States,\nyou need to delete machine!", callback);
+            else if (getMachineStates(node.machine).length <= 2)
+                return main.showError("Cannot delete last state from lachine,\nyou need to delete machhine!", callback);
+
+            //            stDialogOpen(params, 'Delete State', callback);
+            main.confirmMessage(`Do you really want to delete ${node.label}`, 'Delete Nopde', 'help', function (ok) {
+                callback(ok ? params : null);
+            });
         }
 
-        function stEditNode(data, callback) {
-            if (data.name == '*') {
-                alert("Cannot edit '*'- (Machine-) States!");
-                return callback(null);
-            }
-            stDialogOpen(data, 'Edit State', callback);
+        function stEditNode(params, callback) {
+            if (params.name == '*')
+                return main.showError("Cannot edit '*'- (Machine-) States!", callback);
+            var n = cloneObject(params);
+            n.name = n.label;
+            stDialogOpen(n, 'Edit/Rename State', callback);
         }
 
         function stDialogOpen(item, action, callback) {
@@ -937,10 +946,8 @@
                     node.name = l;
                     node.id = node.machine + '.' + node.name;
                 }
-                if (data.nodes.get(node.id)) {
-                    alert(`A state with this name exist already and cannot be added multiple times!`);
-                    return false;
-                }
+                if (data.nodes.get(node.id))
+                    return main.showError(`A state with this name exist already and cannot be added multiple times!`);
                 stDialog._$tips.text("All form fields are required");
                 stDialog.find('.state-dialog-field').removeClass("ui-state-error");
                 stDialog._$item.name = l;
@@ -955,15 +962,484 @@
             }
             return ok;
         }
-        var tabMachineName, tabStateName, tabPhysics;
+
+        var dialogMessage, $dialogConfirm, firstConnect = true,
+            that = this;
+
+        var main = {
+            objects: {},
+            states: {},
+            mstate: {},
+            sstate: {},
+            currentId: null,
+            currentHost: '',
+            hosts: [],
+            instances: [],
+            that: this,
+            changed: false,
+            objectsLoaded: false,
+            waitForRestart: false,
+            selectId: null,
+            connectCb: null,
+            socket: io.connect(),
+
+            //            socket: io.connect(location.protocol + '//' + location.host, {
+            //                query: 'ws=true'
+            //            }),
+            saveConfig: function (attr, value) {
+                if (!main.config) return;
+                if (attr) main.config[attr] = value;
+
+                if (typeof storage !== 'undefined') {
+                    storage.set('adminConfig', JSON.stringify(main.config));
+                }
+            },
+            showError: function (error, cb) {
+                main.showMessage(_(error), _('Error'), 'alert', cb);
+            },
+            showMessage: function (message, title, icon, cb) {
+                if (typeof title === 'function') {
+                    cb = title;
+                    title = null;
+                    icon = null;
+                }
+                if (typeof icon === 'function') {
+                    cb = icon;
+                    icon = null;
+                }
+                $dialogMessage.dialog('option', 'title', title || _('Message'));
+                $('#dialog-message-text').html(message);
+
+                if (icon) {
+                    if (!icon.match(/^ui\-icon\-/)) icon = 'ui-icon-' + icon;
+
+                    $('#dialog-message-icon').show();
+                    $('#dialog-message-icon').attr('class', '');
+                    $('#dialog-message-icon').addClass('ui-icon ' + icon);
+                } else {
+                    $('#dialog-message-icon').hide();
+                }
+                $dialogMessage.data('callback', cb);
+                $dialogMessage.dialog('open');
+            },
+            confirmMessage: function (message, title, icon, buttons, callback) {
+                if (typeof buttons === 'function') {
+                    callback = buttons;
+                    $dialogConfirm.dialog('option', 'buttons', [{
+                            text: _('Ok'),
+                            click: function () {
+                                var cb = $(this).data('callback');
+                                $(this).dialog('close');
+                                if (cb) cb(true);
+                            }
+                        },
+                        {
+                            text: _('Cancel'),
+                            click: function () {
+                                var cb = $(this).data('callback');
+                                $(this).dialog('close');
+                                if (cb) cb(false);
+                            }
+                        }
+
+                    ]);
+                } else if (typeof buttons === 'object') {
+                    for (var b = 0; b < buttons.length; b++) {
+                        buttons[b] = {
+                            text: buttons[b],
+                            id: 'dialog-confirm-button-' + b,
+                            click: function (e) {
+                                var id = parseInt(e.currentTarget.id.substring('dialog-confirm-button-'
+                                    .length), 10);
+                                var cb = $(this).data('callback');
+                                $(this).dialog('close');
+                                if (cb) cb(id);
+                            }
+                        }
+                    }
+                    $dialogConfirm.dialog('option', 'buttons', buttons);
+                }
+
+                $dialogConfirm.dialog('option', 'title', title || _('Message'));
+                $('#dialog-confirm-text').html(message);
+                if (icon) {
+                    $('#dialog-confirm-icon').show();
+                    $('#dialog-confirm-icon').attr('class', '');
+                    $('#dialog-confirm-icon').addClass('ui-icon ui-icon-' + icon);
+                } else {
+                    $('#dialog-confirm-icon').hide();
+                }
+                $dialogConfirm.data('callback', callback);
+                $dialogConfirm.dialog('open');
+            },
+            initSelectId: function () {
+                if (main.selectId) return main.selectId;
+                main.selectId = $('#dialog-select-member').selectId('init', {
+                    objects: main.objects,
+                    states: main.states,
+                    noMultiselect: true,
+                    imgPath: '../../lib/css/fancytree/',
+                    filter: {
+                        type: 'state'
+                    },
+                    texts: {
+                        select: _('Select'),
+                        cancel: _('Cancel'),
+                        all: _('All'),
+                        id: _('ID'),
+                        name: _('Name'),
+                        role: _('Role'),
+                        room: _('Room'),
+                        value: _('Value'),
+                        selectid: _('Select ID'),
+                        from: _('From'),
+                        lc: _('Last changed'),
+                        ts: _('Time stamp'),
+                        wait: _('Processing...'),
+                        ack: _('Acknowledged')
+                    },
+                    columns: ['image', 'name', 'role', 'room', 'value']
+                });
+                return main.selectId;
+            },
+            addSState: function addSState(obj, id) {
+                if (obj.type === 'state') {
+                    var n = obj.common.name;
+                    if (!main.mstate[n]) {
+                        if (main.sstate[n]) {
+                            main.mstate[n] = [id];
+                            delete main.sstate[n];
+                        } else
+                            main.sstate[n] = id;
+                    } else main.mstate[n].push(id);
+                }
+
+            },
+            objectChange: function (id, obj) {
+                if (obj) {
+                    if (obj._rev && main.objects[id]) main.objects[id]._rev = obj._rev;
+                    if (!main.objects[id] || JSON.stringify(main.objects[id]) != JSON.stringify(obj)) {
+                        main.objects[id] = obj;
+                    }
+                } else if (main.objects[id]) {
+                    var oldObj = {
+                        _id: id,
+                        type: main.objects[id].type
+                    };
+                    delete main.objects[id];
+                    if (oldObj.type === 'instance') {
+                        var pos = main.instances.indexOf(id);
+                        if (pos !== -1) main.instances.splice(pos, 1);
+                    } else if (oldObj.type === 'script') {
+                        var pos = main.instances.indexOf(id);
+                        if (pos !== -1) main.instances.splice(pos, 1);
+                    } else if (id.match(/^script\.js\./) && oldObj.type === 'channel') {
+                        var pos = main.instances.indexOf(id);
+                        if (pos !== -1) main.instances.splice(pos, 1);
+                    }
+                }
+
+                if (main.selectId) main.selectId.selectId('object', id, obj);
+
+                if (id.match(/^system\.adapter\.[-\w]+\.[0-9]+$/)) { /// TODO
+                    // Disable statemachine tab if no one script engine instance found
+                    var engines = main.fillEngines();
+                    $('#tabs').tabs('option', 'disabled', (engines && engines.length) ? [] : [4]);
+                }
+
+                addEvent(obj, `Object Change of ${id}`);
+            },
+            stateChange: function (id, state) {
+                var s = {
+                    ostate: main.states[id] || {},
+                    nstate: cloneObject(state),
+                };
+                for (var k of Object.keys(state))
+                    if (s.ostate[k] == s.nstate[k])
+                        delete s.nstate[k];
+                state.lc = s.nstate.lc = s.ostate.ts;
+                if (!id.match(/^system\./)) {
+                    addEvent(s, `State change of ${id}`);
+                    /// TODO: check machine states to display them!
+                }
+                //id = id ? id.replace(/[\s'"]/g, '_') : ''; /// TODO - do not know what it does!
+                //if (!id || !id.match(/\.messagebox$/)) {
+                //    if (main.selectId) main.selectId.selectId('state', id, state);
+                //}
+                main.states[id] = state;
+            },
+            getStates: function (callback) {
+                main.socket.emit('getStates', function (err, res) {
+                    main.states = res;
+                    if (typeof callback === 'function')
+                        setTimeout(callback, 0);
+                });
+            },
+            getObjects: function (callback) {
+                main.socket.emit('getAllObjects', function (err, res) {
+                    setTimeout(function () {
+                        var obj;
+                        main.objects = res;
+                        for (var id in main.objects) {
+                            if (id.slice(0, 7) === '_design') continue;
+
+                            obj = res[id];
+                            main.addSState(obj, id);
+                            if (obj.type === 'instance') main.instances.push(id);
+                            //                        if (obj.type === 'channel' && id.match(/^script\.js\./)) main.groups.push(id);
+                            if (obj.type === 'host') main.hosts.push(id);
+                        }
+                        main.objectsLoaded = true;
+
+                        //                    main.prepare();
+                        //                    main.init();
+
+                        if (typeof callback === 'function') callback();
+                    }, 0);
+                });
+            },
+            /** 
+             * Read the settings for adapter
+             * @param {type} callback
+             */
+            readInstanceConfig: function (callback) {
+                systemConfig = main.objects['system.config'];
+                addEvent(systemConfig, "System Config");
+                if (systemConfig && systemConfig.common) {
+                    systemLang = systemConfig.common.language;
+                } else {
+                    systemLang = window.navigator.userLanguage || window.navigator.language;
+
+                    if (systemLang !== 'en' && systemLang !== 'de' && systemLang !== 'ru') {
+                        systemConfig.common.language = 'en';
+                        systemLang = 'en';
+                    }
+                }
+                adapterConfig = main.objects['system.adapter.statemachine.0'];
+                if (adapterConfig && adapterConfig.native)
+                    adapterConfig = adapterConfig.native;
+                else
+                    adapterConfig = null;
+                addEvent({
+                    adapterConfig: adapterConfig,
+                    language: systemLang,
+                    states: Object.keys(main.states).length,
+                    objects: Object.keys(main.objects).length,
+                    hosts: Object.keys(main.hosts).length,
+                }, "Adapter Config")
+                if (typeof callback === 'function') {
+                    callback();
+                }
+            },
+            init: function (callb) {
+                if (callb)
+                    main.connectCb = callb;
+                main.socket.on('permissionError', function (err) {
+                    main.showMessage(_('Has no permission to %s %s %s', err.operation, err.type, (err.id ||
+                        '')));
+                });
+                main.socket.on('objectChange', function (id, obj) {
+                    setTimeout(main.objectChange, 0, id, obj);
+                });
+                main.socket.on('onUpdate', function (id, obj) {
+                    setTimeout(main.stateChange, 0, id, obj);
+                });
+                main.socket.on('stateChange', function (id, obj) {
+                    setTimeout(main.stateChange, 0, id, obj);
+                });
+                main.socket.on('connect', function () {
+                    $('#connecting').hide();
+                    if (firstConnect) {
+                        firstConnect = false;
+
+                        main.socket.emit('getUserPermissions', function (err, acl) {
+                            main.acl = acl;
+                            // Read system configuration
+                            main.socket.emit('getObject', 'system.config', function (err, data) {
+                                main.systemConfig = data;
+                                if (!err && main.systemConfig && main.systemConfig.common) {
+                                    systemLang = main.systemConfig.common.language;
+                                } else {
+                                    systemLang = window.navigator.userLanguage ||
+                                        window.navigator.language;
+
+                                    if (systemLang !== 'en' && systemLang !== 'de' &&
+                                        systemLang !==
+                                        'ru') {
+                                        main.systemConfig.common.language = 'en';
+                                        systemLang = 'en';
+                                    }
+                                }
+
+                                translateAll();
+
+                                $dialogMessage.dialog({
+                                    autoOpen: false,
+                                    modal: true,
+                                    width: "30%",
+                                    maxWidth: "500px",
+                                    buttons: [{
+                                        text: _('Ok'),
+                                        click: function () {
+                                            $(this).dialog('close');
+                                            var cb = $(this).data(
+                                                'callback');
+                                            if (typeof cb ===
+                                                'function') {
+                                                $(this).data(
+                                                    'callback',
+                                                    null);
+                                                cb();
+                                            }
+                                        }
+                                    }]
+                                });
+
+                                $dialogConfirm.dialog({
+                                    autoOpen: false,
+                                    modal: true,
+                                    width: "30%",
+                                    maxWidth: "500px",
+                                    //                                    width: 400,
+                                    height: 200,
+                                    buttons: [{
+                                            text: _('Ok'),
+                                            click: function () {
+                                                var cb = $(this).data(
+                                                    'callback');
+                                                $(this).dialog('close');
+                                                if (cb) cb(true);
+                                            }
+                                        },
+                                        {
+                                            text: _('Cancel'),
+                                            click: function () {
+                                                var cb = $(this).data(
+                                                    'callback');
+                                                $(this).dialog('close');
+                                                if (cb) cb(false);
+                                            }
+                                        }
+
+                                    ]
+                                });
+
+                                main.getStates(function () {
+                                    main.getObjects(function () {
+                                        main.readInstanceConfig(
+                                            function () {
+                                                if (main.connectCb)
+                                                    main.connectCb();
+                                            })
+                                    })
+                                });
+                            });
+                        });
+                    }
+                    if (main.waitForRestart) {
+                        location.reload();
+                    }
+                });
+                main.socket.on('disconnect', function () {
+                    $('#connecting').show();
+                });
+                main.socket.on('reconnect', function () {
+                    $('#connecting').hide();
+                    if (main.waitForRestart) {
+                        location.reload();
+                    }
+                });
+                main.socket.on('reauthenticate', function () {
+                    location.reload();
+                });
+                main.socket.on('log', function (message) {
+                    setTimeout(main.onLog, 0, message);
+                });
+
+            }
+        };
+
+        main.init(function () {
+            options.locale = systemLang;
+            data = createData(nodes);
+            draw();
+        });
+
+        window.onbeforeunload = function (evt) {
+            if (main.changed) {
+                if (window.confirm(_('Script changes are not saved. Discard?'))) {
+                    return null;
+                } else {
+                    return _('Configuration not saved.');
+                }
+            }
+            return null;
+        };
+
+        var $tabMachineName, $tabStateName, curMachine, curState, curEdge, curVar, curEvent;
         $(function () {
-            //            alert('Selection length:' + $("#node-popUp").length + ', ' + $("#nodepopUp").length+ ', ' + $("#nodePopUp").length)
-            tabMachineName = $('#tab-machine-name').prop('disabled', true);
-            tabStateName = $('#tab-state-name');
-            tabPhysics = $('#st-physics').checkboxradio();
-//            $(".st-control").controlgroup({
-//                "direction": "vertical"
-//            });
+            container = document.getElementById('mynetwork');
+            exportArea = document.getElementById('input_output');
+            importButton = document.getElementById('import_button');
+            exportButton = document.getElementById('export_button');
+            $dialogMessage = $('#dialog-message');
+            $dialogConfirm = $('#dialog-confirm');
+
+            $('#dialog-edit-insert-id').button({
+                icons: {
+                    primary: 'ui-icon-note'
+                }
+            }).css('height', '30px').click(function () {
+                var ids = [];
+                //                $(":focus").each(function () {
+                //                    ids.push($(this).attr("id") + " has focus!");
+                //                });
+                addEvent(ids, " Focus");
+                var sid = main.initSelectId();
+                sid.selectId('show', function (newId) {
+                    main.showMessage(newId);
+                    //                    that.editorDialog.insert('"' + newId + '"' + ((that.main.objects[newId] && that.main.objects[newId].common && that.main.objects[newId].common.name) ? ('/*' + that.main.objects[newId].common.name + '*/') : ''));
+                    //                    that.editorDialog.focus();
+                });
+            });
+
+            // Read all positions, selected widgets for every view,
+            // Selected view, selected menu page,
+            // Selected widget or view page
+            // Selected filter
+            if (typeof storage !== 'undefined') {
+                try {
+                    main.config = storage.get('adminConfig');
+                    if (main.config) {
+                        main.config = JSON.parse(main.config);
+                    } else {
+                        main.config = {};
+                    }
+                } catch (e) {
+                    console.log('Cannot load edit config');
+                    main.config = {};
+                }
+            } //            alert('Selection length:' + $("#node-popUp").length + ', ' + $("#nodepopUp").length+ ', ' + $("#nodePopUp").length)
+            $tabMachineName = $('#tab-machine-name').prop('disabled', true).change(function () {
+                curMachine = $(this).val();
+            });
+            $tabStateName = $('#tab-state-name').prop('disabled', true).change(function () {
+                curState = $(this).val();
+            });
+            $('#tab-physics').prop('checked', options.physics.enabled).change(function () {
+                options.physics.enabled = this.checked;
+                network.setOptions({
+                    physics: {
+                        enabled: options.physics.enabled
+                    }
+                });
+                if (this.checked)
+                    network.startSimulation();
+                else network.stopSimulation();
+            });
+            //                        $(".st-control").controlgroup({
+            //                            "direction": "vertical"
+            //                        });
             stDialog = $("#state-dialog-form").dialog({
                 autoOpen: false,
                 //                dialogClass: "no-close",
@@ -1010,13 +1486,14 @@
             });
             $('#endcreate').click(function (event) {
                 network.disableEditMode();
+                network.enableEditMode();
             });
             $('#create-state').click(function (event) {
                 network.addNodeMode();
             });
             $('#createStateButton').click(function (event) {
                 stDialogOpen({
-                    machine: tabMachineName.val(),
+                    machine: $tabMachineName.val(),
                     name: 'newName'
                 }, "Create State", null);
             });
@@ -1027,7 +1504,7 @@
                     configure: options.configure
                 });
             });
-            init();
+            //            init();
         });
     </script>
 </head>
@@ -1038,13 +1515,11 @@
 
         <div class="page-title">
             <div class="column50">
-                <!--a href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css">../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css</a>
+                <a href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css">../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css</a>
                 <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.structure.min.css" />
-                    <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.theme.min.css" />
-                <a href="lib/css/vis.min.css">lib/css/vis.min.css</a-->
-                <h1>StateMachine Adapter</h1>
-                <button id="changeOptions" class="myButtons">Show Options</button>
-
+                <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.theme.min.css" />
+                <a href="lib/css/vis.min.css">lib/css/vis.min.css</a>
+                <h1>StateMachine Adapter Config</h1>
             </div>
             <div class="column25">
                 <h3>import/export</h3>
@@ -1061,6 +1536,7 @@
             </div>
 
             <div class="column25 st-control">
+                <button id="changeOptions" class="myButtons">Show Options</button>
                 <button id="importButton" class="myButtons">import</button>
                 <button id="exportButton" class="myButtons">export</button>
                 <button id="destroyButton" class="myButtons">destroy</button>
@@ -1070,23 +1546,45 @@
                 <div class="clearfix"></div>
                 <button id="endcreate" class="myButtons">EndCreate</button>
                 <div class="clearfix"></div>
-                <label class="column25" for="machineName">Machine Name</label>
-                <input class="column75" type="text" name="machineName" id="tab-machine-name" value="newMachine" class="text ui-widget-content ui-corner-all">
+                <label class="column25 text-label" for="machineName">Machine Name</label>
+                <span class="column50">
+                    <input type="text" name="machineName" id="tab-machine-name" value="newMachine" class="text ui-widget-content ui-corner-all">
+                </span>
                 <div class="clearfix"></div>
-                <label class="column25" for="stateName">State Name</label>
-                <input class="column75" type="text" name="stateName" id="tab-state-name" value="newState" class="text ui-widget-content ui-corner-all">
+                <label class="column25 text-label" for="stateName">State Name</label>
+                <span class="column50">
+                    <input type="text" name="stateName" id="tab-state-name" value="newState" class="text ui-widget-content ui-corner-all">
+                </span>
                 <div class="clearfix"></div>
-                <label for="physics">Insurance</label>
-                <input type="checkbox" name="physics" id="st-physics">
+                <label class="column25 text-label" for="stphysics">Physics enabled</label>
+                <span class="column50">
+                    <input type="checkbox" name="stphysics" id="tab-physics">
+                </span>
+                <div class="clearfix"></div>
+                <button id="dialog-edit-insert-id" class="translate">Insert ID</button>
                 <br>
                 <textarea cols="40" rows="50" id=input_output></textarea>
             </div>
             <div class="column25">
-                <pre id="eventSpan"></pre>
+                <pre id="eventSpan" style="font-size: 0.8em"></pre>
             </div>
             <div class="clearfix"></div>
-            <div class="tile-stats">
-            </div>
+
+        </div>
+        <div class="tile-stats">
+        </div>
+        <div id="dialog-select-member" style="display:none"></div>
+        <div id="dialog-message" title="Message" style="display: none">
+            <p>
+                <span id="dialog-message-icon" class="ui-icon ui-icon-circle-check" style="float: left; margin: 0 7px 50px 0;"></span>
+                <span id="dialog-message-text"></span>
+            </p>
+        </div>
+        <div id="dialog-confirm" title="Question" style="display: none">
+            <p>
+                <span id="dialog-confirm-icon" class="ui-icon ui-icon-circle-check" style="float: left; margin: 0 7px 50px 0;"></span>
+                <span id="dialog-confirm-text" width="500px"></span>
+            </p>
         </div>
         <div id="state-dialog-form" title="...State">
             <p class="validateTips">All form fields are required.</p>
