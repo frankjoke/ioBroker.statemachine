@@ -65,9 +65,8 @@ adapter.on('ready', function () {
 });
 */
 function main() {
-    var time = 0;
     function tick() {
-        A.makeState('timer',++time,true);
+        A.makeState('timer',''+new Date(),true);
     }
-    A.makeState("timer",time,false).then(()=> setInterval(tick,60000));
+    A.makeState("timer",''+new Date(),false).then(()=> setInterval(tick,60000));
 }

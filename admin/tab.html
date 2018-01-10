@@ -3,8 +3,11 @@
 
 <head>
     <meta charset='utf-8' />
+    <!--link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"-->
+    <link href="lib/fonts/micons/material-design-icons.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/default/jquery-ui.min.css" />
     <link rel="stylesheet" type="text/css" href="../../lib/css/fancytree/ui.fancytree.min.css" />
+    <link rel="stylesheet" type="text/css" href="lib/css/materialize.css">
     <!--link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css" /-->
     <!--link rel="stylesheet" type="text/css" href="lib/css/jquery-ui.min.css" />
     <!--link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.structure.min.css" />
@@ -21,14 +24,19 @@
     <script type="text/javascript" src="lib/js/vis.min.js"></script>
 
     <script type="text/javascript" src="../../lib/js/translate.js"></script>
+    <script type="text/javascript" src="lib/js/materialize.js"></script>
     <script type="text/javascript" src="../../lib/js/selectID.js"></script>
     <script type="text/javascript" src="../../lib/js/loStorage.js"></script>
 
     <script type="text/javascript" src="lib/js/words.js"></script>
 
     <style type="text/css">
-        body,
-        select {
+        xxhtml {
+            font-family: Arial, sans-serif;
+        }
+
+        xxbody,
+        xxselect {
             font: 12pt sans;
         }
 
@@ -46,91 +54,20 @@
             height: 600px;
         }
 
-        p {
+        xxp {
             font-size: 16px;
             max-width: 700px;
         }
 
-        .clearfix::after {
-            visibility: hidden;
-            font-size: 0;
-            content: " ";
-            clear: both;
-            height: 0;
-            display: table;
-        }
 
-        .column15 {
-            float: left;
-            box-sizing: border-box;
-            width: 15%;
-            padding: 3px;
-        }
-
-        .column25 {
-            float: left;
-            box-sizing: border-box;
-            width: 25%;
-            padding: 3px;
-        }
-
-        .column33 {
-            float: left;
-            box-sizing: border-box;
-            width: 33%;
-            padding: 3px;
-        }
-
-        .column45 {
-            float: left;
-            box-sizing: border-box;
-            width: 45%;
-            padding: 3px;
-        }
-
-        .column50 {
-            float: left;
-            box-sizing: border-box;
-            width: 50%;
-            padding: 3px;
-        }
-
-        .column40 {
-            float: left;
-            box-sizing: border-box;
-            width: 40%;
-            padding: 3px;
-        }
-
-        .column60 {
-            float: left;
-            box-sizing: border-box;
-            width: 60%;
-            padding: 3px;
-        }
-
-        .column80 {
-            float: left;
-            box-sizing: border-box;
-            width: 80%;
-            padding: 3px;
-        }
-
-        .column20 {
-            float: left;
-            box-sizing: border-box;
-            width: 20%;
-            padding: 3px;
-        }
-
-        table.legend_table {
+        xxtable.legend_table {
             font-size: 11px;
             border-width: 1px;
             border-color: #d3d3d3;
             border-style: solid;
         }
 
-        table.legend_table,
+        xxtable.legend_table,
         td {
             border-width: 2px;
             border-color: #d3d3d3;
@@ -138,42 +75,61 @@
             padding: 2px;
         }
 
-        div.table_content {
+        xxdiv.table_content {
             width: 80px;
             text-align: center;
         }
 
-        div.table_description {
+        xxdiv.table_description {
             width: 100px;
         }
 
-        #operation {
+        xx#operation {
             font-size: 28px;
         }
 
-        input.text {
+        xxinput.text {
             margin-bottom: 12px;
             width: 95%;
             padding: .4em;
         }
 
-        fieldset {
+        xxfieldset {
             padding: 0;
             border: 0;
             margin-top: 25px;
         }
 
-        h1 {
+        xxh1 {
             margin: .6em 0;
         }
 
-        label.text-label {
+        xxlabel.text-label {
             line-height: 2;
             vertical-align: middle;
             font-family: Arial, sans-serif;
             font-weight: bold;
             font-size: 0.8em;
             text-align: right;
+        }
+
+        button[disabled="disabled"] {
+            pointer-events: none;
+        }
+
+        a[disabled="disabled"] {
+            pointer-events: none;
+        }
+
+        .btn-small {
+            height: 24px;
+            line-height: 24px;
+            padding: 0 0.1rem;
+            font-size: 0.7rem;
+        }
+
+        .w100 {
+            width: 100%;
         }
     </style>
 
@@ -357,46 +313,17 @@
                 randomSeed: 2
             }, // just to make sure the layout is the same when the locale is changed
             manipulation: {
-                enabled: true,
-                initiallyActive: true,
-                addNode: function (data, callback) {
-                    stDialogOpen({
-                        machine: curMachine,
-                        label: curState
-                    }, 'Create State', function (res) {
-                        callback(res);
-                        if (!res) {
-                            network.disableEditMode();
-                            network.enableEditMode();
-                        } else {
-                            $tabStateName.val(curState = res.label);
-                            $tabMachineName.val(curMachine = res.machine);
-                        }
-                    });
-                },
-                editNode: stEditNode,
-                editEdge: stEditEdge,
-                deleteNode: stDeleteNode,
-                deleteEdge: stDeleteEdge,
-                addEdge: saveEdgeData
-                /* ,
-                               editEdge: {
-                                   editWithoutDrag: function (data, callback) {
-                                       document.getElementById('edge-operation').innerHTML = "Edit Edge";
-                                       editEdgeWithoutDrag(data, callback);
-                                   }
-                               } */
+                enabled: false,
+                initiallyActive: false,
+                //                deleteNode: stDeleteNode,
+                //                addEdge: saveEdgeData
             }
         };
-        var network;
-        var container;
-        var exportArea;
-        var importButton;
-        var exportButton;
+        var network, container, $exportArea, importButton, exportButton, selection;
 
         function exportNetwork() {
             network.storePositions();
-            exportArea.value = "";
+            setExport("");
             //            var nodes = objectToArray(network.getPositions());
             var nodes = [];
             data.nodes.forEach(function (el) {
@@ -427,22 +354,21 @@
                 delete elem.id;
                 nodes.push(elem);
             });
-            exportArea.value = JSON.stringify(nodes, undefined, 2);;
-            resizeExportArea();
+            setExport(JSON.stringify(nodes, undefined, 2));
+        }
+
+        function setExport(text) {
+            $exportArea.val(text);
+            $exportArea.trigger('autoresize');;
         }
 
         function importNetwork() {
-            var inputData = JSON.parse(exportArea.value);
+            var inputData = JSON.parse($exportArea.val());
             if (Array.isArray(inputData) && inputData.length > 0) {}
             data = createData(inputData);
             draw({
                 manipulation: options.manipulation
             });
-        }
-
-        function resizeExportArea() {
-            //            exportArea.style.height = (1 + exportArea.scrollHeight) + "px";
-            exportArea.style.height = exportArea.scrollHeight + "px";
         }
 
         function destroy() {
@@ -469,6 +395,33 @@
                 }
             };
             return node.color;
+        }
+
+        function decorateNode(n) {
+            var l = n.label.trim();
+            n.machine = n.machine.trim();
+            if (n.machine == l) {
+                n.color = createColor('pink');
+                n.shape = 'star';
+                n.name = '*';
+                n.font = {
+                    size: 30
+                };
+                n.size = 30;
+                n.id = l;
+            } else if (l.startsWith('@')) {
+                n.color = createColor('yellow');
+                //                    var m = n.label.match(/^(\@.?)\=/)[1];
+                var m = l.match(/^@(.?)\s*=\s*(.+)$/);
+                n.shape = 'box';
+                n.name = "@" + m[1] ? m[1] : '';
+                n.timer = m[2];
+            } else {
+                n.name = n.label;
+            }
+            if (!n.id)
+                n.id = n.machine + (n.machine == l ? '' : '.' + n.name);
+
         }
 
         function createData(nodes) {
@@ -515,20 +468,7 @@
                             edges.push(edge);
                         }
                     }
-                if (n.machine == n.label) {
-                    n.color = createColor('pink');
-                    n.shape = 'star';
-                    n.name = '*';
-                    n.font = {
-                        size: 30
-                    };
-                    n.size = 30;
-                } else if (n.label.startsWith('@')) {
-                    n.color = createColor('yellow');
-                    var m = n.label.match(/^(\@.?)\=/)[1];
-                    n.shape = 'box';
-                    n.name = "@" + m ? m : '';
-                }
+                decorateNode(n);
                 nn.push(n);
             }
             data.nodes = new vis.DataSet(nn);
@@ -553,7 +493,7 @@
         function addEvent(obj, type) {
             if (events.length > 4)
                 events.pop();
-            events.unshift('<h3>' + type + ' event:' + new Date().toISOString() + '</h3>' + JSON.stringify(obj, null, 4));
+            events.unshift('<h6>' + type + ' event:' + new Date().toISOString() + '</h6>' + JSON.stringify(obj, null, 4));
             var s = '';
             events.forEach(function (x) {
                 s += x;
@@ -571,14 +511,12 @@
                 var div = container.getElementsByClassName('vis-configuration-wrapper')[0];
                 div.style["height"] = div.getBoundingClientRect().height + "px";
             });
-            //            network.on("selectNode", function (params) {
-            //                changeOnSelect(params, "Node");
+
+            //            network.on('zoom', function (params) {
+            //                addEvent({
+            //                    scale: params.scale
+            //                }, 'Zoom ' + params.direction);
             //            });
-            network.on('zoom', function (params) {
-                addEvent({
-                    scale: params.scale
-                }, 'Zoom ' + params.direction);
-            });
 
             network.once('stabilized', function () {
                 network.setOptions({
@@ -591,130 +529,124 @@
                 network.stabilize();
             });
             clusterPositions = {};
-            network.on("click", function (params) {
-                var m = {
-                    manipulation: {
-                        enabled: true
-                    }
-                };
-                if (params.nodes.length == 1 && params.nodes[0].startsWith('cluster:')) {
-                    addEvent(getParams(params), "Select Cluster");
-                    m.manipulation.enabled = false;
-                } 
-                network.setOptions(m);
+            network.on("select", function (params) {
+                params = getParams(params);
+                if (params.edge) {
+                    var edge = params.edge;
+                    params.isstar = edge.from == edge.machine;
+                    selection = edge;
+                    prepareMenu();
+                    addEvent(params, "Select Edge");
+                } else if (params.cluster) {
+                    params.machine = params.id.split(':')[1];
+                    params.label = params.machine;
+                    selection = params;
+                    prepareMenu();
+                    addEvent(params, "Select Cluster");
+                } else if (params.node) {
+                    var node = params.node;
+                    selection = node;
+                    params.isstar = node.label == node.machine;
+                    prepareMenu();
+                    addEvent(params, params.isstar ? 'Select Machine' : 'Select State');
+
+                } // cannot get there....
             });
-            network.on("doubleClick", function (params) {
-                addEvent(getParams(params), "DoubleClick");
-                if (params.nodes.length == 1) {
-                    var nid = params.nodes[0];
-                    if (network.isCluster(nid)) {
-                        network.openCluster(nid, {
-                            releaseFunction: function (clusterPosition, containedNodesPositions) {
-                                var newPositions = {};
-                                // clusterPosition = {x:clusterX, y:clusterY};
-                                // containedNodesPositions = {nodeId:{x:nodeX,y:nodeY}, nodeId2....}
-                                for (nodeId in containedNodesPositions)
-                                    newPositions[nodeId] = {
-                                        x: containedNodesPositions[nodeId].x,
-                                        y: containedNodesPositions[nodeId].y
-                                    };
-                                return newPositions;
-                            }
-                        });
-                        var m = nid.split(':')[1];
-                        data.edges.forEach(function (edge) {
-                            data.edges.update(edge);
-                        }, {
-                            filter: function (item) {
-                                return item.machine == m;
-                            }
-                        });
-                        return;
+            setExport("");
+        }
+
+        function prepareMenu() {
+            if (selection) {
+                Materialize.Toast.removeAll();
+                if (selection.id.split(':').length > 1) { // this is an edge! or an cluster
+                    if (selection.id.startsWith('cluster:')) { // cluster selected
+                        fromNode = null;
+                        $tabMachineName.val(curMachine = selection.machine).prop('disabled', true);
+                        $tabStateName.val(curState = '').prop('disabled', true);
+                        $tabEdgeName.val(curEdge = '').prop('disabled', true);
+                        enableDisableChange('#clusterButton', 'Open Machine', 'expand_less');
+                        enableDisable(['#deleteButton', '#renameButton', '#createStateButton', '#createLinkButton'],
+                            false);
+                    } else { // edge selected
+                        fromNode = null;
+                        $tabMachineName.val(curMachine = selection.machine).prop('disabled', true);
+                        $tabStateName.val(curState = '').prop('disabled', true);
+                        $tabEdgeName.val(curEdge = selection.id).prop('disabled', true);
+                        enableDisableChange('#deleteButton', selection.id.indexOf('*') + 1 ? null : 'Delete Link');
+                        enableDisable(['#renameButton', '#createLinkButton'], false);
+                        enableDisableChange('#createStateButton', 'Create State');
+                        enableDisableChange('#clusterButton', 'Cluster Machine', 'expand_more');
                     }
-                    var machine = data.nodes.get(nid);
-                    if (!machine) return;
-                    machine = machine.machine;
-                    //                  mass = 0;
-                    clusterOptionsByData = {
-                        joinCondition: function (childOptions) {
-                            return childOptions.machine == machine;
-                        },
-                        /*                        
-                                                processProperties: function (clusterOptions, childNodes, childEdges) {
-                                                    var totalMass = 0;
-                                                    for (var i = 0; i < childNodes.length; i++) {
-                                                        totalMass += childNodes[i].mass;
-                                                    }
-                                                    clusterOptions.mass = totalMass;
-                                                    return clusterOptions;
-                                                },
-                        */
-                        clusterNodeProperties: {
-                            id: 'cluster:' + machine,
-                            borderWidth: 3,
-                            shape: 'database',
-                            color: 'lightgreen',
-                            label: machine,
-                            //                            mass: 1,
-                            font: {
-                                size: 30
-                            }
+                } else { // node selectedThis is 
+                    $tabMachineName.val(curMachine = selection.machine).prop('disabled', true);
+                    $tabEdgeName.val(curEdge = '').prop('disabled', true);
+                    if (selection.label != selection.machine) { // a state
+                        if (fromNode) {
+                            enableDisableChange('#createLinkButton', 'Cancel Create Link');
+                            var ok = false,
+                                edge = {
+                                    from: fromNode,
+                                    to: selection.id
+                                };
+                            if (edge.from == edge.to && !confirm("Do you want to connect the node to itself?"))
+                                ok = null;
+
+                            var nf = data.nodes.get(edge.from);
+                            var nt = data.nodes.get(edge.to);
+                            if (nf.machine != nt.machine)
+                                showError(
+                                    `cannot connect states from different machines! "${nf.machine}" and "${nt.machine}"`
+                                );
+                            else if (nf.name.startsWith('@') && network.getConnectedNodes(nf.id, 'to').length > 0)
+                                showError(`cannot connect more than ONE state to timer-states like "${nf.id}"!`);
+                            else if (network.getConnectedNodes(nf.id, 'to').indexOf(nt.id) >= 0)
+                                showError(
+                                    `cannot connect more than ONE time to the SAME state:"${nf.id}" > "${nt.id}"!`);
+                            else ok = ok !== null;
+                            if (network)
+                                network.unselectAll();
+                            if (ok) {
+                                edge.machine = nf.machine;
+                                edge.label = nf.name + '>' + nt.name;
+                                edge.id = edge.machine + ':' + edge.label;
+                                data.edges.add(edge);
+                                selection = fromNode = null;
+                                prepareMenu();
+                            } else
+                                showMessage('Please select the target State!');
+                        } else {
+                            $tabStateName.val(curState = selection.label).prop('disabled', true);
+                            enableDisableChange('#deleteButton', getMachineStates(selection.machine).length > 2 ?
+                                'Delete State' : null);
+                            enableDisableChange('#renameButton', 'Rename State');
+                            enableDisableChange('#createStateButton', 'Create State');
+                            enableDisableChange('#createLinkButton', getMachineStates(selection.machine).length < 3 ?
+                                undefined : 'Create Link');
+                            enableDisableChange('#clusterButton', 'Cluster Machine', 'expand_more');
                         }
-                    };
-                    network.storePositions();
-                    network.cluster(clusterOptionsByData);
+                    } else { // a machine
+                        if (fromNode) {
+                            fromNode = null;
+                            showError(`cannot connect states to Machines ('Stars'/*)!`);
+                        }
+                        $tabStateName.val(curState = '').prop('disabled', true);
+                        enableDisableChange('#deleteButton', 'Delete Machine');
+                        enableDisableChange('#renameButton', 'Rename Machine');
+                        enableDisableChange('#createStateButton', 'Create State');
+                        enableDisableChange('#createLinkButton');
+                        enableDisableChange('#clusterButton', 'Cluster Machine', 'expand_more');
+                    }
                 }
-            });
-
-            network.on("selectEdge", function (params) {
-                //               if (params.nodes.length==0)
-                params = getParams(params);
-                var edge = params[params.eid];
-                var isstar = edge.from == edge.machine;
-                network.setOptions({
-                    manipulation: {
-                        editEdge: isstar ? false : stEditEdge
-                    }
-                });
-                network.setOptions({
-                    manipulation: {
-                        deleteEdge: isstar ? false : stDeleteEdge
-                    }
-                });
-
-                addEvent(params, "Select Edge");
-            });
-            network.on("selectNode", function (params) {
-                //               if (params.nodes.length==0)
-                params = getParams(params);
-                if (params.nid) {
-                    var node = params[params.nid];
-                    if (node) {
-                        curMachine = node.machine;
-                        $tabMachineName.val(curMachine).show();
-                        if (node.label != node.machine) {
-                            curState = node.label
-                            $tabStateName.val(curState).prop('disabled', false).show();
-                        } else $tabStateName.val(curState).prop('disabled', true).show();
-                    }
-                } else
-                    $tabStateName.hide();
-                var isstar = params.nid == params[params.nid].machine;
-                var machs = getMachineStates(params[params.nid].machine);
-                network.setOptions({
-                    manipulation: {
-                        editNode: isstar ? false : stEditNode
-                    }
-                });
-                network.setOptions({
-                    manipulation: {
-                        deleteNode: isstar || machs.length <= 2 ? false : stDeleteNode
-                    }
-                });
-                addEvent(params, "Select Node");
-            });
-            exportArea.value = "";
-            resizeExportArea();
+            } else {
+                fromNode = null;
+                if (network)
+                    network.unselectAll();
+                enableDisable(['#deleteButton', '#renameButton', '#createLinkButton', '#clusterButton'], false);
+                enableDisableChange('#createStateButton', 'Create State');
+                $tabMachineName.val(curMachine = '').prop('disabled', true);
+                $tabStateName.val(curState = '').prop('disabled', true);
+                $tabEdgeName.val(curEdge = '').prop('disabled', true);
+            }
         }
 
         function cloneObject(obj) {
@@ -730,23 +662,23 @@
             params.edges.forEach(function (edge) {
                 e.push(data.edges.get(edge))
             });
-            if (n.length === 0 && e.length == 1) {
-                params.eid = params.edges[0];
-                params[params.eid] = e[0];
+            if (n.length === 0 && e.length === 1) {
+                params.id = params.edges[0];
+                params.edge = e[0];
             } else
                 params.edges = e;
 
             var nid = n.length == 1 && n[0];
             if (nid) {
-                params.nid = nid;
+                params.id = nid;
                 var node = data.nodes.get(nid);
                 if (node) {
                     var cn = cloneObject(node);
                     delete cn.color;
                     delete cn.font;
-                    params[nid] = cn;
+                    params.node = cn;
                 } else if (network.isCluster(nid))
-                    params[nid] = network.getNodesInCluster(nid);
+                    params.cluster = network.getNodesInCluster(nid);
             }
             if (typeof params.to === 'object')
                 params.to = params.to.id
@@ -763,56 +695,20 @@
             });
         }
 
-        function checkStarState(state) {
-            var pos = network.getPositions();
-            if (state && state.id) {
-                var nst = JSON.parse(JSON.stringify(state));
-                var p = pos[nst.id];
-                if (p) {
-                    nst.x = p.x;
-                    nst.y = p.y;
-                }
-                if (!data.nodes.get(nst.machine)) {
-                    nst.size = 30;
-                    nst.shape = 'star';
-                    nst.name = '*';
-                    nst.font = {
-                        size: 30
-                    };
-                    nst.color = createColor('pink');
-                    nst.label = nst.machine;
-                    nst.id = nst.machine;
-                    data.nodes.add(nst);
-                } else
-                    nst = data.nodes.get(nst.machine);
-
-                var conn = network.getConnectedNodes(nst.id, 'to');
-                if (conn.indexOf(state.id) < 0) {
-                    var edge = {
-                        to: state.id,
-                        from: nst.id,
-                        machine: nst.machine,
-                        label: nst.name + '>' + state.name
-                    };
-                    edge.id = edge.machine + ':' + edge.label;
-                    data.edges.add(edge);
-                }
-            }
-
+        function createToast(string, icon) {
+            var $toastContent = $((icon ? '<i class="medium material-icons">' + icon + '</i>&nbsp;&nbsp;' : '') +
+                '<span><b>' + string + '</b></span>')
+            //                .add($('<button class="btn-flat toast-action">OK</button>'))
+            ;
+            Materialize.toast($toastContent, 5000, (icon == 'error' ? 'red' : 'blue') + ' rounded');
         }
 
-        function stEditEdge(edge, callback) {
-            if (typeof edge.from === 'object')
-                edge.from = edge.from.id
-            if (typeof edge.to === 'object')
-                edge.to = edge.to.id
+        function showError(string) {
+            createToast(string, 'error');
         }
 
-        function stDeleteEdge(edge, callback) {
-            if (typeof edge.from === 'object')
-                edge.from = edge.from.id
-            if (typeof edge.to === 'object')
-                edge.to = edge.to.id
+        function showMessage(string) {
+            createToast(string, 'announcement');
         }
 
         function saveEdgeData(edge, callback) {
@@ -830,18 +726,18 @@
             var nt = data.nodes.get(edge.to);
 
             if (nf.machine != nt.machine)
-                return main.showError(
-                    `cannot connect states from different machines! "${nf.machine}" and "${nt.machine}"`, callback);
+                return showError(`cannot connect states from different machines! "${nf.machine}" and "${nt.machine}"`,
+                    callback());
 
             if (nt.label == nt.machine || nf.label == nf.machine) // this are '*' states!
-                return main.showError(`cannot connect states to Machines ('Stars'/*)!`, callback);
+                return showError(`cannot connect states to Machines ('Stars'/*)!`, callback());
 
             if (nf.name.startsWith('@') && network.getConnectedNodes(nf.id, 'to').length > 0)
-                return main.showError(`cannot connect more than ONE state to timer-states like "${nf.id}"!`, callback);
+                return showError(`cannot connect more than ONE state to timer-states like "${nf.id}"!`, callback());
 
             if (network.getConnectedNodes(nf.id, 'to').indexOf(nt.id) >= 0)
-                return main.showError(`cannot connect more than ONE time to the SAME state:"${nf.id}" > "${nt.id}"!`,
-                    callback);
+                return showError(`cannot connect more than ONE time to the SAME state:"${nf.id}" > "${nt.id}"!`,
+                    callback());
 
             edge.machine = nf.machine;
             edge.label = nf.name + '>' + nt.name;
@@ -860,109 +756,19 @@
             //            draw();
         }
 
-        var stDialog;
-
-
         function stDeleteNode(params, callback) {
             var node = data.nodes.get(params.nodes[0]);
             if (!node)
                 return;
             if (node.name == '*')
-                return main.showError("Cannot delete '*'- (Machine-) States,\nyou need to delete machine!", callback);
+                return showError("Cannot delete '*'- (Machine-) States,\nyou need to delete machine!", callback());
             else if (getMachineStates(node.machine).length <= 2)
-                return main.showError("Cannot delete last state from lachine,\nyou need to delete machhine!", callback);
+                return showError("Cannot delete last state from lachine,\nyou need to delete machhine!", callback());
 
-            //            stDialogOpen(params, 'Delete State', callback);
-            main.confirmMessage(`Do you really want to delete ${node.label}`, 'Delete Nopde', 'help', function (ok) {
+            confirmMessage(`Do you really want to delete ${node.label}`, 'Delete Nopde', function (ok) {
                 callback(ok ? params : null);
             });
         }
-
-        function stEditNode(params, callback) {
-            if (params.name == '*')
-                return main.showError("Cannot edit '*'- (Machine-) States!", callback);
-            var n = cloneObject(params);
-            n.name = n.label;
-            stDialogOpen(n, 'Edit/Rename State', callback);
-        }
-
-        function stDialogOpen(item, action, callback) {
-            //            var $dialog = $("#state-dialog-form"); 
-            stDialog.find('.state-dialog-field').removeClass("ui-state-error");
-            stDialog._$machine = stDialog.find('#machine');
-            stDialog._$tips = stDialog.find(".validateTips");
-            stDialog._$name = stDialog.find('#name');
-            stDialog._$item = item;
-            stDialog._$create = action.startsWith('Create ');
-            stDialog._$callback = callback;
-            if (item && item.machine) {
-                stDialog._$machine.val(item.machine);
-            }
-            if (item && item.name) {
-                stDialog._$name.val(item.name);
-            } else if (!stDialog._$create && item.label)
-                stDialog._$name.val(item.label);
-
-            stDialog._$machine.prop('disabled', !stDialog._$create);
-
-            stDialog._$tips.text("All form fields are required");
-            stDialog.dialog('option', 'title', action);
-            stDialog.dialog("open");
-        }
-
-        function addState() {
-            function verify(item, text, regexp, max) {
-                var v = item.val();
-                var r = typeof regexp === 'number' ? v.length >= regexp && (typeof max === 'number' ? v.length <= max :
-                    true) : regexp.test(v);
-                if (r)
-                    return true;
-                item.addClass("ui-state-error");
-                stDialog._$tips.text(text);
-            }
-
-            var ok = true;
-            ok = ok && verify(stDialog._$machine, "Länge muss zwischen 3 und 20 sein", 3, 20);
-            ok = ok && verify(stDialog._$machine, "Text darf nur '$_A-Za-z0-9' enthalten", /^\s*[$\w]+\s*$/);
-            ok = ok && verify(stDialog._$name, "Länge muss zwischen 3 und 20 sein", 3, 20);
-            ok = ok && verify(stDialog._$name, "Text darf nur '$_A-Za-z0-9' enthalten oder @(x)=(*h)(*m)(*s)",
-                /^\s*([$\w]+|@(.?)\s*=\s*(.+?))\s*$/);
-            if (ok) {
-                var m = stDialog._$machine.val().trim();
-                var l = stDialog._$name.val().trim();
-                var match = l.match(/^@(.?)\s*=\s*(.+)$/);
-                var node = stDialog._$item;
-                node.machine = m;
-                if (match) {
-                    node.shape = 'box';
-                    node.timeout = match[2];
-                    node.name = node.id = '@' + match[1];
-                    node.label = l;
-                    node.id = node.machine + '.' + node.name;
-                    node.color = createColor('yellow');
-                } else {
-                    //                node.id = node.label.trim();
-                    node.label = l;
-                    node.name = l;
-                    node.id = node.machine + '.' + node.name;
-                }
-                if (data.nodes.get(node.id))
-                    return main.showError(`A state with this name exist already and cannot be added multiple times!`);
-                stDialog._$tips.text("All form fields are required");
-                stDialog.find('.state-dialog-field').removeClass("ui-state-error");
-                stDialog._$item.name = l;
-                stDialog._$item = node;
-                stDialog._$item.machine = m;
-                if (stDialog._$callback) {
-                    stDialog._$callback(node);
-                    stDialog._$callback = null;
-                }
-                stDialog.dialog("close");
-                setTimeout(checkStarState, 100, node);
-            }
-            return ok;
-        }
-
         var dialogMessage, $dialogConfirm, firstConnect = true,
             that = this;
 
@@ -993,84 +799,6 @@
                 if (typeof storage !== 'undefined') {
                     storage.set('adminConfig', JSON.stringify(main.config));
                 }
-            },
-            showError: function (error, cb) {
-                main.showMessage(_(error), _('Error'), 'alert', cb);
-            },
-            showMessage: function (message, title, icon, cb) {
-                if (typeof title === 'function') {
-                    cb = title;
-                    title = null;
-                    icon = null;
-                }
-                if (typeof icon === 'function') {
-                    cb = icon;
-                    icon = null;
-                }
-                $dialogMessage.dialog('option', 'title', title || _('Message'));
-                $('#dialog-message-text').html(message);
-
-                if (icon) {
-                    if (!icon.match(/^ui\-icon\-/)) icon = 'ui-icon-' + icon;
-
-                    $('#dialog-message-icon').show();
-                    $('#dialog-message-icon').attr('class', '');
-                    $('#dialog-message-icon').addClass('ui-icon ' + icon);
-                } else {
-                    $('#dialog-message-icon').hide();
-                }
-                $dialogMessage.data('callback', cb);
-                $dialogMessage.dialog('open');
-            },
-            confirmMessage: function (message, title, icon, buttons, callback) {
-                if (typeof buttons === 'function') {
-                    callback = buttons;
-                    $dialogConfirm.dialog('option', 'buttons', [{
-                            text: _('Ok'),
-                            click: function () {
-                                var cb = $(this).data('callback');
-                                $(this).dialog('close');
-                                if (cb) cb(true);
-                            }
-                        },
-                        {
-                            text: _('Cancel'),
-                            click: function () {
-                                var cb = $(this).data('callback');
-                                $(this).dialog('close');
-                                if (cb) cb(false);
-                            }
-                        }
-
-                    ]);
-                } else if (typeof buttons === 'object') {
-                    for (var b = 0; b < buttons.length; b++) {
-                        buttons[b] = {
-                            text: buttons[b],
-                            id: 'dialog-confirm-button-' + b,
-                            click: function (e) {
-                                var id = parseInt(e.currentTarget.id.substring('dialog-confirm-button-'
-                                    .length), 10);
-                                var cb = $(this).data('callback');
-                                $(this).dialog('close');
-                                if (cb) cb(id);
-                            }
-                        }
-                    }
-                    $dialogConfirm.dialog('option', 'buttons', buttons);
-                }
-
-                $dialogConfirm.dialog('option', 'title', title || _('Message'));
-                $('#dialog-confirm-text').html(message);
-                if (icon) {
-                    $('#dialog-confirm-icon').show();
-                    $('#dialog-confirm-icon').attr('class', '');
-                    $('#dialog-confirm-icon').addClass('ui-icon ui-icon-' + icon);
-                } else {
-                    $('#dialog-confirm-icon').hide();
-                }
-                $dialogConfirm.data('callback', callback);
-                $dialogConfirm.dialog('open');
             },
             initSelectId: function () {
                 if (main.selectId) return main.selectId;
@@ -1143,8 +871,8 @@
 
                 if (id.match(/^system\.adapter\.[-\w]+\.[0-9]+$/)) { /// TODO
                     // Disable statemachine tab if no one script engine instance found
-                    var engines = main.fillEngines();
-                    $('#tabs').tabs('option', 'disabled', (engines && engines.length) ? [] : [4]);
+                    //                    var engines = main.fillEngines();
+                    //                    $('#tabs').tabs('option', 'disabled', (engines && engines.length) ? [] : [4]);
                 }
 
                 addEvent(obj, `Object Change of ${id}`);
@@ -1235,7 +963,7 @@
                 if (callb)
                     main.connectCb = callb;
                 main.socket.on('permissionError', function (err) {
-                    main.showMessage(_('Has no permission to %s %s %s', err.operation, err.type, (err.id ||
+                    showMessage(_('Has no permission to %s %s %s', err.operation, err.type, (err.id ||
                         '')));
                 });
                 main.socket.on('objectChange', function (id, obj) {
@@ -1272,57 +1000,6 @@
                                 }
 
                                 translateAll();
-
-                                $dialogMessage.dialog({
-                                    autoOpen: false,
-                                    modal: true,
-                                    width: "30%",
-                                    maxWidth: "500px",
-                                    buttons: [{
-                                        text: _('Ok'),
-                                        click: function () {
-                                            $(this).dialog('close');
-                                            var cb = $(this).data(
-                                                'callback');
-                                            if (typeof cb ===
-                                                'function') {
-                                                $(this).data(
-                                                    'callback',
-                                                    null);
-                                                cb();
-                                            }
-                                        }
-                                    }]
-                                });
-
-                                $dialogConfirm.dialog({
-                                    autoOpen: false,
-                                    modal: true,
-                                    width: "30%",
-                                    maxWidth: "500px",
-                                    //                                    width: 400,
-                                    height: 200,
-                                    buttons: [{
-                                            text: _('Ok'),
-                                            click: function () {
-                                                var cb = $(this).data(
-                                                    'callback');
-                                                $(this).dialog('close');
-                                                if (cb) cb(true);
-                                            }
-                                        },
-                                        {
-                                            text: _('Cancel'),
-                                            click: function () {
-                                                var cb = $(this).data(
-                                                    'callback');
-                                                $(this).dialog('close');
-                                                if (cb) cb(false);
-                                            }
-                                        }
-
-                                    ]
-                                });
 
                                 main.getStates(function () {
                                     main.getObjects(function () {
@@ -1376,33 +1053,171 @@
             return null;
         };
 
-        var $tabMachineName, $tabStateName, curMachine, curState, curEdge, curVar, curEvent;
+        function enableDisable(sel, value) { //value = true = enabled
+            if (Array.isArray(sel))
+                return sel.forEach(function (id) {
+                    enableDisable(id, value);
+                })
+
+            var $sel = $(sel);
+            if (value)
+                $sel.removeClass('disabled');
+            else
+                $sel.addClass('disabled');
+            //            .prop('disabled', !value);
+        }
+
+        function enableDisableChange(sel, text, icon) { //value = true = enabled
+            if (Array.isArray(sel))
+                return sel.forEach(function (id) {
+                    enableDisableChange(id, text, icon);
+                })
+
+            var $sel = $(sel);
+            var ch = $sel.children();
+            var t = $sel.data('mytype');
+            if (t) {
+                $sel.removeClass(t);
+                $sel.data('mytype', null);
+            }
+            if (text) {
+                var m = text.match(/^\s*\(([\w\s*]+)\)\s*(.*)\s*$/);
+                if (m) {
+                    $sel.data('mytype', m[1])
+                    $sel.addClass(m[1]);
+                    text = m[2];
+                }
+                $sel.removeClass('disabled');
+                if (ch.length > 1)
+                    ch[1].innerHTML = text;
+            }
+            if (icon && ch.length > 0)
+                ch[0].innerHTML = icon;
+            if (!text && !icon)
+                $sel.addClass('disabled');
+            else
+                $sel.removeClass('disabled');
+            //            .prop('disabled', !value);
+        }
+
+        function changeButtonText(sel, text, icon) {
+            var ch = $(sel).children();
+            if (icon)
+                ch[0].innerHTML = icon;
+            if (text && ch.length > 1)
+                ch[1].innerHTML = text;
+        }
+
+        function showHide(sel, value) { //value = true = enabled
+            var $sel = $(sel);
+            if (!value)
+                $sel.hide();
+            else
+                $sel.show();
+            //            $(sel).prop('disabled',!value);
+        }
+
+        function showModal(o) {
+            if (typeof o === 'string')
+                o = {
+                    text: o
+                };
+            else if (typeof o !== 'object')
+                o = {};
+            var t = $('#modalText').children();
+            t[0].innerHTML = o.title || "Information";
+            t[1].innerHTML = o.text || ' ';
+            o.buttons = o.buttons || 1;
+            if (typeof o.buttons === 'string')
+                o.buttons = o.buttons.split(',');
+            else if (!Array.isArray(o.buttons)) {
+                o.buttons = o.buttons == 1 ? ['OK'] : ['OK', 'cancel'];
+            }
+            $('#modalIcon').text(o.icon || o.buttons.length > 1 ? 'help' : "info");
+            enableDisableChange('#modalOk', o.buttons[0])
+            if (o.buttons.length == 1)
+                $('#modalExit').hide();
+            else {
+                enableDisableChange('#modalExit', o.buttons[1])
+                $('#modalExit').show();
+            }
+            $('#dialog-modal').data('callback', o.callback);
+            $('#dialog-modal').modal('open');
+        }
+
+        function confirmMessage(message, title, icon, buttons, callback) {
+            if (typeof icon == 'function') {
+                callback = icon;
+                icon = undefined,
+                    buttons = 2;
+            } else if (typeof buttons == 'function') {
+                callback = buttons;
+                buttons = 2;
+            }
+
+            showModal({
+                text: message,
+                title: title,
+                icon: icon,
+                buttons: buttons,
+                callback: callback,
+            });
+        }
+
+        function fitMachine(machine) {
+            var nn = [],
+                nd = {
+                    nodes: getMachineStates(machine).forEach(function (n) {
+                        return nn.push(n.id);
+                    }),
+                    animation: {
+                        duration: 500
+                    }
+                }
+            network.fit(nn);
+        }
+
+        var $tabMachineName, $tabStateName, $tabEdgeName, $okData, $cancelData, curMachine, curState, curEdge, curVar,
+            curEvent,fromNode;
         $(function () {
             container = document.getElementById('mynetwork');
-            exportArea = document.getElementById('input_output');
+            $exportArea = $('#input_output');
             importButton = document.getElementById('import_button');
             exportButton = document.getElementById('export_button');
-            $dialogMessage = $('#dialog-message');
-            $dialogConfirm = $('#dialog-confirm');
+            $('#dialog-modal').modal({
+                dismissible: true, // Modal can be dismissed by clicking outside of the modal
+                opacity: .5, // Opacity of modal background
+                inDuration: 200, // Transition in duration
+                outDuration: 200, // Transition out duration
+                startingTop: '5%', // Starting top style attribute
+                endingTop: '10%', // Ending top style attribute
+            });
 
-            $('#dialog-edit-insert-id').button({
-                icons: {
-                    primary: 'ui-icon-note'
-                }
-            }).css('height', '30px').click(function () {
-                var ids = [];
-                //                $(":focus").each(function () {
-                //                    ids.push($(this).attr("id") + " has focus!");
-                //                });
-                addEvent(ids, " Focus");
+            $('#modalOk').unbind('click').click(function (event) {
+                var fun = $('#dialog-modal').data('callback');
+                if (typeof fun == 'function')
+                    fun(event);
+            });
+            $('#dialog-edit-insert-id').click(function () {
                 var sid = main.initSelectId();
                 sid.selectId('show', function (newId) {
-                    main.showMessage(newId);
+                    showMessage(newId);
                     //                    that.editorDialog.insert('"' + newId + '"' + ((that.main.objects[newId] && that.main.objects[newId].common && that.main.objects[newId].common.name) ? ('/*' + that.main.objects[newId].common.name + '*/') : ''));
                     //                    that.editorDialog.focus();
                 });
             });
 
+            $okData = $('#okData');
+            $cancelData = $('#cancelData');
+            enableDisable('button.ok-cancel', false);
+            $cancelData.unbind('click').click(function (e) {
+                enableDisable('button.ok-cancel', false);
+                $tabMachineName.prop('disabled', true);
+                $tabStateName.prop('disabled', true);
+                $tabEdgeName.prop('disabled', true);
+                fromNode = selection = null;
+                prepareMenu();
+            });
             // Read all positions, selected widgets for every view,
             // Selected view, selected menu page,
             // Selected widget or view page
@@ -1420,188 +1235,437 @@
                     main.config = {};
                 }
             } //            alert('Selection length:' + $("#node-popUp").length + ', ' + $("#nodepopUp").length+ ', ' + $("#nodePopUp").length)
-            $tabMachineName = $('#tab-machine-name').prop('disabled', true).change(function () {
+            $tabMachineName = $('#tab-machine-name').prop('disabled', true).unbind('change').change(function () {
                 curMachine = $(this).val();
             });
-            $tabStateName = $('#tab-state-name').prop('disabled', true).change(function () {
+            $tabStateName = $('#tab-state-name').prop('disabled', true).unbind('change').change(function () {
                 curState = $(this).val();
             });
-            $('#tab-physics').prop('checked', options.physics.enabled).change(function () {
+            $tabEdgeName = $('#tab-edge-name').prop('disabled', true).unbind('change').change(function () {
+                curEdge = $(this).val();
+            });
+            $('#tab-physics').prop('checked', options.physics.enabled).unbind('change').change(function () {
                 options.physics.enabled = this.checked;
                 network.setOptions({
                     physics: {
                         enabled: options.physics.enabled
                     }
                 });
+                $('#tab-physics-label').html('Physics ' + (this.checked ? 'enabled' : 'disabled'));
                 if (this.checked)
                     network.startSimulation();
                 else network.stopSimulation();
             });
-            //                        $(".st-control").controlgroup({
-            //                            "direction": "vertical"
-            //                        });
-            stDialog = $("#state-dialog-form").dialog({
-                autoOpen: false,
-                //                dialogClass: "no-close",
-                height: 300,
-                width: 500,
-                modal: true,
-                buttons: [{
-                        text: 'Save State',
-                        click: addState
-                    },
-                    {
-                        text: 'Cancel',
-                        click: function (event) {
-                            $(this).dialog('close');
-                        }
-                    }
-                ],
-                close: function () {
-                    form[0].reset();
-                    if (stDialog._$callback)
-                        stDialog._$callback(null);
-                    stDialog._$callback = null;
-                }
-            });
-
-            form = stDialog.find("form").on("submit", function (event) {
-                event.preventDefault();
-                addState();
-            });
-            $('.myButtons').button({
-                icon: "ui-icon-star"
-            });
-            $('#create-state').button({
-                icon: "ui-icon-star"
-            });
-            $('#importButton').click(function (event) {
+            $('#importButton').unbind('click').click(function (event) {
                 importNetwork();
             });
-            $('#exportButton').click(function (event) {
+            $('#exportButton').unbind('click').click(function (event) {
                 exportNetwork();
             });
-            $('#destroyButton').click(function (event) {
+            $('#destroyButton').unbind('click').click(function (event) {
                 destroy();
             });
-            $('#endcreate').click(function (event) {
-                network.disableEditMode();
-                network.enableEditMode();
+            prepareMenu();
+            $('#createLinkButton').unbind('click').click(function (event) {
+                if (fromNode) {
+                    enableDisable('#createLinkButton', false);
+                    fitMachine(data.nodes.get(fromNode).machine);
+                    selection = fromNode = null;
+                    network.unselectAll();
+                    Materialize.Toast.removeAll();
+                    enableDisableChange('#createLinkButton', 'CreateLink');
+                    enableDisable('#createLinkButton', false);
+                    prepareMenu();
+                } else if (selection) {
+                    fromNode = selection.id;
+                    network.unselectAll();
+                    enableDisableChange('#createLinkButton', '(red)Cancel Link');
+                    showMessage('Please select the target State!');
+                }
             });
-            $('#create-state').click(function (event) {
-                network.addNodeMode();
+            $('#deleteButton').unbind('click').click(function (event) {
+                if (selection) {
+                    var title = "Delete ";
+                    var message = 'Do you really want to delete ';
+                    var mend = "</b> ?";
+                    if (selection.id.match(/.+\:.+\>.+/)) { // edge
+                        confirmMessage(message + 'transition <b>' + selection.id + mend, title +
+                            'Transition', 'ask',
+                            function (e) {
+                                data.edges.remove(selection.id);
+                                selection = null;
+                                prepareMenu();
+                            });
+                    } else if (selection.id == selection.machine) {
+                        confirmMessage(message + 'machine <b>' + selection.id + mend, title + 'Machine',
+                            'ask',
+                            function (e) {
+                                getMachineStates(selection.id).forEach(function (n) {
+                                    network.getConnectedEdges(n).forEach(function (e) {
+                                        data.edges.remove(e);
+                                    });
+                                    data.nodes.remove(n);
+                                });
+                                data.nodes.remove();
+                                selection = null;
+                                prepareMenu();
+                            });
+                    } else {
+                        confirmMessage(message + 'state <b>' + selection.id + mend, title + 'State',
+                            'ask',
+                            function (e) {
+                                network.getConnectedEdges(selection.id).forEach(function (e) {
+                                    data.edges.remove(e);
+                                });
+                                data.nodes.remove(selection.id);
+                                selection = null;
+                                prepareMenu();
+                            });
+                    }
+                }
             });
-            $('#createStateButton').click(function (event) {
-                stDialogOpen({
-                    machine: $tabMachineName.val(),
-                    name: 'newName'
-                }, "Create State", null);
+            $('#createStateButton').unbind('click').click(function (event) {
+                event.preventDefault();
+                $tabMachineName.prop('disabled', false);
+                $tabStateName.prop('disabled', false);
+                enableDisable('button.ok-cancel', true);
+                enableDisable(['#deleteButton', '#renameButton', '#createLinkButton', '#clusterButton','#createStateButton'], false);
+                $tabStateName.val(curState = 'newState');
+                if (! curMachine || curMachine=='')
+                    $tabMachineName.val(curMachine = 'newMachine');
+                $okData.unbind('click').click(function (event) {
+                    function verify(item, text, regexp, max) {
+                        var v = item.val();
+                        var r = typeof regexp === 'number' ? v.length >= regexp && (typeof max ===
+                            'number' ?
+                            v.length <= max :
+                            true) : regexp.test(v);
+                        if (r)
+                            return true;
+                        showMessage(text);
+                    }
+                    var ok = true;
+                    ok = ok && verify($tabMachineName, "Länge muss zwischen 3 und 20 sein",
+                        3, 20);
+                    ok = ok && verify($tabMachineName,
+                        "Text darf nur '$_A-Za-z0-9' enthalten",
+                        /^\s*[$\w]+\s*$/);
+                    ok = ok && verify($tabStateName, "Länge muss zwischen 3 und 20 sein", 3,
+                        20);
+                    ok = ok && verify($tabStateName,
+                        "Text darf nur '$_A-Za-z0-9' enthalten oder @(x)=(*h)(*m)(*s)",
+                        /^\s*([$\w]+|@(.?)\s*=\s*(.+?))\s*$/);
+                    network.unselectAll();
+                    fromNode = selection = null;
+                    if (ok) {
+                        //                        var m = $tabMachineName.val().trim();
+                        //                        var l = $tabStateName.val().trim();
+                        //                        var match = l.match(/^@(.?)\s*=\s*(.+)$/);
+                        var node = {
+                            machine: $tabMachineName.val().trim(),
+                            label: $tabStateName.val().trim()
+                        };
+                        decorateNode(node);
+                        if (data.nodes.get(node.id))
+                            return showError(
+                                `A state with this name exist already and cannot be added multiple times!`
+                            );
+                        var pos = network.getPositions(),
+                            y = Number.POSITIVE_INFINITY,
+                            x = Number.NEGATIVE_INFINITY;
+                        Object.keys(pos).forEach(function (k) {
+                            var p = pos[k];
+                            y = Math.min(y, p.y);
+                            x = Math.max(x, p.x);
+                        });
+                        node.x = x * 0.8;
+                        node.y = y * 0.8;
+                        data.nodes.add(node);
+                        var nst = cloneObject(data.nodes.get(node.id));
+                        var p = pos[nst.id];
+                        if (p) {
+                            nst.x = p.x;
+                            nst.y = p.y;
+                        }
+                        if (!data.nodes.get(nst.machine)) {
+                            nst.label = nst.machine;
+                            decorateNode(nst);
+                            data.nodes.add(nst);
+                        } else
+                            nst = data.nodes.get(nst.machine);
+
+                        var conn = network.getConnectedNodes(nst.id, 'to');
+                        if (conn.indexOf(node.id) < 0) {
+                            var edge = {
+                                to: node.id,
+                                from: nst.id,
+                                machine: nst.machine,
+                                label: nst.name + '>' + node.name
+                            };
+                            edge.id = edge.machine + ':' + edge.label;
+                            data.edges.add(edge);
+                        }
+                        fitMachine(node.machine);
+                        $cancelData.click();
+                    }
+                });
             });
-            $('#changeOptions').click(function (event) {
+            $('#changeOptions').unbind('click').click(function (event) {
                 options.configure = !options.configure;
-                $(this).text(options.configure ? "Hide Options" : "Show Options");
                 network.setOptions({
                     configure: options.configure
                 });
             });
-            //            init();
+            $('#clusterButton').unbind('click').click(function (event) {
+                var nid = selection.id;
+                if (network.isCluster(nid)) {
+                    network.openCluster(nid, {
+                        releaseFunction: function (clusterPosition, containedNodesPositions) {
+                            var newPositions = {};
+                            for (nodeId in containedNodesPositions)
+                                newPositions[nodeId] = {
+                                    x: containedNodesPositions[nodeId].x,
+                                    y: containedNodesPositions[nodeId].y
+                                };
+                            return newPositions;
+                        }
+                    });
+                    var m = nid.split(':')[1];
+                    data.edges.forEach(function (edge) {
+                        data.edges.update(edge);
+                    }, {
+                        filter: function (item) {
+                            return item.machine == m;
+                        }
+                    });
+                } else {
+                    var machine = data.nodes.get(nid);
+                    if (!machine) return;
+                    machine = machine.machine;
+                    clusterOptionsByData = {
+                        joinCondition: function (childOptions) {
+                            return childOptions.machine == machine;
+                        },
+                        clusterNodeProperties: {
+                            id: 'cluster:' + machine,
+                            borderWidth: 3,
+                            shape: 'database',
+                            color: 'lightgreen',
+                            label: machine,
+                            font: {
+                                size: 30
+                            }
+                        }
+                    };
+                    network.storePositions();
+                    network.cluster(clusterOptionsByData);
+                }
+                selection = null;
+                prepareMenu();
+            });
         });
     </script>
 </head>
 
 <body>
     <div id="homeTemplate">
-
-
-        <div class="page-title">
-            <div class="column50">
+        <div class="row">
+            <div class="col s1">
+                <img src="/adapter/statemachine/statemachine.png" style="width: 3em; height: 3em" onclick="window.location.reload();">
+            </div>
+            <div class="col s6">
+                <h5>StateMachine Setup</h5>
+                <!--&nbsp;
                 <a href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css">../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css</a>
                 <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.structure.min.css" />
                 <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.theme.min.css" />
-                <a href="lib/css/vis.min.css">lib/css/vis.min.css</a>
-                <h1>StateMachine Adapter Config</h1>
+                &nbsp;
+                <a href="/lib/js/materialize.js">/lib/js/materialize.js</a>
+                &nbsp;
+                <a href="lib/css/vis.min.css">lib/css/vis.min.css</a-->
             </div>
-            <div class="column25">
-                <h3>import/export</h3>
+            <div class="col s5">
+                <h5>Control &amp; Options</h5>
             </div>
-            <div class="column25">
-                <h3>Options</h3>
-            </div>
-        </div>
-        <div class="clearfix"></div>
-
-        <div id="home-container">
-            <div class="column50">
-                <div id="mynetwork"></div>
-            </div>
-
-            <div class="column25 st-control">
-                <button id="changeOptions" class="myButtons">Show Options</button>
-                <button id="importButton" class="myButtons">import</button>
-                <button id="exportButton" class="myButtons">export</button>
-                <button id="destroyButton" class="myButtons">destroy</button>
-                <br>
-                <button id="createStateButton" class="myButtons">CreateState</button>
-                <button id="create-state" class="myButtons">create-state</button>
-                <div class="clearfix"></div>
-                <button id="endcreate" class="myButtons">EndCreate</button>
-                <div class="clearfix"></div>
-                <label class="column25 text-label" for="machineName">Machine Name</label>
-                <span class="column50">
-                    <input type="text" name="machineName" id="tab-machine-name" value="newMachine" class="text ui-widget-content ui-corner-all">
-                </span>
-                <div class="clearfix"></div>
-                <label class="column25 text-label" for="stateName">State Name</label>
-                <span class="column50">
-                    <input type="text" name="stateName" id="tab-state-name" value="newState" class="text ui-widget-content ui-corner-all">
-                </span>
-                <div class="clearfix"></div>
-                <label class="column25 text-label" for="stphysics">Physics enabled</label>
-                <span class="column50">
-                    <input type="checkbox" name="stphysics" id="tab-physics">
-                </span>
-                <div class="clearfix"></div>
-                <button id="dialog-edit-insert-id" class="translate">Insert ID</button>
-                <br>
-                <textarea cols="40" rows="50" id=input_output></textarea>
-            </div>
-            <div class="column25">
-                <pre id="eventSpan" style="font-size: 0.8em"></pre>
-            </div>
-            <div class="clearfix"></div>
-
-        </div>
-        <div class="tile-stats">
-        </div>
-        <div id="dialog-select-member" style="display:none"></div>
-        <div id="dialog-message" title="Message" style="display: none">
-            <p>
-                <span id="dialog-message-icon" class="ui-icon ui-icon-circle-check" style="float: left; margin: 0 7px 50px 0;"></span>
-                <span id="dialog-message-text"></span>
-            </p>
-        </div>
-        <div id="dialog-confirm" title="Question" style="display: none">
-            <p>
-                <span id="dialog-confirm-icon" class="ui-icon ui-icon-circle-check" style="float: left; margin: 0 7px 50px 0;"></span>
-                <span id="dialog-confirm-text" width="500px"></span>
-            </p>
-        </div>
-        <div id="state-dialog-form" title="...State">
-            <p class="validateTips">All form fields are required.</p>
-            <form>
-                <fieldset>
-                    <label class="column40 ui-font" for="machine">Machine Name</label>
-                    <input class="column60" type="text" name="machine" id="machine" value="thisMachine" class="text ui-widget-content ui-corner-all state-dialog-field">
-                    <div class="clearfix"></div>
-                    <label class="column40 ui-font" for="name">State Name</label>
-                    <input class="column60" type="text" name="name" id="name" value="newState" class="text ui-widget-content ui-corner-all state-dialog-field">
-                    <!-- Allow form submission with keyboard without duplicating the dialog button -->
-                    <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
-                </fieldset>
-            </form>
         </div>
 
-    </div>
+        <div class="row">
+            <div class="col s7">
+                <div class="row">
+                    <div class="col s2">
+                        <input type="checkbox" id="tab-physics" checked="checked" class="btn-small" />
+                        <label for="tab-physics">
+                            <span id="tab-physics-label">Physics enabled</span>
+                        </label>
+                    </div>
+                    <div class="col s2">
+                        <button id="clusterButton" class="waves-effect waves-light btn not-ok-cancel btn-small w100 disabled">
+                            <i class="material-icons left">expand_more</i>
+                            <span>Cluster</span>
+                        </button>
+                    </div>
+                    <div class="col s2">
+                        <button id="deleteButton" class="waves-effect waves-light btn red not-ok-cancel btn-small w100 disabled">
+                            <i class="material-icons left">remove</i>
+                            <span>Delete</span>
+                        </button>
+                    </div>
+                    <div class="col s2">
+                        <button id="renameButton" class="waves-effect waves-light btn not-ok-cancel btn-small w100 disabled">
+                            <i class="material-icons left">border_color</i>
+                            <span>Rename</span>
+                        </button>
+                    </div>
+                    <div class="col s2">
+                        <button id="createLinkButton" class="waves-effect waves-light btn not-ok-cancel btn-small w100 disabled">
+                            <i class="material-icons left">insert_link</i>
+                            <span>Create Link</span>
+                        </button>
+                    </div>
+                    <div class="col s2">
+                        <button id="createStateButton" class="waves-effect waves-light btn not-ok-cancel btn-small w100">
+                            <i class="material-icons left">repeate</i>
+                            <span>Create State</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="mynetwork"></div>
+                </div>
+            </div>
+            <div class="col s5">
+                <div class="row">
+                    <div class="input-field col s4">
+                        <div class="row">
+                            <i class="material-icons prefix">star_border</i>
+                            <input type="text" placeholder="Machine Name" id="tab-machine-name" class="validate" required pattern="[$_\da-zA-Z][$\w]{1,20}">
+                            <label for="tab-machine-name" data-error="wrong" data-success="right" class="active">Machine Name</label>
+                            <span class="helper-text" data-error="2-20 characters starting with $_a-zA-Z and then can include 0-9" data-success="Ok"></span>
+                        </div>
+                        <button id="okData" class="ok-cancel waves-effect waves-light btn btn-small w100">
+                            <i class="material-icons left">done</i>OK</button>
+                    </div>
+                    <div class="input-field col s4">
+                        <div class="row">
+                            <i class="material-icons prefix">repeate</i>
+                            <input type="text" placeholder="State Name" id="tab-state-name" class="validate" required>
+                            <label for="tab-state-name" data-error="wrong" data-success="right" class="active">State Name</label>
+                        </div>
+                        <button id="cancelData" class="ok-cancel waves-effect waves-light btn btn-small w100 brown">
+                            <i class="material-icons left">cancel</i>Cancel</button>
+                    </div>
+                    <div class="input-field col s4">
+                        <div class="row">
+                            <i class="material-icons prefix">insert_link</i>
+                            <input type="text" placeholder="Link Name" id="tab-edge-name" class="validate" required>
+                            <label for="tab-edge-name" data-error="wrong" data-success="right" class="active">Link Name</label>
+                        </div>
+                        <!--button id="cancelData" class="ok-cancel waves-effect waves-light btn btn-small w100 brown">
+                            <i class="material-icons left">cancel</i>Cancel</button-->
+                    </div>
+
+                </div>
+                <div class="divider"></div>
+                <div class="row">
+                    <div class="col s4">
+                        <button id="importButton" class="waves-effect waves-light btn not-ok-cancel  btn-small">
+                            <i class="material-icons left">import_export</i>
+                            <span>import</span>
+                        </button>
+                    </div>
+                    <div class="col s4">
+                        <button id="exportButton" class="waves-effect waves-light btn not-ok-cancel btn-small">
+                            <i class="material-icons left">archive</i>
+                            <span>export</span>
+                        </button>
+                    </div>
+                    <div class="col s4">
+                        <button id="destroyButton" class="waves-effect waves-light btn not-ok-cancel btn-small">
+                            <i class="material-icons left">destroy</i>
+                            <span>delete</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="row">
+                    <div class="col s4">
+                        <button id="dialog-edit-insert-id" class="waves-effect waves-light btn not-ok-cancel btn-small">
+                            <i class="material-icons left">insert_link</i>
+                            <span>Insert ID</span>
+                        </button>
+                    </div>
+                    <div class="col s4">
+                        <button id="endcreate" class="waves-effect waves-light btn not-ok-cancel btn-small" onclick="showModal({text:'bla bla bla', buttons:'Ja,Nein!', icon:'help'})">
+                            <i class="material-icons left">close</i>
+                            <span>EndCreate</span>
+                        </button>
+                    </div>
+                    <div class="col s4">
+                        <button id="changeOptions" class="waves-effect waves-light btn not-ok-cancel btn-small">
+                            <i class="material-icons left">assignment</i>
+                            <span>Toggle Options</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="row">
+                    <div class="col s4">
+                        <a class="waves-effect waves-light btn modal-trigger btn-small" href="#dialog-modal">Modal</a>
+                    </div>
+                    <div class="col s4">
+                        <button id="test-clickOn" class="waves-effect waves-light btn btn-small" onclick="changeButtonText('#endcreate','newText','add');showHide('#endcreate',true);enableDisable('#endcreate',true)">
+                            <i class="material-icons left">power_settings_new</i>Show</button>
+                    </div>
+                    <div class="col s4">
+                        <button id="test-clickOff" class="waves-effect waves-light btn btn-small" onclick="changeButtonText('#endcreate','newText','remove');enableDisable('#endcreate',false)">
+                            <i class="material-icons left">remove</i>Hide</button>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="row">
+                    <div class="col s6">
+                        <label for="input_output">Input/output machines</label>
+                        <textarea id="input_output" class="materialize-textarea"></textarea>
+                        <!--textarea cols="40" rows="50" id=input_output></textarea-->
+                    </div>
+                    <div class="col s6">
+                        <pre id="eventSpan" style="font-size: 0.8em"></pre>
+                    </div>
+                </div>
+            </div>
+            <!--div class="tile-stats"></div-->
+            <!-- Modal Structure -->
+            <div id="dialog-modal" class="modal">
+                <div class="modal-content">
+                    <div class="row">
+                        <div class="col s2">
+                            <i id="modalIcon" class="material-icons large">check</i>
+                        </div>
+                        <div id="modalText" class="col s10">
+                            <h4>Title</h4>
+                            <p>text</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="modalOk" class="modal-action modal-close waves-effect waves-light btn">
+                        <i class="material-icons left">check</i>
+                        <span>OK</span>
+                    </button>
+                    <button id="modalExit" class="modal-action modal-close waves-effect waves-light btn brown">
+                        <i class="material-icons left">close</i>
+                        <span>cancel</span>
+                    </button>
+                </div>
+            </div>
+            <div id="dialog-select-member" style="display:none"></div>
+            <div id="dialog-confirm" title="Question" style="display: none">
+                <p>
+                    <span id="dialog-confirm-icon" class="ui-icon ui-icon-circle-check" style="float: left; margin: 0 7px 50px 0;"></span>
+                    <span id="dialog-confirm-text" width="500px"></span>
+                </p>
+            </div>
+        </div>
 
     </div>
 
