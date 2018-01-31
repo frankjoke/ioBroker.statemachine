@@ -46,35 +46,5 @@
             "fa-icon": "fa-statemachine-circle"
         }
     },
-    "native": {
-        "nodes": [{
-            "id": 1,
-            "label": "Aus"
-        }, {
-            "id": 2,
-            "label": "Timer",
-            "shape": "box",
-            "connections": [
-                4,
-                2,
-                3
-            ]
-        }, {
-            "id": 3,
-            "label": "Ein",
-            "connections": [
-                4,
-                1
-            ]
-        }, {
-            "id": 4,
-            "shape": "star",
-            "size": 40,
-            "connections": [
-                4,
-                1
-            ]
-        }]
-    },
     "objects": []
 }

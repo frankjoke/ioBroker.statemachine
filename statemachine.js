@@ -65,8 +65,11 @@ adapter.on('ready', function () {
 });
 */
 function main() {
+    var v = 0;
     function tick() {
+        A.makeState('Event3',(v = 3-v));
         A.makeState('timer',''+new Date(),true);
     }
-    A.makeState("timer",''+new Date(),false).then(()=> setInterval(tick,60000));
+    tick();
+    setInterval(tick,60000);
 }

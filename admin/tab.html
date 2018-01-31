@@ -3,114 +3,40 @@
 
 <head>
     <meta charset='utf-8' />
-    <!--link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"-->
-    <link href="lib/fonts/micons/material-design-icons.css" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/default/jquery-ui.min.css" />
-    <link rel="stylesheet" type="text/css" href="../../lib/css/fancytree/ui.fancytree.min.css" />
+    <!--link href="lib/fonts/micons/material-design-icons.css" rel="stylesheet"-->
     <link rel="stylesheet" type="text/css" href="lib/css/materialize.css">
-    <!--link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css" /-->
-    <!--link rel="stylesheet" type="text/css" href="lib/css/jquery-ui.min.css" />
-    <!--link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.structure.min.css" />
-    <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.theme.min.css" /-->
-    <link rel="stylesheet" type="text/css" href="lib/css/vis.min.css" />
 
-    <script type="text/javascript" src="../../lib/js/jquery-1.11.2.min.js"></script>
-    <script type="text/javascript" src="../../lib/js/jquery-ui-1.11.4.full.min.js"></script>
-    <!--script type="text/javascript" src="../../lib/js/jquery-1.11.1.min.js"></script>
-    <script type="text/javascript" src="../../lib/js/jquery-ui.min.js"></script-->
-    <script type="text/javascript" src="../../lib/js/jquery.fancytree-all.min.js"></script>
+    <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
+    <!--script type="text/javascript" src="../../lib/js/jquery-1.11.2.min.js"></script-->
     <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
-    <!--script type="text/javascript" src="lib/js/jquery-ui.min.js"></script-->
-    <script type="text/javascript" src="lib/js/vis.min.js"></script>
-
     <script type="text/javascript" src="../../lib/js/translate.js"></script>
-    <script type="text/javascript" src="lib/js/materialize.js"></script>
-    <script type="text/javascript" src="../../lib/js/selectID.js"></script>
     <script type="text/javascript" src="../../lib/js/loStorage.js"></script>
-
+    <script type="text/javascript" src="lib/js/materialize.js"></script>
+    <script type="text/javascript" src="lib/js/jquery.treetable.js"></script>
     <script type="text/javascript" src="lib/js/words.js"></script>
 
     <style type="text/css">
-        xxhtml {
-            font-family: Arial, sans-serif;
+        @font-face {
+            font-family: "Material Icons";
+            font-style: normal;
+            font-weight: 400;
+            src: url("../../lib/fonts/material.woff2") format("woff2")
         }
 
-        xxbody,
-        xxselect {
-            font: 12pt sans;
-        }
-
-        #mynetwork {
-            box-sizing: border-box;
-            position: relative;
-            width: 100%;
-            height: 800px;
-            border: 2px solid lightgray;
-        }
-
-        #config {
-            float: left;
-            width: 400px;
-            height: 600px;
-        }
-
-        xxp {
-            font-size: 16px;
-            max-width: 700px;
-        }
-
-
-        xxtable.legend_table {
-            font-size: 11px;
-            border-width: 1px;
-            border-color: #d3d3d3;
-            border-style: solid;
-        }
-
-        xxtable.legend_table,
-        td {
-            border-width: 2px;
-            border-color: #d3d3d3;
-            border-style: solid;
-            padding: 2px;
-        }
-
-        xxdiv.table_content {
-            width: 80px;
-            text-align: center;
-        }
-
-        xxdiv.table_description {
-            width: 100px;
-        }
-
-        xx#operation {
-            font-size: 28px;
-        }
-
-        xxinput.text {
-            margin-bottom: 12px;
-            width: 95%;
-            padding: .4em;
-        }
-
-        xxfieldset {
-            padding: 0;
-            border: 0;
-            margin-top: 25px;
-        }
-
-        xxh1 {
-            margin: .6em 0;
-        }
-
-        xxlabel.text-label {
-            line-height: 2;
-            vertical-align: middle;
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-            font-size: 0.8em;
-            text-align: right;
+        .material-icons {
+            font-family: 'Material Icons';
+            font-weight: 400;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            /* -webkit-font-feature-settings: 'liga'; */
+            -webkit-font-smoothing: antialiased
         }
 
         button[disabled="disabled"] {
@@ -124,41 +50,215 @@
         .btn-small {
             height: 24px;
             line-height: 24px;
-            padding: 0 0.1rem;
+            padding: 0 0.2rem;
             font-size: 0.7rem;
+        }
+
+        .btn-small i {
+            font-size: 1rem;
+            line-height: 24px;
+        }
+
+        .btn-floating.btn-small {
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            padding: 0;
         }
 
         .w100 {
             width: 100%;
         }
+
+        /* .chips .input { */
+
+        /* width: 200px !important;  */
+
+        /* } */
+
+        .clear,
+        .clear-10,
+        .clear-15 {
+            clear: both;
+            height: 0;
+            overflow: hidden;
+            /* Précaution pour IE 7 */
+        }
+
+        .clear-10 {
+            margin-bottom: 10px
+        }
+
+        .clear-15 {
+            margin-bottom: 15px
+        }
+
+        .clear10 {
+            margin-bottom: 10px
+        }
+
+        .clear15 {
+            margin-bottom: 15px
+        }
+
+        .h3em {
+            height: 3em
+        }
+
+        .h2em {
+            height: 2em
+        }
+
+        .h4em {
+            height: 4em
+        }
+
+        #tab-events-content {
+            /* box-sizing: border-box; */
+            /* position: relative; */
+            /* width: 100%; */
+            /* height: 50vh; */
+            border: 2px solid lightgray;
+        }
+
+        .card-header {
+            font-size: 1.2rem;
+            font-weight: 400;
+        }
+
+        table.treetable span.indenter {
+            display: inline-block;
+            margin: 0;
+            padding: 0;
+            text-align: right;
+            /* Disable text selection of nodes (for better D&D UX) */
+            user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -o-user-select: none;
+            -webkit-user-select: none;
+            /* Force content-box box model for indenter (Bootstrap compatibility) */
+            -webkit-box-sizing: content-box;
+            -moz-box-sizing: content-box;
+            box-sizing: content-box;
+            width: 24px;
+        }
+
+        #debugLevel.browser-default {
+            height: 2.2em;
+            font-size: 0.8rem;
+        }
+
+        textarea.input-output {
+            font-family: 'DejaVu Sans Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        td,
+        th {
+            padding: 4px 3px;
+        }
+
+        td.ft {
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        td.fd {
+            font-size: 0.85rem;
+        }
+
+        td.ft.disabled {
+            color: grey;
+        }
+
+        td.state-value {
+            padding-right: 2em;
+        }
+
+        td a {
+            color: inherit;
+        }
+
+        table.treetable span.indenter a {
+            background-position: left center;
+            background-repeat: no-repeat;
+            display: inline-block;
+            text-decoration: none;
+            width: 24px;
+        }
+
+
+        table.treetable thead {
+            background: #aaa url(data:image/png;base64,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) repeat-x top left;
+            font-size: 1em;
+        }
+
+        table.treetable span.file {
+            background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAADoSURBVBgZBcExblNBGAbA2ceegTRBuIKOgiihSZNTcC5LUHAihNJR0kGKCDcYJY6D3/77MdOinTvzAgCw8ysThIvn/VojIyMjIyPP+bS1sUQIV2s95pBDDvmbP/mdkft83tpYguZq5Jh/OeaYh+yzy8hTHvNlaxNNczm+la9OTlar1UdA/+C2A4trRCnD3jS8BB1obq2Gk6GU6QbQAS4BUaYSQAf4bhhKKTFdAzrAOwAxEUAH+KEM01SY3gM6wBsEAQB0gJ+maZoC3gI6iPYaAIBJsiRmHU0AALOeFC3aK2cWAACUXe7+AwO0lc9eTHYTAAAAAElFTkSuQmCC);
+        }
+
+        table.treetable span.folder {
+            background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAGrSURBVDjLxZO7ihRBFIa/6u0ZW7GHBUV0UQQTZzd3QdhMQxOfwMRXEANBMNQX0MzAzFAwEzHwARbNFDdwEd31Mj3X7a6uOr9BtzNjYjKBJ6nicP7v3KqcJFaxhBVtZUAK8OHlld2st7Xl3DJPVONP+zEUV4HqL5UDYHr5xvuQAjgl/Qs7TzvOOVAjxjlC+ePSwe6DfbVegLVuT4r14eTr6zvA8xSAoBLzx6pvj4l+DZIezuVkG9fY2H7YRQIMZIBwycmzH1/s3F8AapfIPNF3kQk7+kw9PWBy+IZOdg5Ug3mkAATy/t0usovzGeCUWTjCz0B+Sj0ekfdvkZ3abBv+U4GaCtJ1iEm6ANQJ6fEzrG/engcKw/wXQvEKxSEKQxRGKE7Izt+DSiwBJMUSm71rguMYhQKrBygOIRStf4TiFFRBvbRGKiQLWP29yRSHKBTtfdBmHs0BUpgvtgF4yRFR+NUKi0XZcYjCeCG2smkzLAHkbRBmP0/Uk26O5YnUActBp1GsAI+S5nRJJJal5K1aAMrq0d6Tm9uI6zjyf75dAe6tx/SsWeD//o2/Ab6IH3/h25pOAAAAAElFTkSuQmCC);
+        }
+
+        table.treetable tr.collapsed span.indenter a {
+            background-image: url(data:image/png;base64,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);
+        }
+
+        table.treetable tr.expanded span.indenter a {
+            background-image: url(data:image/png;base64,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);
+        }
+
+        table.treetable tr span.indenter a {
+            outline: none;
+            /* Expander shows outline after upgrading to 3.0 (#141) */
+        }
+
+        table.treetable tr.collapsed.selected span.indenter a {
+            background-image: url(data:image/png;base64,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);
+        }
+
+        table.treetable tr.expanded.selected span.indenter a {
+            background-image: url(data:image/png;base64,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);
+        }
+
+        table.treetable tr.accept {
+            background-color: #a3bce4;
+            color: #fff
+        }
+
+        #tree tbody {
+            display: block;
+            height: 50vh;
+            overflow: auto;
+        }
+
+        #tree thead,
+        #tree tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        #tree thead {
+            width: calc( 100% - 1em);
+        }
+
+        #tree {
+            width: 100%;
+        }
+
+        table.treetable tr.collapsed.accept td span.indenter a {
+            background-image: url(data:image/x-png;base64,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);
+        }
+
+        table.treetable tr.expanded.accept td span.indenter a {
+            background-image: url(data:image/x-png;base64,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);
+        }
     </style>
 
     <script type="text/javascript">
-        //            font-weight: bold;
-        //                        font: bold 12pt sans;
-        //            display: block;
-        //            height: 18px;
-        //            line-height: 18px;
-        //        const socket = io.connect();
-        var systemLang = 'en';
-        var systemConfig = {};
-        var adapterConfig = {};
-        var uptimeMap = {};
-        var dateOptions = {
-            "weekday": "short",
-            "year": "numeric",
-            "month": "long",
-            "day": "2-digit",
-            "hour": "2-digit",
-            "minute": "2-digit",
-            "second": "2-digit"
-        };
-        var installMsg = {};
-        var cmdCallback = null;
-        var activeCmdId = null;
-        var $stdout = $('#stdout');
-        var stdout = '';
-
         //--------------------------------------------------------- COMMONS -----------------------------------------------------------------------
         /** 
          * Translate word
@@ -177,598 +277,65 @@
 
             return text;
         }
-        var nodes = null;
-        var edges = null;
-        var network = null;
-        // randomly create some nodes and edges
 
-        var nodes = [{
-                machine: 'test',
-                label: 'Aus',
-                connections: [
-                    "test.Ein"
-                ]
-            },
-            {
-                label: '@=1m',
-                machine: 'test',
-                connections: [
-                    "test.Aus"
-                ]
-            },
-            {
-                machine: 'test',
-                label: 'Ein',
-                connections: [
-                    "test.Aus"
-                ]
-            },
-            {
-                machine: 'test',
-                label: 'test',
-                connections: [
-                    "test.Aus",
-                    "test.Ein",
-                    "test.@"
-                ]
-            },
-            {
-                machine: 'rest',
-                label: 'Aus',
-                connections: []
-            },
-            {
-                machine: 'rest',
-                label: 'rest',
-                connections: [
-                    "rest.Aus"
-                ]
-            },
-        ];
-
-        // create connections between people
-        // value corresponds with the amount of contact between two people
-        var data;
-        var options = {
-            physics: {
-                enabled: true,
-                stabilization: false,
-                barnesHut: {
-                    gravitationalConstant: -20000,
-                    centralGravity: 2,
-                    damping: 0.5,
-                    springLength: 225,
-                    avoidOverlap: 0.8
-                    //                        springLength: 180
-                },
-            },
-            locales: {
-                de: {
-                    edit: 'Edit',
-                    del: 'Lösche Auswahl',
-                    back: 'Zurück',
-                    addNode: 'State hinzufügen',
-                    addEdge: 'Übergang hinzufügen',
-                    editNode: 'Edit State',
-                    editEdge: 'Edit Übergang',
-                    addDescription: 'Auf freien Platz klicken um State zu positionieren!',
-                    edgeDescription: 'Klicke auf von-State und ziehe Cursor zu auf-State',
-                    editEdgeDescription: 'Click on the control points and drag them to a node to connect to it.',
-                    createEdgeError: 'Kann keine Übergänge auf Cluster einfügen!',
-                    deleteClusterError: 'Clusters können hier nicht gelöscht werden!',
-                    editClusterError: 'Clusters können hier nicht editiert werden!'
-                }
-            },
-            interaction: {
-                hover: true,
-                navigationButtons: true,
-                selectConnectedEdges: false,
-                tooltipDelay: 250
-            },
-            configure: false,
-            nodes: {
-                borderWidth: 2,
-                borderWidthSelected: 10,
-                color: createColor(),
-                font: {
-                    size: 20,
-                    face: "verdana",
-                    strokeWidth: 2
-                },
-                scaling: {
-                    min: 5,
-                    //                    max: null
-                },
-                shadow: {
-                    enabled: true
-                },
-                shapeProperties: {
-                    borderRadius: 10
-                },
-                size: 20
-            },
-            edges: {
-                arrowStrikethrough: false,
-                arrows: {
-                    to: {
-                        enabled: true,
-                    }
-                },
-                color: {
-                    inherit: false
-                },
-                font: {
-                    color: "rgba(15,52,21,1)"
-                },
-                selfReferenceSize: 35,
-                shadow: {
-                    enabled: true
-                },
-                smooth: {
-                    forceDirection: "none",
-                    roundness: 0.75
-                }
-            },
-            layout: {
-                randomSeed: 2
-            }, // just to make sure the layout is the same when the locale is changed
-            manipulation: {
-                enabled: false,
-                initiallyActive: false,
-                //                deleteNode: stDeleteNode,
-                //                addEdge: saveEdgeData
-            }
-        };
-        var network, container, $exportArea, importButton, exportButton, selection;
-
-        function exportNetwork() {
-            network.storePositions();
-            setExport("");
-            //            var nodes = objectToArray(network.getPositions());
-            var nodes = [];
-            data.nodes.forEach(function (el) {
-                var elem = cloneObject(el);
-                delete elem.color;
-                delete elem.font;
-                delete elem.size;
-                delete elem.name;
-                delete elem.shape;
-                var conns = network.getConnectedNodes(elem.id, 'to');
-                var edges = network.getConnectedEdges(elem.id);
-                var conns = [];
-                edges.forEach(function (eid) {
-                    var e = cloneObject(data.edges.get(eid));
-                    var f = e.from;
-                    delete e.from;
-                    delete e.machine;
-                    delete e.label;
-                    delete e.id;
-                    if (f == elem.id) {
-                        k = Object.keys(e);
-                        if (k.length == 1 && k[0] == 'to')
-                            e = e[k];
-                        conns.push(e);
-                    }
-                });
-                elem.connections = conns;
-                delete elem.id;
-                nodes.push(elem);
-            });
-            setExport(JSON.stringify(nodes, undefined, 2));
+        function ownKeys(obj) {
+            return typeof obj == 'object' ? Object.keys(obj).filter(function (k) {
+                return obj.hasOwnProperty(k);
+            }).sort() : [];
         }
 
-        function setExport(text) {
-            $exportArea.val(text);
+
+        function cloneObject(obj) {
+            return JSON.parse(JSON.stringify(obj));
+        }
+
+
+        function showHide(sel, value) { //value = true = enabled
+            if (typeof sel == 'string')
+                sel = $(sel);
+            if (!value)
+                sel.hide();
+            else
+                sel.show();
+        }
+
+        function newClick(sel, fun) {
+            if (typeof sel === 'string')
+                sel = $(sel);
+            sel.unbind('click');
+            if (typeof fun == 'function')
+                sel.click(fun)
+            return sel;
+        }
+
+        // randomly create some nodes and edges
+        // create connections between people
+        // value corresponds with the amount of contact between two people
+        var data, container, $exportArea, selection;
+
+        function exportNetwork() {
+            $exportArea.val(JSON.stringify(createConfig(), undefined, 2));
             $exportArea.trigger('autoresize');;
         }
 
         function importNetwork() {
             var inputData = JSON.parse($exportArea.val());
             if (Array.isArray(inputData) && inputData.length > 0) {}
-            data = createData(inputData);
-            draw({
-                manipulation: options.manipulation
-            });
+            // TODO: refresh table
         }
 
-        function destroy() {
-            if (network !== null) {
-                network.destroy();
-                network = null;
-            }
-        }
-
-        function createColor(background, border, node) {
-            node = node || {};
-            border = border || (node.color ? node.color.border : false) || 'blue';
-            background = background || (node.color ? node.color.background : false) || 'lightblue';
-            node.color = {
-                border: border,
-                background: background,
-                highlight: {
-                    border: border,
-                    background: background
-                },
-                hover: {
-                    border: border,
-                    background: background
-                }
-            };
-            return node.color;
-        }
-
-        function decorateNode(n) {
-            var l = n.label.trim();
-            n.machine = n.machine.trim();
-            if (n.machine == l) {
-                n.color = createColor('pink');
-                n.shape = 'star';
-                n.name = '*';
-                n.font = {
-                    size: 30
-                };
-                n.size = 30;
-                n.id = l;
-            } else if (l.startsWith('@')) {
-                n.color = createColor('yellow');
-                //                    var m = n.label.match(/^(\@.?)\=/)[1];
-                var m = l.match(/^@(.?)\s*=\s*(.+)$/);
-                n.shape = 'box';
-                n.name = "@" + m[1] ? m[1] : '';
-                n.timer = m[2];
-            } else {
-                n.name = n.label;
-            }
-            if (!n.id)
-                n.id = n.machine + (n.machine == l ? '' : '.' + n.name);
-
-        }
-
-        function createData(nodes) {
-
-            function getLabel(node) {
-                if (!node)
-                    return 'N/A';
-                if (node.label && node.label != ' ' && node.machine != node.label)
-                    return node.label;
-                if (node.machine == node.label)
-                    return '*';
-                return '!' + node.id;
-            }
-            const data = {},
-                ln = {},
-                edges = [],
-                nn = [];
-            for (let n of nodes) {
-                var node = cloneObject(n);
-                node.name = node.label.startsWith('@') ? node.label.match(/^(@.?)\=/)[1] : node.label == node.machine ?
-                    '*' : node.label;
-                node.id = node.machine;
-                if (node.machine != node.label)
-                    node.id += '.' + node.name;
-                ln[node.id] = node;
-            }
-            for (let k in ln) {
-                var n = ln[k];
-                if (n && n.connections)
-                    for (let c of n.connections) {
-                        if (typeof c === 'object') {
-                            edges.push(c);
-                        } else {
-                            const fn = ln[n.id];
-                            const cn = ln[c];
-                            let l = getLabel(fn) + '>' + getLabel(cn);
-                            const edge = {
-                                from: n.id,
-                                to: cn.id,
-                                label: l,
-                                id: fn.machine + ':' + l,
-                                machine: fn.machine
-                            };
-                            edges.push(edge);
-                        }
-                    }
-                decorateNode(n);
-                nn.push(n);
-            }
-            data.nodes = new vis.DataSet(nn);
-            data.nodes.on('*', function (event, properties, senderId) {
-                addEvent({
-                    prop: properties.items[0],
-                    node: data.nodes.get(properties.items[0])
-                }, 'Node changed');
-            });
-            data.edges = new vis.DataSet(edges);
-            data.edges.on('*', function (event, properties, senderId) {
-                addEvent({
-                    prop: properties.items[0],
-                    edge: data.edges.get(properties.items[0])
-                }, 'Edge changed');
-            });
-            return data;
-        }
-
-        var events = [];
+        var displayEvents = [];
 
         function addEvent(obj, type) {
-            if (events.length > 4)
-                events.pop();
-            events.unshift('<h6>' + type + ' event:' + new Date().toISOString() + '</h6>' + JSON.stringify(obj, null, 4));
-            var s = '';
-            events.forEach(function (x) {
-                s += x;
-            });
-            document.getElementById('eventSpan').innerHTML = s;
+            if (displayEvents.length > 4)
+                displayEvents.pop();
+            var ne = $('#eventSpan').text(JSON.stringify(obj, null, 4)).html();
+            displayEvents.unshift('<h6>' + type + ' event:' + new Date().toISOString() + '</h6><code>' + ne + '</code>');
+            $('#eventSpan').html(displayEvents.join('\n'));
         }
 
-        function draw(opt) {
-            destroy();
-            network = new vis.Network(container, data, opt || options);
-            network.on("configChange", function () {
-                // this will immediately fix the height of the configuration
-                // wrapper to prevent unecessary scrolls in chrome.
-                // see https://github.com/almende/vis/issues/1568
-                var div = container.getElementsByClassName('vis-configuration-wrapper')[0];
-                div.style["height"] = div.getBoundingClientRect().height + "px";
-            });
 
-            //            network.on('zoom', function (params) {
-            //                addEvent({
-            //                    scale: params.scale
-            //                }, 'Zoom ' + params.direction);
-            //            });
 
-            network.once('stabilized', function () {
-                network.setOptions({
-                    physics: {
-                        stabilization: {
-                            fit: false
-                        }
-                    }
-                });
-                network.stabilize();
-            });
-            clusterPositions = {};
-            network.on("select", function (params) {
-                params = getParams(params);
-                if (params.edge) {
-                    var edge = params.edge;
-                    params.isstar = edge.from == edge.machine;
-                    selection = edge;
-                    prepareMenu();
-                    addEvent(params, "Select Edge");
-                } else if (params.cluster) {
-                    params.machine = params.id.split(':')[1];
-                    params.label = params.machine;
-                    selection = params;
-                    prepareMenu();
-                    addEvent(params, "Select Cluster");
-                } else if (params.node) {
-                    var node = params.node;
-                    selection = node;
-                    params.isstar = node.label == node.machine;
-                    prepareMenu();
-                    addEvent(params, params.isstar ? 'Select Machine' : 'Select State');
-
-                } // cannot get there....
-            });
-            setExport("");
-        }
-
-        function prepareMenu() {
-            if (selection) {
-                Materialize.Toast.removeAll();
-                if (selection.id.split(':').length > 1) { // this is an edge! or an cluster
-                    if (selection.id.startsWith('cluster:')) { // cluster selected
-                        fromNode = null;
-                        $tabMachineName.val(curMachine = selection.machine).prop('disabled', true);
-                        $tabStateName.val(curState = '').prop('disabled', true);
-                        $tabEdgeName.val(curEdge = '').prop('disabled', true);
-                        enableDisableChange('#clusterButton', 'Open Machine', 'expand_less');
-                        enableDisable(['#deleteButton', '#renameButton', '#createStateButton', '#createLinkButton'],
-                            false);
-                    } else { // edge selected
-                        fromNode = null;
-                        $tabMachineName.val(curMachine = selection.machine).prop('disabled', true);
-                        $tabStateName.val(curState = '').prop('disabled', true);
-                        $tabEdgeName.val(curEdge = selection.id).prop('disabled', true);
-                        enableDisableChange('#deleteButton', selection.id.indexOf('*') + 1 ? null : 'Delete Link');
-                        enableDisable(['#renameButton', '#createLinkButton'], false);
-                        enableDisableChange('#createStateButton', 'Create State');
-                        enableDisableChange('#clusterButton', 'Cluster Machine', 'expand_more');
-                    }
-                } else { // node selectedThis is 
-                    $tabMachineName.val(curMachine = selection.machine).prop('disabled', true);
-                    $tabEdgeName.val(curEdge = '').prop('disabled', true);
-                    if (selection.label != selection.machine) { // a state
-                        if (fromNode) {
-                            enableDisableChange('#createLinkButton', 'Cancel Create Link');
-                            var ok = false,
-                                edge = {
-                                    from: fromNode,
-                                    to: selection.id
-                                };
-                            if (edge.from == edge.to && !confirm("Do you want to connect the node to itself?"))
-                                ok = null;
-
-                            var nf = data.nodes.get(edge.from);
-                            var nt = data.nodes.get(edge.to);
-                            if (nf.machine != nt.machine)
-                                showError(
-                                    `cannot connect states from different machines! "${nf.machine}" and "${nt.machine}"`
-                                );
-                            else if (nf.name.startsWith('@') && network.getConnectedNodes(nf.id, 'to').length > 0)
-                                showError(`cannot connect more than ONE state to timer-states like "${nf.id}"!`);
-                            else if (network.getConnectedNodes(nf.id, 'to').indexOf(nt.id) >= 0)
-                                showError(
-                                    `cannot connect more than ONE time to the SAME state:"${nf.id}" > "${nt.id}"!`);
-                            else ok = ok !== null;
-                            if (network)
-                                network.unselectAll();
-                            if (ok) {
-                                edge.machine = nf.machine;
-                                edge.label = nf.name + '>' + nt.name;
-                                edge.id = edge.machine + ':' + edge.label;
-                                data.edges.add(edge);
-                                selection = fromNode = null;
-                                prepareMenu();
-                            } else
-                                showMessage('Please select the target State!');
-                        } else {
-                            $tabStateName.val(curState = selection.label).prop('disabled', true);
-                            enableDisableChange('#deleteButton', getMachineStates(selection.machine).length > 2 ?
-                                'Delete State' : null);
-                            enableDisableChange('#renameButton', 'Rename State');
-                            enableDisableChange('#createStateButton', 'Create State');
-                            enableDisableChange('#createLinkButton', getMachineStates(selection.machine).length < 3 ?
-                                undefined : 'Create Link');
-                            enableDisableChange('#clusterButton', 'Cluster Machine', 'expand_more');
-                        }
-                    } else { // a machine
-                        if (fromNode) {
-                            fromNode = null;
-                            showError(`cannot connect states to Machines ('Stars'/*)!`);
-                        }
-                        $tabStateName.val(curState = '').prop('disabled', true);
-                        enableDisableChange('#deleteButton', 'Delete Machine');
-                        enableDisableChange('#renameButton', 'Rename Machine');
-                        enableDisableChange('#createStateButton', 'Create State');
-                        enableDisableChange('#createLinkButton');
-                        enableDisableChange('#clusterButton', 'Cluster Machine', 'expand_more');
-                    }
-                }
-            } else {
-                fromNode = null;
-                if (network)
-                    network.unselectAll();
-                enableDisable(['#deleteButton', '#renameButton', '#createLinkButton', '#clusterButton'], false);
-                enableDisableChange('#createStateButton', 'Create State');
-                $tabMachineName.val(curMachine = '').prop('disabled', true);
-                $tabStateName.val(curState = '').prop('disabled', true);
-                $tabEdgeName.val(curEdge = '').prop('disabled', true);
-            }
-        }
-
-        function cloneObject(obj) {
-            return JSON.parse(JSON.stringify(obj));
-        }
-
-        function getParams(par) {
-            var params = cloneObject(par);
-            var n = params.nodes;
-            var e = [];
-            delete params.pointer;
-            delete params.event;
-            params.edges.forEach(function (edge) {
-                e.push(data.edges.get(edge))
-            });
-            if (n.length === 0 && e.length === 1) {
-                params.id = params.edges[0];
-                params.edge = e[0];
-            } else
-                params.edges = e;
-
-            var nid = n.length == 1 && n[0];
-            if (nid) {
-                params.id = nid;
-                var node = data.nodes.get(nid);
-                if (node) {
-                    var cn = cloneObject(node);
-                    delete cn.color;
-                    delete cn.font;
-                    params.node = cn;
-                } else if (network.isCluster(nid))
-                    params.cluster = network.getNodesInCluster(nid);
-            }
-            if (typeof params.to === 'object')
-                params.to = params.to.id
-            if (typeof params.from === 'object')
-                params.from = params.from.id
-            return params;
-        }
-
-        function getMachineStates(machine) {
-            return data.nodes.get({
-                filter: function (item) {
-                    return (item.machine == machine);
-                }
-            });
-        }
-
-        function createToast(string, icon) {
-            var $toastContent = $((icon ? '<i class="medium material-icons">' + icon + '</i>&nbsp;&nbsp;' : '') +
-                '<span><b>' + string + '</b></span>')
-            //                .add($('<button class="btn-flat toast-action">OK</button>'))
-            ;
-            Materialize.toast($toastContent, 5000, (icon == 'error' ? 'red' : 'blue') + ' rounded');
-        }
-
-        function showError(string) {
-            createToast(string, 'error');
-        }
-
-        function showMessage(string) {
-            createToast(string, 'announcement');
-        }
-
-        function saveEdgeData(edge, callback) {
-            if (edge.from == edge.to) {
-                var r = confirm("Do you want to connect the node to itself?");
-                if (r != true)
-                    return callback(null);
-            }
-
-            if (typeof edge.to === 'object')
-                edge.to = edge.to.id
-            if (typeof edge.from === 'object')
-                edge.from = edge.from.id
-            var nf = data.nodes.get(edge.from);
-            var nt = data.nodes.get(edge.to);
-
-            if (nf.machine != nt.machine)
-                return showError(`cannot connect states from different machines! "${nf.machine}" and "${nt.machine}"`,
-                    callback());
-
-            if (nt.label == nt.machine || nf.label == nf.machine) // this are '*' states!
-                return showError(`cannot connect states to Machines ('Stars'/*)!`, callback());
-
-            if (nf.name.startsWith('@') && network.getConnectedNodes(nf.id, 'to').length > 0)
-                return showError(`cannot connect more than ONE state to timer-states like "${nf.id}"!`, callback());
-
-            if (network.getConnectedNodes(nf.id, 'to').indexOf(nt.id) >= 0)
-                return showError(`cannot connect more than ONE time to the SAME state:"${nf.id}" > "${nt.id}"!`,
-                    callback());
-
-            edge.machine = nf.machine;
-            edge.label = nf.name + '>' + nt.name;
-            edge.id = edge.machine + ':' + edge.label;
-            //            clearEdgePopUp();
-            callback(edge);
-        }
-
-        function changeOptions() {
-            //            var div = container.getElementsByClassName('vis-configuration-wrapper')[0];
-            options.configure = !options.configure;
-            network.setOptions({
-                configure: options.configure
-            });
-            //            div.style["height"] = options.configure ? div.getBoundingClientRect().height + "px" : '1px';            
-            //            draw();
-        }
-
-        function stDeleteNode(params, callback) {
-            var node = data.nodes.get(params.nodes[0]);
-            if (!node)
-                return;
-            if (node.name == '*')
-                return showError("Cannot delete '*'- (Machine-) States,\nyou need to delete machine!", callback());
-            else if (getMachineStates(node.machine).length <= 2)
-                return showError("Cannot delete last state from lachine,\nyou need to delete machhine!", callback());
-
-            confirmMessage(`Do you really want to delete ${node.label}`, 'Delete Nopde', function (ok) {
-                callback(ok ? params : null);
-            });
-        }
         var dialogMessage, $dialogConfirm, firstConnect = true,
             that = this;
 
@@ -777,6 +344,8 @@
             states: {},
             mstate: {},
             sstate: {},
+            icons: {},
+            svalues: {},
             currentId: null,
             currentHost: '',
             hosts: [],
@@ -785,61 +354,46 @@
             changed: false,
             objectsLoaded: false,
             waitForRestart: false,
-            selectId: null,
             connectCb: null,
+            changed: false,
             socket: io.connect(),
+            systemLang: 'en',
+            adapterConfig: {},
+            adapterConfigId: 'system.adapter.statemachine.0',
 
             //            socket: io.connect(location.protocol + '//' + location.host, {
             //                query: 'ws=true'
             //            }),
-            saveConfig: function (attr, value) {
-                if (!main.config) return;
-                if (attr) main.config[attr] = value;
-
-                if (typeof storage !== 'undefined') {
-                    storage.set('adminConfig', JSON.stringify(main.config));
-                }
-            },
-            initSelectId: function () {
-                if (main.selectId) return main.selectId;
-                main.selectId = $('#dialog-select-member').selectId('init', {
-                    objects: main.objects,
-                    states: main.states,
-                    noMultiselect: true,
-                    imgPath: '../../lib/css/fancytree/',
-                    filter: {
-                        type: 'state'
-                    },
-                    texts: {
-                        select: _('Select'),
-                        cancel: _('Cancel'),
-                        all: _('All'),
-                        id: _('ID'),
-                        name: _('Name'),
-                        role: _('Role'),
-                        room: _('Room'),
-                        value: _('Value'),
-                        selectid: _('Select ID'),
-                        from: _('From'),
-                        lc: _('Last changed'),
-                        ts: _('Time stamp'),
-                        wait: _('Processing...'),
-                        ack: _('Acknowledged')
-                    },
-                    columns: ['image', 'name', 'role', 'room', 'value']
+            saveConfig: function () {
+                main.adapterConfig = createConfig();
+                var cconf = main.objects[main.adapterConfigId];
+                cconf.native = main.adapterConfig;
+                //                main.objectChange(main.adapterConfigId, cconf);
+                main.socket.emit('setObject', main.adapterConfigId, cconf, function (err) {
+                    if (err) {
+                        showError(err);
+                        //                        that.init(true);
+                    }
                 });
-                return main.selectId;
+                main.oldconfig = createConfig(true);
+                main.changed = false;
+                showMessage('Saved Adapter config which restarted the machines!');
             },
             addSState: function addSState(obj, id) {
-                if (obj.type === 'state') {
+                if (obj.type === 'state' && !id.startsWith('system.adapter.')) {
                     var n = obj.common.name;
+                    //                    var i = {id: id, icon: main.icons['system.adapter.'+split]};
                     if (!main.mstate[n]) {
                         if (main.sstate[n]) {
+                            main.sstate[id] = id;
                             main.mstate[n] = [id];
                             delete main.sstate[n];
                         } else
                             main.sstate[n] = id;
-                    } else main.mstate[n].push(id);
+                    } else {
+                        main.mstate[n].push(id);
+                        main.sstate[id] = id;
+                    }
                 }
 
             },
@@ -855,46 +409,36 @@
                         type: main.objects[id].type
                     };
                     delete main.objects[id];
-                    if (oldObj.type === 'instance') {
-                        var pos = main.instances.indexOf(id);
-                        if (pos !== -1) main.instances.splice(pos, 1);
-                    } else if (oldObj.type === 'script') {
-                        var pos = main.instances.indexOf(id);
-                        if (pos !== -1) main.instances.splice(pos, 1);
-                    } else if (id.match(/^script\.js\./) && oldObj.type === 'channel') {
-                        var pos = main.instances.indexOf(id);
-                        if (pos !== -1) main.instances.splice(pos, 1);
+                    if (id.match(/^system\.adapter\.[-\w]+\.[0-9]+$/)) { /// TODO
+                        // Disable statemachine tab if no one script engine instance found
+                        //                    var engines = main.fillEngines();
+                        //                    $('#tabs').tabs('option', 'disabled', (engines && engines.length) ? [] : [4]);
                     }
                 }
-
-                if (main.selectId) main.selectId.selectId('object', id, obj);
-
-                if (id.match(/^system\.adapter\.[-\w]+\.[0-9]+$/)) { /// TODO
-                    // Disable statemachine tab if no one script engine instance found
-                    //                    var engines = main.fillEngines();
-                    //                    $('#tabs').tabs('option', 'disabled', (engines && engines.length) ? [] : [4]);
-                }
-
-                addEvent(obj, `Object Change of ${id}`);
+                addEvent(obj, `Object Change:${id}`);
             },
             stateChange: function (id, state) {
+                var os = cloneObject(main.states[id] || {});
                 var s = {
-                    ostate: main.states[id] || {},
+                    ostate: os,
                     nstate: cloneObject(state),
                 };
-                for (var k of Object.keys(state))
-                    if (s.ostate[k] == s.nstate[k])
+                for (var k of ownKeys(state))
+                    if (k == 'ts' || s.ostate[k] == s.nstate[k]) {
                         delete s.nstate[k];
+                        delete s.ostate[k];
+                    }
                 state.lc = s.nstate.lc = s.ostate.ts;
-                if (!id.match(/^system\./)) {
+                if (JSON.stringify(s.ostate) != JSON.stringify(s.nstate) && !id.match(/^system\./)) {
                     addEvent(s, `State change of ${id}`);
                     /// TODO: check machine states to display them!
                 }
                 //id = id ? id.replace(/[\s'"]/g, '_') : ''; /// TODO - do not know what it does!
                 //if (!id || !id.match(/\.messagebox$/)) {
-                //    if (main.selectId) main.selectId.selectId('state', id, state);
                 //}
                 main.states[id] = state;
+                if (main.svalues[id])
+                    $(`span[s-v="${id}"`).html(getValue(id, true));
             },
             getStates: function (callback) {
                 main.socket.emit('getStates', function (err, res) {
@@ -913,6 +457,11 @@
 
                             obj = res[id];
                             main.addSState(obj, id);
+                            var an = obj._id.split('.')[2];
+                            if (obj.common && obj.common.icon)
+                                main.icons[id] = '/adapter/' + id.split('.')[0] + obj.common.icon;
+                            if (an && obj.type == "adapter")
+                                main.icons[an] = '/adapter/' + an + '/' + obj.common.icon;
                             if (obj.type === 'instance') main.instances.push(id);
                             //                        if (obj.type === 'channel' && id.match(/^script\.js\./)) main.groups.push(id);
                             if (obj.type === 'host') main.hosts.push(id);
@@ -931,29 +480,32 @@
              * @param {type} callback
              */
             readInstanceConfig: function (callback) {
-                systemConfig = main.objects['system.config'];
-                addEvent(systemConfig, "System Config");
-                if (systemConfig && systemConfig.common) {
-                    systemLang = systemConfig.common.language;
+                main.systemConfig = main.objects['system.config'];
+                addEvent(main.systemConfig, "System Config");
+                if (main.systemConfig && main.systemConfig.common) {
+                    main.systemLang = main.systemConfig.common.language;
                 } else {
-                    systemLang = window.navigator.userLanguage || window.navigator.language;
+                    main.systemLang = window.navigator.userLanguage || window.navigator.language;
 
-                    if (systemLang !== 'en' && systemLang !== 'de' && systemLang !== 'ru') {
-                        systemConfig.common.language = 'en';
-                        systemLang = 'en';
-                    }
+                    //                    if (main.systemLang !== 'en' && main.systemLang !== 'de' && main.systemLang !== 'ru') {
+                    //                        main.systemConfig.common.language = 'en';
+                    //                        main.systemLang = 'en';
+                    //                    }
                 }
-                adapterConfig = main.objects['system.adapter.statemachine.0'];
-                if (adapterConfig && adapterConfig.native)
-                    adapterConfig = adapterConfig.native;
+                main.adapterConfig = main.objects[main.adapterConfigId];
+                if (main.adapterConfig && main.adapterConfig.native)
+                    main.adapterConfig = main.adapterConfig.native;
                 else
-                    adapterConfig = null;
+                    main.adapterConfig = null;
+
                 addEvent({
-                    adapterConfig: adapterConfig,
+                    adapterConfig: main.adapterConfig,
                     language: systemLang,
-                    states: Object.keys(main.states).length,
-                    objects: Object.keys(main.objects).length,
-                    hosts: Object.keys(main.hosts).length,
+                    states: ownKeys(main.states).length,
+                    objects: ownKeys(main.objects).length,
+                    hosts: ownKeys(main.hosts).length,
+                    mstates: ownKeys(main.mstate).length,
+                    sstates: ownKeys(main.sstate).length,
                 }, "Adapter Config")
                 if (typeof callback === 'function') {
                     callback();
@@ -1036,35 +588,74 @@
             }
         };
 
-        main.init(function () {
-            options.locale = systemLang;
-            data = createData(nodes);
-            draw();
-        });
+        var modalOpts = {
+            dismissible: true, // Modal can be dismissed by clicking outside of the modal
+            opacity: .5, // Opacity of modal background
+            inDuration: 100, // Transition in duration
+            outDuration: 100, // Transition out duration
+            startingTop: '5%', // Starting top style attribute
+            endingTop: '10%', // Ending top style attribute
+            ready: function (modal) {
+                var f = modal.find('.input-modal-field');
+                if (f.first() && f.first()[0] && f.first()[0].nodeName == 'DIV')
+                    f = f.find('.select-dropdown');
+                f.focus();
+            },
 
-        window.onbeforeunload = function (evt) {
-            if (main.changed) {
-                if (window.confirm(_('Script changes are not saved. Discard?'))) {
-                    return null;
-                } else {
-                    return _('Configuration not saved.');
-                }
-            }
-            return null;
+            complete: function modalComplete($m) {
+                if (!$m) return;
+                var fun = $m.data('callback');
+                if (typeof fun == 'function')
+                    fun($m.data('OK'));
+            },
         };
+
+        function createToast(string, icon, time) {
+            var $toastContent = $((icon ? '<i class="medium material-icons">' + icon + '</i>&nbsp;&nbsp;' : '') +
+                '<span><b>' + string + '</b></span>')
+            //                .add($('<button class="btn-flat toast-action">OK</button>'))
+            ;
+            Materialize.toast($toastContent, time || icon == "error" ? 5000 : 3000, (icon == 'error' ? 'red darken-4' :
+                'blue darken-4') + ' rounded');
+        }
+
+        function showError(string) {
+            createToast(string, 'error');
+        }
+
+        function showMessage(string) {
+            createToast(string, 'announcement');
+        }
 
         function enableDisable(sel, value) { //value = true = enabled
             if (Array.isArray(sel))
                 return sel.forEach(function (id) {
                     enableDisable(id, value);
                 })
+            else if (typeof sel == 'string')
+                sel = $(sel);
+            sel.toggleClass('disabled', !value);
+            return sel;
+        }
 
-            var $sel = $(sel);
-            if (value)
-                $sel.removeClass('disabled');
-            else
-                $sel.addClass('disabled');
-            //            .prop('disabled', !value);
+        function disEn(sel, val) {
+            if (sel && sel[0]) {
+                switch (sel[0].nodeName) {
+                    case 'BUTTON':
+                        enableDisable(sel, val);
+                        break;
+                    case 'DIV':
+                        if (val)
+                            sel.show();
+                        else
+                            sel.hide();
+                        break;
+
+                        //                        sel.prop('disabled', !val);
+                    default:
+                        break;
+                }
+            }
         }
 
         function enableDisableChange(sel, text, icon) { //value = true = enabled
@@ -1072,49 +663,253 @@
                 return sel.forEach(function (id) {
                     enableDisableChange(id, text, icon);
                 })
+            else if (typeof sel == 'string')
+                sel = $(sel);
 
-            var $sel = $(sel);
-            var ch = $sel.children();
-            var t = $sel.data('mytype');
+            var ch = sel.children();
+            var t = sel.data('mytype');
+            if (!text)
+                text = '';
             if (t) {
-                $sel.removeClass(t);
-                $sel.data('mytype', null);
+                sel.removeClass(t);
+                sel.data('mytype', null);
             }
             if (text) {
                 var m = text.match(/^\s*\(([\w\s*]+)\)\s*(.*)\s*$/);
                 if (m) {
-                    $sel.data('mytype', m[1])
-                    $sel.addClass(m[1]);
+                    sel.data('mytype', m[1])
+                    sel.addClass(m[1]);
                     text = m[2];
                 }
-                $sel.removeClass('disabled');
+                disEn(sel, true);
                 if (ch.length > 1)
                     ch[1].innerHTML = text;
             }
             if (icon && ch.length > 0)
                 ch[0].innerHTML = icon;
-            if (!text && !icon)
-                $sel.addClass('disabled');
-            else
-                $sel.removeClass('disabled');
-            //            .prop('disabled', !value);
+            disEn(sel, text || icon);
         }
 
         function changeButtonText(sel, text, icon) {
-            var ch = $(sel).children();
+            if (typeof sel == 'string')
+                sel = $(sel);
+            var ch = sel.children();
             if (icon)
                 ch[0].innerHTML = icon;
             if (text && ch.length > 1)
                 ch[1].innerHTML = text;
         }
 
-        function showHide(sel, value) { //value = true = enabled
-            var $sel = $(sel);
-            if (!value)
-                $sel.hide();
-            else
-                $sel.show();
-            //            $(sel).prop('disabled',!value);
+        var $idModal, $idData, $idModalOk, $treeId, noSystem = true,
+            ids;
+
+        function getWidths($sel) {
+            if (typeof $sel === 'string')
+                $sel = $($sel);
+            var w = [];
+            $sel.find('thead tr th').each(function () {
+                w.push($(this).prop('width'));
+            });
+            return w;
+        }
+
+        function createIdTree() {
+            var wi = [];
+
+            function createIds() {
+                function count(x) {
+                    var c = 0;
+                    for (var i of ownKeys(x)) {
+                        if (i == '_$id$_') {
+                            ++c;
+                            continue;
+                        }
+                        if (count(x[i]))
+                            ++c;
+                        else
+                            delete x[i];
+                    }
+                    return c;
+                }
+
+                ids = {};
+                for (var id of ownKeys(main.objects).sort()) {
+                    var ida = id.split('.');
+                    if (ida[0] !== 'system' || !noSystem) {
+                        if (/^\d+$/.test(ida[1])) {
+                            ida.splice(0, 2, ida[0] + '.' + ida[1]);
+                        }
+                        var st = main.states[id];
+                        if (st) {
+                            var idx = ids;
+                            while (ida.length > 0) {
+                                var e0 = ida.shift();
+                                if (!idx[e0])
+                                    idx[e0] = {};
+                                ldx = idx;
+                                idx = idx[e0];
+                            }
+                            idx._$id$_ = id;
+                        }
+                    }
+                    //                idx._$o_ = main.objects[id];
+                }
+
+                count(ids);
+                return ids;
+            }
+
+            function createEntry(parent, ids) {
+                var html = '';
+                for (var idn of ownKeys(ids))
+                    if (idn != '_$id$_') {
+                        var idc = parent + (parent ? '.' : '') + idn;
+                        var wic = 0;
+                        html +=
+                            `<tr data-tt-id="${idc}"${parent ? ' data-tt-parent-id="' + parent +'"' : ''}><td class="ft" width="${wi[wic++]}">&nbsp;${idn}</td>`;
+                        if (ids[idn]._$id$_) {
+                            var o = main.objects[ids[idn]._$id$_];
+                            var s = main.states[ids[idn]._$id$_];
+                            if (o && s) {
+                                for (var x of [o.common.name, o.common.type, o.common.role])
+                                    html += `<td class="fd" width="${wi[wic++]}">${x}</td>`
+                                html +=
+                                    `<td class="state-value fd right-align" width="${wi[wic++]}" data-tt-id="${idc}"></td>`;
+                            }
+                        }
+                        html += '</tr>\n';
+                        html += createEntry(idc, ids[idn]);
+                    }
+                return html;
+            }
+            ids = ids || createIds();
+
+            if (!$idModal) {
+                $idModal = $('#id-modal').modal(modalOpts);
+
+                $idData = $('#table-id-data');
+                $idModalOk = $('#modalIdOk');
+                $treeId = $('#tree-id');
+                wi = getWidths($treeId);
+                $idData.html(createEntry('', ids));
+                $treeId.treetable({
+                    expandable: true,
+                    initialState: "collapsed", // collapsed or expanded
+                    //                    _onNodeCollapse: function () {
+                    //                        var node = this;
+                    //                    table.treetable("unloadBranch", node);
+                    //                    },
+                    indent: 24,
+                    stringCollapse: "Collapse",
+                    stringExpand: "Expand",
+                    onNodeExpand: function (mynode) {
+                        var node = this.id;
+                        if (!this.parentId) {
+                            $idData.find('.expanded').each(function (i) {
+                                var id = $(this).data('ttId');
+                                if (id && !$(this).data('ttParentId') && node != id)
+                                    $treeId.treetable('collapseNode', id);
+                            });
+                        }
+                    }
+                });
+                $idModalOk.mousedown(function () {
+                    $idModal.data('OK', $idModal.data('OK') ? $idModal.data('OK') : $idModal.data('OKS'));
+                });
+                $idData.find('tr').mousedown(function (event) {
+                    $idData.find("tr.selected").removeClass("selected blue lighten-4");
+                    if ($(this).children().length > 2) {
+                        $idModal.data('OKS', $(this).data('ttId'));
+                        $(this).addClass("selected blue lighten-4");
+                    } else {
+                        $idModal.data('OKS', '');
+                        if (event.target.nodeName == "A")
+                            return true;
+                        if ($(this).hasClass('expanded'))
+                            $treeId.treetable("collapseNode", $(this).data("ttId"));
+                        else
+                            $treeId.treetable("expandNode", $(this).data("ttId"));
+
+                    }
+                });
+                $idData.find('tr').dblclick(function () {
+                    if ($(this).children().length > 2) {
+                        $idModal.data('OK', $(this).data('ttId'));
+                        $idModalOk.click();
+                    } else $idModal.data('OKS', '');
+                });
+            }
+            $idModal.data('OK', '');
+            $idModal.data('OKS', '');
+            $idData.find("tr.selected").removeClass("selected blue lighten-4");
+            $idData.find('td.state-value').each(function () {
+                var id = $(this).data('ttId');
+                var t = getValue(id, true);
+                if (typeof t === 'string')
+                    $(this).html(`<span s-v= "${id}">${t}</span>`);
+                /*                
+                                if (main.states[id]) {
+                                    if (t.length <= 50)
+                                        $(this).text(t);
+                                    else {
+                                        $(this).text(t);
+                                        var escaped = $(this).html().replace(/"/g, '&quot;');
+                                        $(this).html(`<a href="#!" title="${escaped}">${t.slice(0,30) + '...'}</a>`);
+                                    }
+                                }
+                */
+            });
+        }
+
+        function getValue(id, html) {
+            var s = main.states[id];
+            if (!s)
+                return null;
+            main.svalues[id] = true;
+            var t = '' + s.val;
+            var c = main.objects[id].common;
+            if (c) {
+                if (c.states && c.type == 'number')
+                    c.states.split(';').forEach(function (i) {
+                        var ss = i.split(':');
+                        if (ss[0] == s.val)
+                            t = ss[1];
+                    });
+                if (c.unit)
+                    t += ' ' + c.unit;
+            }
+            if (html) {
+                var newSpan = document.createElement('span');
+                newSpan.innerText = t;
+                var escaped = newSpan.innerHTML.replace(/"/g, '&quot;');
+                if (t.length > 50)
+                    t =
+                    `<a href="#!" title="${escaped}">${newSpan.innerHTML.slice(0,30).replace(/"/g, '&quot;') + '...'}</a>`;
+                else
+                    t = escaped;
+
+            }
+            return t;
+        }
+
+        function getOpt(obj, id) {
+            return obj && obj[id];
+        }
+
+        function setOpt(obj, id, val) {
+            if (obj && id) {
+                if (val === false || val === undefined)
+                    delete obj[id];
+                else
+                    obj[id] = val;
+            }
+        }
+
+        function showIdModal(cb) {
+            createIdTree();
+            $idModal.data('callback', cb);
+            $idModal.data('OK', false);
+            $idModal.modal('open');
         }
 
         function showModal(o) {
@@ -1142,7 +937,72 @@
                 $('#modalExit').show();
             }
             $('#dialog-modal').data('callback', o.callback);
+            $('#dialog-modal').data('OK', false);
             $('#dialog-modal').modal('open');
+        }
+
+        function showInputModal(o, fun) {
+            if (typeof fun != 'function')
+                fun = null;
+
+            function ix(t, i) {
+                return $('#input-modal-' + t + i);
+            }
+            var $t = $('#input-modal');
+            $t.find('select').material_select('destroy');
+            if (typeof o === 'string') {
+                var a = o.split('|');
+                o = {};
+                o.title = a[0];
+                o.text = a[1];
+                o.button = a[2];
+                o.fields = a.slice(3);
+            }
+            $('#input-modal-title').text(o.title || "Please enter");
+            $('#input-modal-text').text(o.text || "");
+            $('#input-modal-button').text(o.button || "OK");
+            if (typeof o.fields === 'string')
+                o.fields = [o.fields.split('|')]
+            else if (!Array.isArray(o.fields) && typeof o.fields == 'object')
+                o.fields = [
+                    [o.fields.name, o.fields.icon, o.fields.value]
+                ]
+            else if (Array.isArray(o.fields) && !Array.isArray(o.fields[0]))
+                o.fields = [o.fields];
+            else if (!Array.isArray(o.fields))
+                o.fields = [
+                    ["Name", 'create', '']
+                ];
+            var html = '';
+            for (var i = 0; i < 3 && i < o.fields.length; i++) {
+                var ii = o.fields[i];
+                var ip = '' + (i + 1);
+                if (typeof ii[2] === 'string')
+                    html +=
+                    `<div class=" row"><div class="col s2"><i class="material-icons prefix right">${ii[1]}</i></div><div class="col s10">
+                            <input type="text" placeholder=" " class="input-modal-field" id="input-modal-field${ip}" value="${ii[2]}"><label for="input-modal-field${ip}" class="active">${ii[0]}</label>
+                                </div></div>`;
+                else if (Array.isArray(ii[2])) {
+                    var h =
+                        `<div class=" row"><div class="col s2"><i class="material-icons prefix right">${ii[1]}</i></div><div class="input-field col s10">
+                        <select id="input-modal-field${ip}" class="input-modal-field" ><option value="" disabled selected>Choose your option</option>`;
+                    for (var ij of ii[2])
+                        h += `<option value="${ij}">${ij}</option>`;
+                    html += h + `</select><label>${ii[0]}</label></div></div>`;
+                }
+            }
+            html = $('#input-modal-inputs').html(html);
+            newClick('#input-modal-button', function (event) {
+                $('#input-modal').data('OK', [$('#input-modal-field1').val(), $('#input-modal-field2').val(),
+                    $('#input-modal-field3').val()
+                ]);
+            });
+
+
+            html.find('select').material_select();
+            $t.data('callback', o.callback || fun);
+            $t.data('OK', null);
+            $t.modal('open');
         }
 
         function confirmMessage(message, title, icon, buttons, callback) {
@@ -1164,510 +1024,1629 @@
             });
         }
 
-        function fitMachine(machine) {
-            var nn = [],
-                nd = {
-                    nodes: getMachineStates(machine).forEach(function (n) {
-                        return nn.push(n.id);
-                    }),
-                    animation: {
-                        duration: 500
-                    }
-                }
-            network.fit(nn);
+        function createConfig(comp) {
+            function traverse(obj) {
+                var n = {};
+                ownKeys(obj).forEach(function (k) {
+                    var o = obj[k];
+                    if (typeof o === 'object')
+                        n[k] = traverse(o);
+                    else
+                        n[k] = cloneObject(o);
+                });
+                return n;
+            }
+
+            if (!comp)
+                return cloneObject(workTree);
+            var all = {};
+            all.debugLevel = parseInt(workTree.debugLevel);
+            all.folders = traverse(workTree.folders);
+            return JSON.stringify(all);
         }
 
-        var $tabMachineName, $tabStateName, $tabEdgeName, $okData, $cancelData, curMachine, curState, curEdge, curVar,
-            curEvent,fromNode;
-        $(function () {
-            container = document.getElementById('mynetwork');
-            $exportArea = $('#input_output');
-            importButton = document.getElementById('import_button');
-            exportButton = document.getElementById('export_button');
-            $('#dialog-modal').modal({
-                dismissible: true, // Modal can be dismissed by clicking outside of the modal
-                opacity: .5, // Opacity of modal background
-                inDuration: 200, // Transition in duration
-                outDuration: 200, // Transition out duration
-                startingTop: '5%', // Starting top style attribute
-                endingTop: '10%', // Ending top style attribute
-            });
+        var oldconf;
 
-            $('#modalOk').unbind('click').click(function (event) {
-                var fun = $('#dialog-modal').data('callback');
-                if (typeof fun == 'function')
-                    fun(event);
-            });
-            $('#dialog-edit-insert-id').click(function () {
-                var sid = main.initSelectId();
-                sid.selectId('show', function (newId) {
-                    showMessage(newId);
-                    //                    that.editorDialog.insert('"' + newId + '"' + ((that.main.objects[newId] && that.main.objects[newId].common && that.main.objects[newId].common.name) ? ('/*' + that.main.objects[newId].common.name + '*/') : ''));
-                    //                    that.editorDialog.focus();
-                });
-            });
+        function checkConfig() {
+            if (oldconf)
+                clearTimeout(oldconf);
+            oldconf = setTimeout(function () {
+                var now = createConfig(true);
+                oldconf = null;
+                if (!main.oldconfig)
+                    main.oldconfig = now;
+                main.changed = (main.oldconfig != now);
+                enableDisable(['#saveButton', '#reloadButton'], main.changed);
+            }, 100);
 
-            $okData = $('#okData');
-            $cancelData = $('#cancelData');
-            enableDisable('button.ok-cancel', false);
-            $cancelData.unbind('click').click(function (e) {
-                enableDisable('button.ok-cancel', false);
-                $tabMachineName.prop('disabled', true);
-                $tabStateName.prop('disabled', true);
-                $tabEdgeName.prop('disabled', true);
-                fromNode = selection = null;
-                prepareMenu();
-            });
-            // Read all positions, selected widgets for every view,
-            // Selected view, selected menu page,
-            // Selected widget or view page
-            // Selected filter
-            if (typeof storage !== 'undefined') {
-                try {
-                    main.config = storage.get('adminConfig');
-                    if (main.config) {
-                        main.config = JSON.parse(main.config);
-                    } else {
-                        main.config = {};
-                    }
-                } catch (e) {
-                    console.log('Cannot load edit config');
-                    main.config = {};
-                }
-            } //            alert('Selection length:' + $("#node-popUp").length + ', ' + $("#nodepopUp").length+ ', ' + $("#nodePopUp").length)
-            $tabMachineName = $('#tab-machine-name').prop('disabled', true).unbind('change').change(function () {
-                curMachine = $(this).val();
-            });
-            $tabStateName = $('#tab-state-name').prop('disabled', true).unbind('change').change(function () {
-                curState = $(this).val();
-            });
-            $tabEdgeName = $('#tab-edge-name').prop('disabled', true).unbind('change').change(function () {
-                curEdge = $(this).val();
-            });
-            $('#tab-physics').prop('checked', options.physics.enabled).unbind('change').change(function () {
-                options.physics.enabled = this.checked;
-                network.setOptions({
-                    physics: {
-                        enabled: options.physics.enabled
-                    }
-                });
-                $('#tab-physics-label').html('Physics ' + (this.checked ? 'enabled' : 'disabled'));
-                if (this.checked)
-                    network.startSimulation();
-                else network.stopSimulation();
-            });
-            $('#importButton').unbind('click').click(function (event) {
-                importNetwork();
-            });
-            $('#exportButton').unbind('click').click(function (event) {
-                exportNetwork();
-            });
-            $('#destroyButton').unbind('click').click(function (event) {
-                destroy();
-            });
-            prepareMenu();
-            $('#createLinkButton').unbind('click').click(function (event) {
-                if (fromNode) {
-                    enableDisable('#createLinkButton', false);
-                    fitMachine(data.nodes.get(fromNode).machine);
-                    selection = fromNode = null;
-                    network.unselectAll();
-                    Materialize.Toast.removeAll();
-                    enableDisableChange('#createLinkButton', 'CreateLink');
-                    enableDisable('#createLinkButton', false);
-                    prepareMenu();
-                } else if (selection) {
-                    fromNode = selection.id;
-                    network.unselectAll();
-                    enableDisableChange('#createLinkButton', '(red)Cancel Link');
-                    showMessage('Please select the target State!');
-                }
-            });
-            $('#deleteButton').unbind('click').click(function (event) {
-                if (selection) {
-                    var title = "Delete ";
-                    var message = 'Do you really want to delete ';
-                    var mend = "</b> ?";
-                    if (selection.id.match(/.+\:.+\>.+/)) { // edge
-                        confirmMessage(message + 'transition <b>' + selection.id + mend, title +
-                            'Transition', 'ask',
-                            function (e) {
-                                data.edges.remove(selection.id);
-                                selection = null;
-                                prepareMenu();
-                            });
-                    } else if (selection.id == selection.machine) {
-                        confirmMessage(message + 'machine <b>' + selection.id + mend, title + 'Machine',
-                            'ask',
-                            function (e) {
-                                getMachineStates(selection.id).forEach(function (n) {
-                                    network.getConnectedEdges(n).forEach(function (e) {
-                                        data.edges.remove(e);
-                                    });
-                                    data.nodes.remove(n);
-                                });
-                                data.nodes.remove();
-                                selection = null;
-                                prepareMenu();
-                            });
-                    } else {
-                        confirmMessage(message + 'state <b>' + selection.id + mend, title + 'State',
-                            'ask',
-                            function (e) {
-                                network.getConnectedEdges(selection.id).forEach(function (e) {
-                                    data.edges.remove(e);
-                                });
-                                data.nodes.remove(selection.id);
-                                selection = null;
-                                prepareMenu();
-                            });
-                    }
-                }
-            });
-            $('#createStateButton').unbind('click').click(function (event) {
-                event.preventDefault();
-                $tabMachineName.prop('disabled', false);
-                $tabStateName.prop('disabled', false);
-                enableDisable('button.ok-cancel', true);
-                enableDisable(['#deleteButton', '#renameButton', '#createLinkButton', '#clusterButton','#createStateButton'], false);
-                $tabStateName.val(curState = 'newState');
-                if (! curMachine || curMachine=='')
-                    $tabMachineName.val(curMachine = 'newMachine');
-                $okData.unbind('click').click(function (event) {
-                    function verify(item, text, regexp, max) {
-                        var v = item.val();
-                        var r = typeof regexp === 'number' ? v.length >= regexp && (typeof max ===
-                            'number' ?
-                            v.length <= max :
-                            true) : regexp.test(v);
-                        if (r)
-                            return true;
-                        showMessage(text);
-                    }
-                    var ok = true;
-                    ok = ok && verify($tabMachineName, "Länge muss zwischen 3 und 20 sein",
-                        3, 20);
-                    ok = ok && verify($tabMachineName,
-                        "Text darf nur '$_A-Za-z0-9' enthalten",
-                        /^\s*[$\w]+\s*$/);
-                    ok = ok && verify($tabStateName, "Länge muss zwischen 3 und 20 sein", 3,
-                        20);
-                    ok = ok && verify($tabStateName,
-                        "Text darf nur '$_A-Za-z0-9' enthalten oder @(x)=(*h)(*m)(*s)",
-                        /^\s*([$\w]+|@(.?)\s*=\s*(.+?))\s*$/);
-                    network.unselectAll();
-                    fromNode = selection = null;
-                    if (ok) {
-                        //                        var m = $tabMachineName.val().trim();
-                        //                        var l = $tabStateName.val().trim();
-                        //                        var match = l.match(/^@(.?)\s*=\s*(.+)$/);
-                        var node = {
-                            machine: $tabMachineName.val().trim(),
-                            label: $tabStateName.val().trim()
-                        };
-                        decorateNode(node);
-                        if (data.nodes.get(node.id))
-                            return showError(
-                                `A state with this name exist already and cannot be added multiple times!`
-                            );
-                        var pos = network.getPositions(),
-                            y = Number.POSITIVE_INFINITY,
-                            x = Number.NEGATIVE_INFINITY;
-                        Object.keys(pos).forEach(function (k) {
-                            var p = pos[k];
-                            y = Math.min(y, p.y);
-                            x = Math.max(x, p.x);
-                        });
-                        node.x = x * 0.8;
-                        node.y = y * 0.8;
-                        data.nodes.add(node);
-                        var nst = cloneObject(data.nodes.get(node.id));
-                        var p = pos[nst.id];
-                        if (p) {
-                            nst.x = p.x;
-                            nst.y = p.y;
-                        }
-                        if (!data.nodes.get(nst.machine)) {
-                            nst.label = nst.machine;
-                            decorateNode(nst);
-                            data.nodes.add(nst);
-                        } else
-                            nst = data.nodes.get(nst.machine);
+        }
 
-                        var conn = network.getConnectedNodes(nst.id, 'to');
-                        if (conn.indexOf(node.id) < 0) {
-                            var edge = {
-                                to: node.id,
-                                from: nst.id,
-                                machine: nst.machine,
-                                label: nst.name + '>' + node.name
-                            };
-                            edge.id = edge.machine + ':' + edge.label;
-                            data.edges.add(edge);
-                        }
-                        fitMachine(node.machine);
-                        $cancelData.click();
-                    }
-                });
-            });
-            $('#changeOptions').unbind('click').click(function (event) {
-                options.configure = !options.configure;
-                network.setOptions({
-                    configure: options.configure
-                });
-            });
-            $('#clusterButton').unbind('click').click(function (event) {
-                var nid = selection.id;
-                if (network.isCluster(nid)) {
-                    network.openCluster(nid, {
-                        releaseFunction: function (clusterPosition, containedNodesPositions) {
-                            var newPositions = {};
-                            for (nodeId in containedNodesPositions)
-                                newPositions[nodeId] = {
-                                    x: containedNodesPositions[nodeId].x,
-                                    y: containedNodesPositions[nodeId].y
-                                };
-                            return newPositions;
-                        }
-                    });
-                    var m = nid.split(':')[1];
-                    data.edges.forEach(function (edge) {
-                        data.edges.update(edge);
-                    }, {
-                        filter: function (item) {
-                            return item.machine == m;
-                        }
-                    });
-                } else {
-                    var machine = data.nodes.get(nid);
-                    if (!machine) return;
-                    machine = machine.machine;
-                    clusterOptionsByData = {
-                        joinCondition: function (childOptions) {
-                            return childOptions.machine == machine;
+        function makeIcon(icon, title, color) {
+            return `<a class="t-button btn-floating btn-small waves-effect waves-light ${color} lighten-2" title="${title}"><i class="material-icons">${icon}</i></a>&nbsp;`;
+        }
+
+
+        var curMachine, curState, curEdge, curVar, curFolder = '',
+            $table, $debugLevel, curId, curPar, curChip,
+            curEvent, fromNode;
+
+        const icons = {
+                iconFolder: 'folder',
+                iconFolderAd: 'create_new_folder',
+                iconMachine: 'settings',
+                iconMachineAdd: 'settings_applications',
+                iconLink: 'insert_link',
+                iconState: 'location_searching',
+                iconStateAdd: 'my_location',
+                iconTimer: 'timer',
+                iconTimeout: 'timer_off',
+                iconEvent: 'flash_on',
+                iconEventAdd: 'flash_auto',
+                iconLinkAuto: 'call_split',
+                iconRename: 'edit',
+                iconDelete: 'delete',
+            },
+            fields = {
+                expanded: ' expanded',
+                type: ' type',
+                disabled: ' disabled',
+                timeout: ' timeout',
+                fire: ' fire',
+                onFire: ' onfire',
+                onEnter: ' onenter',
+                onExit: ' on exit'
+            },
+            regStateName = /^[$_A-Za-z][\-$\w]{1,19}$/,
+            regTimerName = /^(\d+w\s*)?(\d+d\s*)?(\d+h\s*)?(\d+m(?!s)\s*)?(\d+)?(m?s)?\s*$/,
+            regMachineName = /^[$_A-Za-z][\-$\w]{2,19}$/;
+        const txt = {
+                createFolder: 'Add Folder',
+                createMachine: 'Add Machine',
+                createLink: 'Add Link',
+                createTimer: 'Add Timer',
+                createState: 'Add State',
+                createEvent: 'Add Event',
+                rename: 'Rename Item',
+                delete: 'Delete Item',
+            },
+            testconfig = {
+                debugLevel: 2,
+                folders: {
+                    Folder1: {
+                        Machine1: {
+                            [fields.disabled]: true,
+                            State1: {
+                                "2m": {}
+                            },
+                            "2m": {
+                                [fields.timeout]: 'state1',
+                                "2m": {}
+                            },
                         },
-                        clusterNodeProperties: {
-                            id: 'cluster:' + machine,
-                            borderWidth: 3,
-                            shape: 'database',
-                            color: 'lightgreen',
-                            label: machine,
-                            font: {
-                                size: 30
-                            }
+                        Event1: {},
+                        Machine2: {
+                            [fields.disabled]: true,
+                            State1: {
+                                "2m": {}
+                            },
+                            "2m": {
+                                [fields.timeout]: 'State1',
+                                "2m": {}
+                            },
+                        },
+                        Event2: {
+                            [fields.disabled]: true,
                         }
-                    };
-                    network.storePositions();
-                    network.cluster(clusterOptionsByData);
+                    },
+                    "": {
+                        machine3: {
+                            State1: {
+                                "2m": {}
+                            },
+                            "2m": {
+                                [fields.timeout]: 'State1',
+                            },
+                        },
+                        Event3: {}
+                    }
                 }
-                selection = null;
+            };
+        var idList = {},
+            workTree, wi = [];
+
+
+        function setDebug(level) {
+            $('#debugLevel').val(workTree.debugLevel = parseInt(level));
+            checkConfig();
+        }
+
+        function pageInit(cb) {
+            main.init(function () {
+                //                options.locale = main.systemLang;
+                //            alert('Selection length:' + $("#node-popUp").length + ', ' + $("#nodepopUp").length+ ', ' + $("#nodePopUp").length)
+                workTree = cloneObject(main.adapterConfig);
+                if (cb && typeof cb === 'function')
+                    cb();
+            });
+
+            window.onbeforeunload = function (evt) {
+                if (main.changed) {
+                    if (window.confirm(_('Script changes are not saved. Discard?'))) {
+                        return null;
+                    } else {
+                        return _('Configuration not saved.');
+                    }
+                }
+                return null;
+            };
+
+            $table = $("#tree");
+
+            $('i[my-icon]').each(function (e) {
+                $(this).text(icons[$(this).attr('my-icon')]);
+            });
+
+            $exportArea = $('#input_output');
+            $('#dialog-modal').modal(modalOpts);
+            $('#input-modal').modal(modalOpts);
+            newClick('#modalOk', function (event) {
+                $('#dialog-modal').data('OK', true);
+            });
+            enableDisable('button.ok-cancel', false);
+            newClick('#cancelData', function (e) {
+                enableDisable('button.ok-cancel', false);
+                fromNode = null;
                 prepareMenu();
+            });
+
+            $debugLevel = $('#debugLevel').unbind('change').change(function () {
+                setDebug($(this).val());
+            });
+            $('#tab-events-content').show();
+            newClick('#importButton', importNetwork);
+            newClick('#exportButton', exportNetwork);
+            newClick('#saveButton', main.saveConfig);
+            newClick('#test1Button', function (event) {
+                //                createIdTree();
+                showIdModal(function (ok) {
+                    showMessage('modalId returned: ' + ok);
+                });
+                showInputTable('state');
+
+            });
+            newClick('#test2Button', function (event) {
+                showInputTable('event');
+
+                showInputModal({
+                    title: "test2",
+                    text: 'testText',
+                    button: 'Button',
+                    fields: [
+                        ["Whatever", "create", "Whatever Create "],
+                        ["Select", "ask", ["select", "create", "ask", "tast"]]
+                    ],
+                    callback: function (ok) {
+                        if (ok)
+                            setTimeout(showInputModal, 1000,
+                                `test3|test3Text:${ok}|Test3|Test3|cancel|test3`);
+                    }
+                });
+            });
+            newClick('#test3Button', function (event) {
+                addEvent(createConfig(), 'test1');
+                showInputTable('folder');
+            });
+            newClick('#test4Button', function (event) {
+                addEvent(createConfig(true), 'test1')
+                showInputTable('machine');
+            });
+            newClick('#reloadButton', function (event) {
+                confirmMessage('Do you really want to reaload before saving any changes?',
+                    'Reload config', 'alert',
+                    function (ok) {
+                        if (ok) {
+                            main.changed = false;
+                            window.location.reload();
+                        }
+                    });
+            });
+            $('select').material_select();
+            $('input.mach-val').unbind('input').bind('input', function (e) {
+                validateInput($(this));
+                e.target.checkValidity();
+                addEvent({
+                    val: e.target.validity
+                });
+            });
+            $('#input-folder-name').unbind('input').bind('input', function () {
+                validateInput($(this));
+                enableDisable('#input-folder-rename', curFolder != $(this).val());
+            });
+            $('#input-machine-name').unbind('input').bind('input', function () {
+                validateInput($(this));
+                enableDisable('#input-machine-rename', curMachine != $(this).val());
+            });
+            $('#input-event-name').unbind('input').bind('input', function () {
+                validateInput($(this));
+                enableDisable('#input-event-rename', curEvent != $(this).val());
+            });
+            showInputTable('none');
+            newClick('#folder-add', function (e) {
+                var ok = $('#input-folder').val();
+                if (ok) {
+                    if (!regMachineName.test(ok))
+                        showMessage('invalid name, please change $-_A-Za-z0-9 3-20 chars!');
+                    else if (idList[ok])
+                        showMessage('Name already used, please change!');
+                    else {
+                        addId(ok, null, icons.iconFolder);
+                        selectId(ok);
+                    }
+                }
+            });
+            newClick('#event-add', function (e) {
+                var ok = $('#input-event').val();
+                curFolder = $('#input-folder').val();
+                if (curFolder && (!idList[curFolder] || idList[curFolder][fields.type] != 'folder'))
+                    return showMessage(`Folder '${curFolder}' not existing!`);
+                var nid = curFolder ? curFolder + '.' + ok : ok;
+                if (!regMachineName.test(ok))
+                    showMessage('invalid name, please change $-_A-Za-z0-9 3-20 chars!');
+                else if (idList[nid])
+                    showMessage('Name already used, please change!');
+                else {
+                    addId(ok, curFolder, icons.iconEvent);
+                    selectId(nid);
+                }
+            });
+            newClick('#machine-add', function (e) {
+                var m = $('#input-machine').val();
+                curFolder = $('#input-folder').val();
+                if (curFolder && (!idList[curFolder] || idList[curFolder][fields.type] != 'folder'))
+                    return showMessage(`Folder '${curFolder}' not existing!`);
+                var nid = curFolder ? curFolder + '.' + m : m;
+                if (!regMachineName.test(m))
+                    showMessage('invalid name, please change $-_A-Za-z0-9 3-20 chars!');
+                else if (idList[nid])
+                    showMessage('Name already used, please change!');
+                else {
+                    var nm = {};
+                    addId(m, curFolder, icons.iconMachine, nm);
+                    nm.Off = {};
+                    addId('Off', nid, icons.iconState, nm.Off);
+                    selectId(nid);
+                }
+            })
+            newClick(
+                '#input-folder-remove,#input-machine-remove,#input-event-remove,#input-link-remove,#input-state-remove',
+                function () {
+                    setTimeout(doDelete, 30);
+                });
+            newClick('#input-timer-add', function () {
+                setTimeout(doCreateTimer, 30, '1m', curId);
+            });
+            newClick('#input-state-add', function () {
+                setTimeout(doCreateState, 30, 'new', curId);
+            });
+            newClick('#input-link-add,#input-autolink-add', function () {
+                setTimeout(doCreateLink, 30);
+            });
+            newClick($('div.table-interface').find('a.orange'), function () {
+                showMessage('Execute for ' + curId)
+            });
+            newClick('#tab-events-content thead tr', function () {
+                selectRow($(this));
+            });
+            newClick('#input-event-id', function () {
+                showIdModal(function (id) {
+                    if (id) {
+                        var n = main.objects[id] && main.objects[id].common && main.objects[id].common.name;
+                        if (n && main.sstate[n])
+                            id = n;
+                        $('#input-event-chips input').val(id).focus();
+                    }
+                });
+            });
+            newClick('#input-event-ack', function (e) {
+                update3check($(this), 1 + $(this).data('checked'));
+            }).data('checked', null).prop('indeterminate', false).prop('checked', false);
+            $('#div.event-timers').hide();
+        }
+
+        function update3check(el, val) {
+            if (val === undefined)
+                val = parseInt(el.data('checked'));
+            else val = val % 3;
+            switch (val) {
+                // unchecked, going indeterminate
+                case 1:
+                    el.prop('indeterminate', true);
+                    break;
+                    // indeterminate, going checked
+                case 2:
+                    el.prop('indeterminate', false);
+                    el.prop('checked', true);
+                    break;
+                    // checked, going unchecked
+                default:
+                    el.prop('indeterminate', false);
+                    el.prop('checked', false);
+                    val = 0;
+            }
+            el.data('checked', val);
+        }
+
+        var nameData;
+
+        function getNameData() {
+            if (nameData)
+                return nameData;
+            var ac = {};
+            for (var as in main.sstate) {
+                ac[as] = getIcon(as);
+            }
+            nameData = ac;
+            setTimeout(() => (namedata = null), 600000);
+            return nameData;
+        }
+
+        function makeChips($ic, data, auto) {
+            var opt = {
+                data: data,
+                placeholder: 'Enter an event',
+                secondaryPlaceholder: '+event',
+            };
+            if (auto)
+                opt.autocompleteOptions = {
+                    data: auto,
+                    limit: Infinity,
+                    minLength: 1
+                }
+
+            $ic.material_chip(opt);
+        }
+
+        function updateChips($ic, object, gotoId) {
+            var chips = $ic.material_chip('data').sort((a, b) => a.id - b.id);
+            if (object && gotoId)
+                object[gotoId] = chips.map(c => c.tag);
+            makeChips($ic, chips, getNameData());
+            setTimeout(checkConfig,10);
+        }
+
+        function offOn($s, e, fun) {
+            if (typeof $s === 'string')
+                $s = $($s);
+            return $s.off(e).on(e, fun);
+        }
+
+
+        function rebindEventData(inputArea, object) {
+            function selectChip(e, chip) {
+                chip = parseChip(chip);
+                if (!chip.oldTag)
+                    chip.oldTag = chip.tag;
+                if (chip.oldId === undefined)
+                    chip.oldId = chip.id;
+                $ia.data('parsed-chip', chip);
+                addEvent(chip, 'Chip.select');
+                setTimeout(updateEventInput, 20, $ia);
+                //                addEvent($ic.material_chip('data'), 'All chips');
+            }
+
+            var chips = object && object[fields.fire];
+            if (!chips)
+                chips = [];
+            var id = 0;
+            var data = chips.map(function (c) {
+                var p = parseChip(c);
+                p.id = id++;
+                return p;
+            });
+            var $ia = $(inputArea);
+            $ia.data('d-id', id);
+            var $ic = $ia.find('.chips');
+            makeChips($ic, data, getNameData());
+            offOn($ic.find('input'), 'input', function () {
+                var v = $(this).val();
+                var c = parseChip(v);
+                $ia.data('parsed-chip', c);
+                if (c) {
+                    addEvent(c, 'Chip...');
+                    setTimeout(updateEventInput, 20, $ia);
+                }
+            });
+            offOn($ic, 'chip.add', function (e, chip) {
+                chip.id = id++;
+                var c = parseChip(chip);
+                for (var i of ownKeys(c))
+                    chip[i] = c[i];
+                $ia.data('parsed-chip', c);
+                setTimeout(function () {
+                    updateChips($ic, object, fields.fire)
+                    //                    $ia.find('div.chip.selected').removeClass('selected');
+                    $ic.find('div.chip').last().addClass('selected');
+                    selectChip(e, chip);
+                }, 10);
+                addEvent(c, 'Chip.add');
+                return true;
+            });
+            offOn($ic, 'chip.delete', function (e, chip) {
+                addEvent(chip, 'Chip.Delete');
+                addEvent($ic.material_chip('data'), 'All chips');
+                $ia.data('parsed-chip', null);
+                updateChips($ic, object, fields.fire);
+            });
+            offOn($ic, 'chip.select', selectChip);
+            $ia.show();
+            offOn('#input-event-compare', 'change', function () {
+                var c = $ia.data('parsed-chip');
+                if (c) {
+                    c.check = $(this).val();
+                    //                addEvent(c,'compare changed');
+                    rebuildChip($ia, c);
+                }
+            });
+            offOn('#input-event-ack', 'change', function () {
+                var c = $ia.data('parsed-chip');
+                if (c) {
+                    var a = $(this).data('checked');
+                    a = ['', '/', '!'][a];
+                    c.ack = a || '';
+                    //                  addEvent(c,'ack changed');
+                    rebuildChip($ia, c);
+                }
+            });
+            offOn('#input-event-change', 'change', function () {
+                var c = $ia.data('parsed-chip');
+                if (c) {
+                    c.onchange = this.checked ? '~' : '';
+                    //                    addEvent(c,'onchange changed');
+                    rebuildChip($ia, c);
+                }
+            });
+            offOn('#input-event-with', 'input', function () {
+                var c = $ia.data('parsed-chip');
+                if (c) {
+                    c.test = $(this).val();
+                    addEvent(c, 'onchange changed');
+                    rebuildChip($ia, c);
+                }
+            });
+            offOn('#input-event-timers', 'input', function () {
+                validateInput($(this));
+                var v = $(this).val().trim();
+                if (v === '')
+                    v = '0';
+                var c = $ia.data('parsed-chip');
+                var n = parseChip(v);
+                if (n && c && n.timer != c.timer) {
+                    c.name = v;
+                    c.timer = n.timer;
+                    addEvent(c, 'onchange changed');
+                    $('#input-event-timer-data').text(c.timer);
+                    rebuildChip($ia, c);
+                }
+            });
+            updateEventInput($ia);
+        }
+
+        function getIcon(id) {
+            if (main.icons[id])
+                return main.icons[id];
+            if (main.sstate[id])
+                id = main.sstate[id];
+            if (main.icons[id])
+                return main.icons[id];
+            if (main.icons[id.split('.').slice(0, -1).join('.')])
+                return main.icons[id.split('.').slice(0, -1).join('.')];
+            id = id.split('.')[0];
+            if (main.icons[id])
+                return main.icons[id];
+            return null;
+        }
+
+        function rebuildChip($ia, c) {
+            var s = '';
+            if (c.name)
+                s = c.name;
+            else if (c.idn) {
+                s = c.ack + (c.onchange ? '~' : '') + c.idn;
+                if (c.check)
+                    s += '?' + c.check;
+                if (["", "-", "+"].indexOf(c.check) < 0)
+                    s += c.test ? c.test : '';
+                else
+                    delete c.test;
+            }
+            c.tag = s;
+            $ia.data('parsed-chip', c);
+            setTimeout(updateEventInput, 10, $ia);
+            $ia.find('.chips input').val(s);
+        }
+
+        function msValue(selector, value) {
+            selector.val(value);
+            selector.material_select();
+        }
+
+        function updateEventInput($ia) {
+            var c = $ia.data('parsed-chip');
+            var $ic = $ia.find('.chips');
+            $('#input-event-data .event-ids').hide();
+            $('#input-event-data .event-timers').hide();
+            if (c && (c.timer || c.schedule)) {
+                //                $('#input-event-data .event-ids').hide();
+                $('#input-event-data .event-timers').show();
+                $('#input-event-data .event-timers-every').hide();
+                $('#input-event-label-timer').text(c.schedule ? 'at cron:' : 'each:');
+                if (c.schedule) {
+                    function iCheck() {
+                        var s, a = [];
+                        $i.each(function () {
+                            var v = $(this).val().trim();
+                            //                           if (a.length<3 && !isNaN(parseInt(v)))
+                            //                               $(this).val(v = v <= 0 ? '00' : v>9 ? v : '0'+parseInt(v));
+                            a.push(v);
+                        });
+                        if ((a[3] === '*' || a[3] === '') && (a[4] === '*' || a[4] === '') && (a[5] === '*' || a[5] ===
+                                '')) {
+                            s = a[2] + ':' + a[1];
+                            if (a[0] != '' && a[0] != '0' && a[0] != '00')
+                                s += ':' + a[0]
+                        } else s = a.join(' ');
+                        $('#input-event-test').text('@ ' + s);
+                        //                        $ic.find('input').val(s);
+                    }
+                    var html = `<table><thead><tr><th>`;
+                    var sch = c.schedule.split(/\s+/);
+                    html += ['Seconds', 'Minutes', 'Hours', 'Day/Month', 'Day/Year', 'Day/Week'].join('</th><th>');
+                    html += `</th></tr></thead><tbody><tr>`;
+                    for (var i in sch) {
+                        var t = sch[i];
+                        if (i < 3 && parseInt(t) < 10)
+                            t = '0' + parseInt(t);
+                        html +=
+                            `<td><input type="text" class="scheduleinput${!t.match(
+                            /^((?:(?:[0-5]?\d)(?:[\-][0-5]?\d)?)(?:\,(?:[0-5]?\d)(?:[\-][0-5]?\d)?)*|\*)?(?:\/([0-3]?\d))?$/) ? ' invalid' : ''}" value="${t}"></td>`;
+                    }
+                    html += `</td></tr></tbody></table>`;
+                    var $i = $('#input-event-timer-data');
+                    $i.html(html);
+                    $i = $i.find('input');
+                    $i.on('input', function () {
+                        var $t = $(this);
+                        var v = $t.val().trim();
+                        $t.toggleClass('invalid', !v.match(
+                            /^((?:(?:[0-5]?\d)(?:[\-][0-5]?\d)?)(?:\,(?:[0-5]?\d)(?:[\-][0-5]?\d)?)*|\*)?(?:\/([0-3]?\d))?$/
+                        ));
+                        iCheck();
+                    });
+                    iCheck();
+                } else {
+                    $('#input-event-data .event-timers-every').show();
+                    $('#input-event-timer-data').text(c.timer);
+                    validateInput($('#input-event-timers').val(c.name));
+                }
+            } else if (c) {
+                //              $('#input-event-data .event-timers').hide();
+                $('#input-event-data .event-ids').show();
+                $('#input-event-change').prop('checked', c.onchange);
+                update3check($('#input-event-ack'), ["", "/", "!"].indexOf(c.ack));
+                var xd = c && c.idn && main.sstate[c.idn];
+                var cd = c && c.idn ? c.idn.trim() : '';
+                if (xd && xd != cd)
+                    cd += ' (' + xd + ')';
+                if (!cd)
+                    cd = '';
+                $('#input-event-test').text(cd);
+                //            $('#input-event-compare').select(c.check);
+                msValue($('#input-event-compare'), c.check);
+                $('#input-event-with').prop('disabled', ["", "-", "+"].indexOf(c.check) >= 0);
+                //            $('#input-event-compare').val(c.check).change();
+                $('#input-event-with').val(c.test);
+            }
+        }
+
+        function parseChip(name) { // timedistance
+            var c = {};
+            if (typeof name === 'object') {
+                c = cloneObject(name);
+                name = c.tag;
+            }
+            c.tag = name = name ? name.trim() : '';
+            var m; // evry xxx timer
+            if (m = name.match(/^(\d+w)?\s*(\d+d)?\s*(\d+h)?\s*(\d+m)?\s*(\d+s?)?$/)) {
+                var a = [];
+                var ts = 0;
+                for (var i = 1; i < 6; ++i) {
+                    var s = m[i];
+                    if (s) {
+                        if (s[s.length - 1] > '9')
+                            s = s.slice(0, -1);
+                        s = parseInt(s);
+                        ts += s * [0, 7 * 24 * 60 * 60, 24 * 60 * 60, 60 * 60, 60, 1][i];
+                        var ns = '' + s + ['', ' Week', ' Day', ' Hour', ' Minute', ' Second'][i];
+                        if (s)
+                            a.push(ns + (s > 1 ? 's' : ''));
+                    }
+                }
+                if (ts) {
+                    c.timer = a.join(', ');
+                    c.times = ts;
+                    c.name = name;
+                    c.image = 'lib/img/timer-icon-timelapse.png';
+                    return c;
+                }
+            } // time
+            if (m = name.match(/^([\d\-\*\,\/]+)\s*:\s*([\d\-\*\,\/]+)\s*(?::\s*([\d\-\*\,\/]+))?$/)) {
+                if (m[3] == undefined)
+                    m[3] = 0;
+                c.schedule = m[3] + ' ' + m[2] + ' ' + m[1] + ' * * *';
+                c.image = 'lib/img/schedule_24h.png';
+                c.name = name;
+                return c;
+            } // schedule
+            if (m = name.match(
+                    /^((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?\s*){5}((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?)?$/
+                )) {
+                c.schedule = (!m[2] ? '* ' : '') + name;
+                c.timer = name;
+                c.image = 'lib/img/timer-icon-schedule.png';
+                return c;
+            };
+            if (!(m = name.match( // id + verifier
+                    /^([\/\!]?)(~?)([^\?]+)(\?\+(?=\s*$)|\?\-(?=\s*$)|\?\=|\?\!=|\?\>\=|\?\>|\?\<|\?\<\=|\?\?|\?\^|\?\$|\?\#|$)\s*(.*)$/
+                )))
+                return null;
+            c.onchange = !!m[2];
+            c.ack = m[1];
+            c.idn = m[3];
+            c.image = getIcon(c.idn);
+            if (!c.image)
+                c.image = 'lib/img/flash.png';
+            if (m[5])
+                c.test = m[5];
+            c.check = m[4];
+            return c;
+        }
+
+        function showInputTable(name, obj) {
+            $('div.input-table').hide();
+            $('#input-table-' + name).show();
+            var show = [];
+            switch (name) {
+                case 'event':
+                    //                    rebindEventData('#input-event-data', obj && obj[fields.fire]);
+                    rebindEventData('#input-event-data', obj);
+
+                    break;
+                case 'link':
+                    rebindEventData('#input-event-data', obj);
+                    break;
+            }
+        }
+
+        function validateInput($this) {
+            if (typeof $this === 'string')
+                $this = $($this);
+            var nok = '';
+            var val = $this.val();
+            var c = $this.attr('minlength');
+            if (c && val.length < c)
+                nok = `input too short: you have ${val.length} out of minimal ${c}!`;
+            else {
+                c = $this.attr('maxlength');
+                if (c && val.length > c)
+                    nok = `input too long: you have ${val.length} out of maximal ${c}!`;
+                else {
+                    c = $this.attr('pattern');
+                    if (c && !(new RegExp(c)).test(val))
+                        nok = $this.attr('title') ? $this.attr('title') : 'Field must match pattern ' + c;
+                }
+            }
+            $this.next().attr('data-error', nok === true ? '' : nok);
+            $this.toggleClass('invalid', !!nok);
+        }
+
+        function makeTr(id, parent, name, icon, obj) {
+            idList[id] = obj;
+            var wic = 0;
+            var disabled = obj && obj[fields.disabled];
+            var type;
+            var html =
+                `<tr data-tt-id="${id}"${parent ? ' data-tt-parent-id="' + parent +'"' : ''}><td  class="ft ${disabled ? ' disabled' : ''}" width="${wi[wic++]}"><span><i class="material-icons tiny right">${icon}</i>&nbsp;${name}</span>&nbsp;&nbsp;</td>`;
+            html +=
+                `<td class="fd" width="${wi[wic++]}">${id}</td><td class="fd" width="${wi[wic++]}">`
+            if ([icons.iconMachine, icons.iconFolder, icons.iconEvent].indexOf(icon) >= 0)
+                //                        html += `<span><input type="checkbox" id="d-${id}" ${disabled ? '' : 'checked="checked"'}/><label for="d-${id}">Enabled</label></span>`;
+                html +=
+                `<div class="switch left"><label>Off<input class="is-disabled" type="checkbox" ${disabled ? '' : 'checked="checked"'}><span class="lever"></span>On</label></div>`;
+            html += '&nbsp;';
+            if ([icons.iconMachine, icons.iconEvent].indexOf(icon) >= 0)
+                html +=
+                `<span s-v="${'statemachine.0.'+id}" class="right">${getValue('statemachine.0.'+id,true)}</span>`;
+
+            html += '</td></tr>\n';
+            return html;
+        }
+
+        function createFolderTree(complete) {
+            function traverseConfig(id, name, parent, icon, obj) {
+                var items = ownKeys(obj).sort();
+                var hasitems = items.length > 0 && !items[items.length - 1].startsWith(' ');
+                var id = id || name;
+                //                    var nparent = (parent ? parent + '-' : '') + name;
+                var nicon = icons.iconMachine;
+                var timer = (items.indexOf(fields.timeout) >= 0) ? obj[fields.timeout] : '';
+                var type;
+                switch (icon) {
+                    case icons.iconLink:
+                        type = 'link';
+                        nicon = null;
+                        break;
+                    case icons.iconLinkAuto:
+                        type = 'link'
+                        nicon = null;
+                        break;
+                    case icons.iconFolder:
+                        type = 'folder';
+                        break;
+                    case icons.iconMachine:
+                        icon = hasitems ? icons.iconMachine : icons.iconEvent;
+                        type = hasitems ? 'machine' : 'event';
+                        nicon = icons.iconState;
+                        break;
+                    case icons.iconState:
+                        if (timer) {
+                            icon = icons.iconTimer;
+                            type = 'timer';
+                        } else
+                            type = 'state';
+                        nicon = icons.iconLink;
+                        break;
+                    default:
+                        nicon = null;
+                        break;
+                }
+                if (obj && type && !obj[type])
+                    obj[fields.type] = type;
+                if (name)
+                    html += makeTr(id, parent, name, icon, obj);
+                if (!nicon)
+                    return;
+                items.forEach(function (k) {
+                    if (k.startsWith(' '))
+                        return;
+                    nobj = obj[k];
+                    if (typeof nobj === 'object')
+                        traverseConfig(id ? id + '.' + k : k, k, id, nicon, nobj);
+                });
+            }
+
+            if (!workTree.folders)
+                workTree.folders = cloneObject(testconfig.folders);
+            setDebug(workTree.debugLevel);
+
+            var html = '';
+            wi = getWidths('#tree');
+            ownKeys(workTree.folders).forEach(function (m) {
+                traverseConfig('', m, '', icons.iconFolder, workTree.folders[m]);
+            });
+            $('#table-data').html(html);
+            $table.treetable({
+                expandable: true,
+                onNodeExpand: function () {
+                    checkConfig();
+                },
+                onNodeCollapse: function () {
+                    checkConfig();
+                },
+                indent: 24,
+                stringCollapse: "Collapse",
+                stringExpand: "Expand",
+            }, true);
+
+            function autoexpand(obj, id) {
+                if (getOpt(obj, fields.expanded))
+                    $table.treetable("expandNode", id);
+                ownKeys(obj).forEach(function (k) {
+                    autoexpand(obj[k], id ? id + '.' + k : k);
+                });
+
+            }
+            autoexpand(workTree.folders, '');
+            // Highlight selected row
+            rebindTableCommands();
+            var idt = {}
+            $('[id]').each(function () {
+                id = $(this).prop('id');
+                idt[id] = (idt[id] || 0) + 1;
+                if (idt[id] > 1)
+                    console.log(id);
+            });
+        }
+
+        function isAnyChanged(str, disable) {
+            var ch = false;
+            for (var i of str.split('|'))
+                ch = ch || isChanged(i);
+            if (disable)
+                enableDisable(disable, ch);
+        }
+
+        function isChanged($sel) {
+            if (typeof $sel === 'string')
+                $sel = $($sel);
+            var o = $sel.data('old');
+            var n = $sel.val();
+            return o != n;
+        }
+
+        function popStates($sel, m, val) {
+            if (typeof $sel === 'string')
+                $sel = $($sel);
+            if (typeof m == 'string')
+                m = idList[m];
+            var html = '';
+            var ss = val.startsWith('~') ? '~' : '';
+
+            getStates(m).forEach(function (s) {
+                html += `<option value="${ss+s}"${val == s ? ' selected' : ''}>${ss+s}</option>`;
+            });
+
+            $sel.html(html);
+            $sel.material_select();
+            return $sel;
+        }
+
+        function selectId(id) {
+            $table.treetable('reveal', id);
+            selectRow($table.find('tr[data-tt-id="' + id + '"]'));
+        }
+
+        function selectRow($this) {
+            $("#tab-events-content tr.selected").removeClass("selected blue lighten-4");
+            curId = $this.data('ttId');
+            curPar = $this.data('ttParentId');
+            if (!curId)
+                return showInputTable(null);
+            var ido = idList[curId];
+            var ty = ido[fields.type];
+            var ids = curId.split('.');
+            var x = ids[0];
+            $('#input-folder').val("");
+            if (idList[x][fields.type] === 'folder') {
+                $('#input-folder').val(curFolder = x);
+                if (ids.length > 1)
+                    x += '.' + ids[1];
+            }
+            var x2 = idList[x][fields.type];
+            if (x2 === 'machine') {
+                $('#input-machine').val(curMachine = getThisName(x));
+                $('#input-event').val(curEvent = '');
+                $('#input-machine-name').val(curMachine);
+            } else if (x2 === 'event') {
+                $('#input-machine').val(curMachine = '');
+                $('#input-event').val(curEvent = getThisName(x));
+                $('#input-event-name').val(curEvent);
+            }
+            $('input.mach-val').removeClass('invalid');
+            switch (ty) {
+                case 'folder':
+                    $('#input-folder-name').val(curFolder);
+                    break;
+                case 'link':
+                    x = curPar;
+                    $('#input-link-from').text('From ' + getThisName(curPar) + ' to:');
+                    if (idList[curPar][fields.type] === 'machine')
+                        x = curId;
+                    $('#input-link-icon').text(x === curId ? icons.iconLinkAuto : icons.iconLink);
+                    popStates('#input-link-tostate', getParId(x), getThisName(curId)).data('old', ido[
+                        fields.timeout]).unbind('change').change(function () {
+                        isAnyChanged('#input-link-tostate', '#input-link-rename');
+                    });
+                    enableDisable('#input-link-rename');
+                    break;
+                case 'state':
+                    $('#input-state-name').val(getThisName(curId)).data('old', getThisName(curId)).unbind(
+                        'input').bind('input', function () {
+                        validateInput($(this));
+                        isAnyChanged('#input-state-name', '#input-state-rename');
+                    });
+                    enableDisable('#input-state-rename');
+                    break;
+                case 'timer':
+                    $('#input-timer-name').val(getThisName(curId)).data('old', getThisName(curId)).unbind(
+                        'input').bind('input', function () {
+                        validateInput($(this));
+                        isAnyChanged('#input-table-name|#input-state-timeout',
+                            '#input-timer-rename');
+                    });
+                    popStates('#input-state-timeout', curPar, ido[fields.timeout]).data('old', ido[fields.timeout])
+                        .unbind('change').change(function () {
+                            isAnyChanged('#input-state-name|#input-state-timeout',
+                                '#input-state-rename');
+                        });
+                    enableDisable('#input-timer-rename');
+                    break;
+            }
+            showInputTable(ty, ido);
+            Materialize.updateTextFields();
+            //                showMessage($this.data('ttId'));
+            addEvent(ido, "Select Row");
+            $this.addClass("selected blue lighten-4");
+        }
+
+        function rebindTableCommands() {
+            $('#table-data').find("tr").unbind('mousedown').mousedown(function () {
+                if (curId == $(this).data('ttId'))
+                    return;
+                selectRow($(this));
+            });
+
+            $('#table-data').find("input.is-disabled").unbind('change').change(function (e) {
+                var tr = $(this).closest('tr');
+                var id = tr.data('ttId');
+                if (this.checked) {
+                    if (idList[id])
+                        delete idList[id][fields.disabled];
+                    tr.find('td.ft').removeClass('disabled');
+                } else {
+                    if (idList[id])
+                        idList[id][fields.disabled] = true;;
+                    tr.find('td.ft').addClass('disabled');
+                }
+                addEvent(idList[id], 'enabled/disabled id ' + id);
+                checkConfig();
+                showMessage(id + (this.checked ? ' enabled' : ' disabled'));
+            });
+            checkConfig();
+        }
+
+        function getParId(id) {
+            var s = id.split('.');
+            return s.length > 0 ? s.slice(0, -1).join('.') : '';
+        }
+
+        function getThisName(id) {
+            var s = id.split('.');
+            return s.length > 0 ? s[s.length - 1] : '';
+        }
+
+        function getTreeNode(id) {
+            return $table.treetable('node', id);
+        }
+
+        function addId(id, parent, icon, opt) {
+            opt = opt || {};
+            var idr, type, ids = parent ? parent + '.' + id : id;
+            switch (icon) {
+                case icons.iconLink:
+                    type = 'link';
+                    break;
+                case icons.iconLinkAuto:
+                    type = 'link'
+                    break;
+                case icons.iconFolder:
+                    type = 'folder';
+                    break;
+                case icons.iconMachine:
+                    type = 'machine';
+                    break;
+                case icons.iconEvent:
+                    type = 'event';
+                    break;
+                case icons.iconState:
+                    type = 'state';
+                    break;
+                case icons.iconTimer:
+                    type = 'timer';
+                    break;
+            }
+            if (type && !opt[type])
+                opt[fields.type] = type;
+
+            if (icon == icons.iconFolder)
+                idr = workTree.folders;
+            else
+                idr = parent ? idList[parent] : workTree.folders[''];
+            if (!idr || idList[ids])
+                return showError(`cannot add id type '${icon}' '${id}' to parent '${parent}'!`);
+            var html = makeTr(ids, parent, id, icon, opt);
+            $table.treetable('loadBranch', (parent ? getTreeNode(parent) : null), html);
+            if (parent)
+                $table.treetable('sortBranch', getTreeNode(parent), function (a, b) {
+                    if (a.id > b.id) return 1;
+                    if (a.id < b.id) return -1;
+                    return 0;
+                });
+            $table.treetable('reveal', ids)
+            rebindTableCommands();
+        }
+
+        function doDelete() {
+            var id = curId;
+            var par = curPar;
+            s = idList[par];
+            if (s && s[fields.type] == 'machine') {
+                if (getStates(s).length < 2)
+                    return showError(`cannot delete last state/timer of machine!`)
+            }
+
+            confirmMessage(`do you really want to delete '${id}'?`, 'Delete ' + id,
+                function (ok) {
+                    if (ok) {
+                        $table.treetable('removeNode', id);
+                        var p = idList[par];
+                        var name = id.split('.');
+                        name = name[name.length - 1];
+                        if (typeof p !== 'object') {
+                            p = workTree.folders[''];
+                            if (!p[name])
+                                p = workTree.folders;
+                        }
+                        delete p[name];
+                        delete idList[id];
+                        curId = null;
+                        rebindTableCommands();
+                    }
+                });
+        }
+
+        function doCreateState(txt, folder) {
+            var fs = folder ? folder + '.' : '';
+            showInputModal({
+                title: 'Create State',
+                text: '',
+                button: 'Create',
+                fields: [
+                    ['State Name', icons.iconState, txt]
+                ],
+                callback: function (ok) {
+                    if (ok && (ok = ok[0].trim())) {
+                        if (!regStateName.test(ok))
+                            showMessage('invalid name, please change $-_A-Za-z0-9 3-20 chars!');
+                        else if (idList[fs + ok])
+                            showMessage('Name already used, please change!');
+                        else {
+                            addId(ok, folder, icons.iconState);
+                            return setTimeout(selectId, 30, folder + '.' + ok);
+                        }
+                        setTimeout(doCreateState, 50, txt, folder);
+                    }
+                }
+            });
+        }
+
+        function getStates(m) {
+            if (typeof m === 'string')
+                m = idList[m];
+            return m && ownKeys(m).filter(s => !s.startsWith(' ') && !s.startsWith('~'))
+        }
+
+        function doCreateLink() {
+            var s = idList[curId][fields.type];
+            var icon = icons.iconLinkAuto;
+            var m = curId;
+            if (s !== 'machine') {
+                m = getParId(curId);
+                icon = icons.iconLink;
+            }
+            var xs = getStates(m);
+            if (!xs)
+                return showError(`Cold not create link for '${curId}'`);
+            if (icon == icons.iconLinkAuto)
+                xs = xs.map(x => '~' + x);
+            showInputModal({
+                title: (icon == icons.iconLinkAuto) ? 'Create Autolink' : 'Create Link',
+                text: '',
+                button: 'Create',
+                fields: [
+                    ['Timeout State', icon, xs]
+                ],
+                callback: function (ok) {
+                    if (ok) {
+                        var t = ok[0];
+                        if (t && t.startsWith('~'))
+                            t = t.slice(1);
+                        if (!idList[m + '.' + t])
+                            showMessage('You need to select an existing state!');
+                        else {
+                            addId(ok[0], curId, icon, idList[curId][ok[0]] = {});
+                            return setTimeout(selectId, 30, curId + '.' + ok[0]);
+                        }
+                        setTimeout(doCreateLink, 50);
+                    }
+                }
+            });
+        }
+
+        function doCreateTimer(txt, folder) {
+            var fs = folder ? folder + '.' : '';
+            var m = idList[folder];
+            var xs = m && getStates(m);
+            if (!xs)
+                return showError(`Cold not create timer for machine '${folder}'`);
+            showInputModal({
+                title: 'Create Timer',
+                text: '',
+                button: 'Create',
+                fields: [
+                    ['Timeout time', icons.iconTimer, txt],
+                    ['Timeout state', icons.iconTimeout, xs]
+                ],
+                callback: function (ok) {
+                    if (ok) {
+                        var t = ok[0].trim();
+                        if (!regTimerName.test(t))
+                            showMessage('invalid timer: (1+w)(1+d)(1+h)(1+m)(1+((m)s))');
+                        else if (idList[fs + t])
+                            showMessage('Name already used, please change!');
+                        else if (!idList[fs + ok[1]])
+                            showMessage('You need to select an existing tieout state!');
+                        else {
+                            addId(t, folder, icons.iconTimer, m[t] = {});
+                            //                            addId(ok[1], folder + '.' + t, icons.iconTimeout);
+                            idList[folder + '.' + t][fields.timeout] = ok[1];
+                            return setTimeout(selectId, 30, folder + '.' + t);
+                        }
+                        setTimeout(doCreateTimer, 50, t, folder);
+                    }
+                }
+            });
+        }
+
+        $(function () {
+            pageInit(function () { // this is called when initialization happened and all objects are loaded!
+                createFolderTree(true);
+                createIdTree();
             });
         });
     </script>
 </head>
 
 <body>
-    <div id="homeTemplate">
+    <div id="stateMachine">
         <div class="row">
-            <div class="col s1">
-                <img src="/adapter/statemachine/statemachine.png" style="width: 3em; height: 3em" onclick="window.location.reload();">
+            <div class="col s2 m2 l1">
+                <div class="valign-wrapper right">
+                    <img src="/adapter/statemachine/statemachine0.png" style="width: 2.5em; height: 2.5em" onclick="window.location.reload();">
+                </div>
             </div>
-            <div class="col s6">
+            <div class="col s10 m10 l5">
                 <h5>StateMachine Setup</h5>
-                <!--&nbsp;
-                <a href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css">../../lib/css/themes/jquery-ui/redmond/jquery-ui.min.css</a>
-                <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.structure.min.css" />
-                <link rel="stylesheet" type="text/css" href="../../lib/css/themes/jquery-ui/redmond/jquery-ui.theme.min.css" />
-                &nbsp;
-                <a href="/lib/js/materialize.js">/lib/js/materialize.js</a>
-                &nbsp;
-                <a href="lib/css/vis.min.css">lib/css/vis.min.css</a-->
             </div>
-            <div class="col s5">
-                <h5>Control &amp; Options</h5>
+            <div class="col s12 m12 l6">
+                <h6>Control &amp; Options</h6>
             </div>
         </div>
-
         <div class="row">
-            <div class="col s7">
-                <div class="row">
-                    <div class="col s2">
-                        <input type="checkbox" id="tab-physics" checked="checked" class="btn-small" />
-                        <label for="tab-physics">
-                            <span id="tab-physics-label">Physics enabled</span>
-                        </label>
-                    </div>
-                    <div class="col s2">
-                        <button id="clusterButton" class="waves-effect waves-light btn not-ok-cancel btn-small w100 disabled">
-                            <i class="material-icons left">expand_more</i>
-                            <span>Cluster</span>
-                        </button>
-                    </div>
-                    <div class="col s2">
-                        <button id="deleteButton" class="waves-effect waves-light btn red not-ok-cancel btn-small w100 disabled">
-                            <i class="material-icons left">remove</i>
-                            <span>Delete</span>
-                        </button>
-                    </div>
-                    <div class="col s2">
-                        <button id="renameButton" class="waves-effect waves-light btn not-ok-cancel btn-small w100 disabled">
-                            <i class="material-icons left">border_color</i>
-                            <span>Rename</span>
-                        </button>
-                    </div>
-                    <div class="col s2">
-                        <button id="createLinkButton" class="waves-effect waves-light btn not-ok-cancel btn-small w100 disabled">
-                            <i class="material-icons left">insert_link</i>
-                            <span>Create Link</span>
-                        </button>
-                    </div>
-                    <div class="col s2">
-                        <button id="createStateButton" class="waves-effect waves-light btn not-ok-cancel btn-small w100">
-                            <i class="material-icons left">repeate</i>
-                            <span>Create State</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="row">
-                    <div id="mynetwork"></div>
-                </div>
+            <div id="tab-events-content" class="col s12 m12 l6">
+                <table id="tree" class="highlight bordered">
+                    <thead>
+                        <tr>
+                            <th class="center" width="33%">Type</th>
+                            <th class="center" width="33%">Id</th>
+                            <th class="center" width="33%">Status</th>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-data" class='scrollable'>
+                    </tbody>
+                </table>
             </div>
-            <div class="col s5">
+            <div class="col s12 m12 l6 table-interface">
                 <div class="row">
-                    <div class="input-field col s4">
-                        <div class="row">
-                            <i class="material-icons prefix">star_border</i>
-                            <input type="text" placeholder="Machine Name" id="tab-machine-name" class="validate" required pattern="[$_\da-zA-Z][$\w]{1,20}">
-                            <label for="tab-machine-name" data-error="wrong" data-success="right" class="active">Machine Name</label>
-                            <span class="helper-text" data-error="2-20 characters starting with $_a-zA-Z and then can include 0-9" data-success="Ok"></span>
-                        </div>
-                        <button id="okData" class="ok-cancel waves-effect waves-light btn btn-small w100">
-                            <i class="material-icons left">done</i>OK</button>
-                    </div>
-                    <div class="input-field col s4">
-                        <div class="row">
-                            <i class="material-icons prefix">repeate</i>
-                            <input type="text" placeholder="State Name" id="tab-state-name" class="validate" required>
-                            <label for="tab-state-name" data-error="wrong" data-success="right" class="active">State Name</label>
-                        </div>
-                        <button id="cancelData" class="ok-cancel waves-effect waves-light btn btn-small w100 brown">
-                            <i class="material-icons left">cancel</i>Cancel</button>
-                    </div>
-                    <div class="input-field col s4">
-                        <div class="row">
-                            <i class="material-icons prefix">insert_link</i>
-                            <input type="text" placeholder="Link Name" id="tab-edge-name" class="validate" required>
-                            <label for="tab-edge-name" data-error="wrong" data-success="right" class="active">Link Name</label>
-                        </div>
-                        <!--button id="cancelData" class="ok-cancel waves-effect waves-light btn btn-small w100 brown">
-                            <i class="material-icons left">cancel</i>Cancel</button-->
-                    </div>
-
-                </div>
-                <div class="divider"></div>
-                <div class="row">
-                    <div class="col s4">
-                        <button id="importButton" class="waves-effect waves-light btn not-ok-cancel  btn-small">
-                            <i class="material-icons left">import_export</i>
-                            <span>import</span>
-                        </button>
-                    </div>
-                    <div class="col s4">
-                        <button id="exportButton" class="waves-effect waves-light btn not-ok-cancel btn-small">
-                            <i class="material-icons left">archive</i>
-                            <span>export</span>
-                        </button>
-                    </div>
-                    <div class="col s4">
-                        <button id="destroyButton" class="waves-effect waves-light btn not-ok-cancel btn-small">
-                            <i class="material-icons left">destroy</i>
-                            <span>delete</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="divider"></div>
-                <div class="row">
-                    <div class="col s4">
-                        <button id="dialog-edit-insert-id" class="waves-effect waves-light btn not-ok-cancel btn-small">
-                            <i class="material-icons left">insert_link</i>
-                            <span>Insert ID</span>
-                        </button>
-                    </div>
-                    <div class="col s4">
-                        <button id="endcreate" class="waves-effect waves-light btn not-ok-cancel btn-small" onclick="showModal({text:'bla bla bla', buttons:'Ja,Nein!', icon:'help'})">
-                            <i class="material-icons left">close</i>
-                            <span>EndCreate</span>
-                        </button>
-                    </div>
-                    <div class="col s4">
-                        <button id="changeOptions" class="waves-effect waves-light btn not-ok-cancel btn-small">
-                            <i class="material-icons left">assignment</i>
-                            <span>Toggle Options</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="divider"></div>
-                <div class="row">
-                    <div class="col s4">
-                        <a class="waves-effect waves-light btn modal-trigger btn-small" href="#dialog-modal">Modal</a>
-                    </div>
-                    <div class="col s4">
-                        <button id="test-clickOn" class="waves-effect waves-light btn btn-small" onclick="changeButtonText('#endcreate','newText','add');showHide('#endcreate',true);enableDisable('#endcreate',true)">
-                            <i class="material-icons left">power_settings_new</i>Show</button>
-                    </div>
-                    <div class="col s4">
-                        <button id="test-clickOff" class="waves-effect waves-light btn btn-small" onclick="changeButtonText('#endcreate','newText','remove');enableDisable('#endcreate',false)">
-                            <i class="material-icons left">remove</i>Hide</button>
-                    </div>
-                </div>
-                <div class="divider"></div>
-                <div class="row">
-                    <div class="col s6">
-                        <label for="input_output">Input/output machines</label>
-                        <textarea id="input_output" class="materialize-textarea"></textarea>
-                        <!--textarea cols="40" rows="50" id=input_output></textarea-->
-                    </div>
-                    <div class="col s6">
-                        <pre id="eventSpan" style="font-size: 0.8em"></pre>
-                    </div>
-                </div>
-            </div>
-            <!--div class="tile-stats"></div-->
-            <!-- Modal Structure -->
-            <div id="dialog-modal" class="modal">
-                <div class="modal-content">
-                    <div class="row">
-                        <div class="col s2">
-                            <i id="modalIcon" class="material-icons large">check</i>
-                        </div>
-                        <div id="modalText" class="col s10">
-                            <h4>Title</h4>
-                            <p>text</p>
+                    <div class="col s1">
+                        <div class="right valign-wrapper">
+                            <label>Debug</label>&nbsp;
                         </div>
                     </div>
+                    <div class="col s3">
+                        <select id="debugLevel" class="browser-default">
+                            <option value="" disabled selected>Choose your option</option>
+                            <option value="0">Debug off</option>
+                            <option value="1">Debug only errors &amp; warnings</option>
+                            <option value="2">Debug state changes</option>
+                            <option value="3">Debug all events</option>
+                        </select>
+                    </div>
+                    <div class="col s2">
+                        <button id="exportButton" class="waves-effect waves-light btn not-ok-cancel w100 btn-small">
+                            <i class="material-icons left">file_download</i>
+                            <span>Export</span>
+                    </div>
+                    <div class="col s2">
+                        <button id="importButton" class="waves-effect waves-light btn not-ok-cancel w100 btn-small">
+                            <i class="material-icons left">file_upload</i>
+                            <span>Import</span>
+                        </button>
+                    </div>
+                    <div class="col s2">
+                        <button id="saveButton" class="waves-effect waves-light btn not-ok-cancel w100 btn-small">
+                            <i class="material-icons left">save</i>
+                            <span>Save</span>
+                        </button>
+                    </div>
+                    <div class="col s2">
+                        <button id="reloadButton" class="waves-effect waves-light btn not-ok-cancel w100 btn-small">
+                            <i class="material-icons left">loop</i>
+                            <span>Reload</span>
+                        </button>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button id="modalOk" class="modal-action modal-close waves-effect waves-light btn">
-                        <i class="material-icons left">check</i>
-                        <span>OK</span>
-                    </button>
-                    <button id="modalExit" class="modal-action modal-close waves-effect waves-light btn brown">
-                        <i class="material-icons left">close</i>
-                        <span>cancel</span>
-                    </button>
+                <div class="divider clear10"></div>
+                <div class="row">
+                    <div class="col s3">
+                        <button id="test1Button" class="waves-effect waves-light btn btn-small w100">
+                            <i class="material-icons left">filter_1</i>
+                            <span>Test1</span>
+                        </button>
+                    </div>
+                    <div class="col s3">
+                        <button id="test2Button" class="waves-effect waves-light btn blue btn-small w100">
+                            <i class="material-icons left">filter_2</i>
+                            <span>Test2</span>
+                        </button>
+                    </div>
+                    <div class="col s3">
+                        <button id="test3Button" class="waves-effect waves-light btn btn-small w100">
+                            <i class="material-icons left">filter_3</i>
+                            <span>Test3</span>
+                        </button>
+                    </div>
+                    <div class="col s3">
+                        <button id="test4Button" class="waves-effect waves-light btn blue btn-small w100">
+                            <i class="material-icons left">filter_4</i>
+                            <span>Test4</span>
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div id="dialog-select-member" style="display:none"></div>
-            <div id="dialog-confirm" title="Question" style="display: none">
-                <p>
-                    <span id="dialog-confirm-icon" class="ui-icon ui-icon-circle-check" style="float: left; margin: 0 7px 50px 0;"></span>
-                    <span id="dialog-confirm-text" width="500px"></span>
-                </p>
+                <div class="divider clear10"></div>
+                <div class="row">
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix" my-icon="iconFolder"></i>
+                        <input type="text" id="input-folder" class="mach-val" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <label for="input-folder" class="active">Folder</label>
+                    </div>
+                    <div class="col s1">
+                        <a id="folder-add" title="Add Folder" class="btn-floating btn btn-small waves-effect waves-light teal">
+                            <i class="material-icons">add</i>
+                        </a>
+                    </div>
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix" my-icon="iconMachine"></i>
+                        <input type="text" id="input-machine" class="mach-val" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <label for="input-machine" class="active">Machine</label>
+                    </div>
+                    <div class="col s1">
+                        <a id="machine-add" title="Add Machine" class="btn-floating btn btn-small waves-effect waves-light teal">
+                            <i class="material-icons">add</i>
+                        </a>
+                    </div>
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix" my-icon="iconEvent"></i>
+                        <input type="text" id="input-event" class="mach-val" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <label for="input-event" class="active">Event</label>
+                    </div>
+                    <div class="col s1">
+                        <a id="event-add" title="Add Event" class="btn-floating btn btn-small waves-effect waves-light teal">
+                            <i class="material-icons">add</i>
+                        </a>
+                    </div>
+                </div>
+                <div class="divider clear15"></div>
+                <div id="input-table-folder" class="input-table row">
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix" my-icon="iconFolder"></i>
+                        <input type="text" id="input-folder-name" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <label for="input-folder-name" class="active">Folder Name</label>
+                    </div>
+                    <div class="col s3">
+                        <div class='right'>
+                            <!--a id="input-machine-add" title="Add Machine" class="btn-floating btn waves-effect waves-light teal">
+                                <i class="material-icons" my-icon="iconMachineAdd"></i>
+                            </a>
+                            <a id="input-event-add" title="Add Event" class="btn-floating btn waves-effect waves-light teal">
+                                <i class="material-icons" my-icon="iconEventAdd"></i>
+                            </a-->
+                            <a id="input-folder-rename" title="Rename Folder" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
+                                <i class="material-icons" my-icon="iconRename"></i>
+                            </a>
+                            <a id="input-folder-remove" title="Delete Folder" class="btn-floating btn btn-small waves-effect waves-light red">
+                                <i class="material-icons" my-icon="iconDelete"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div id="input-table-event" class="input-table row">
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix" my-icon="iconEvent"></i>
+                        <input type="text" id="input-event-name" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <label for="input-event-name" class="active">Event Name</label>
+                    </div>
+                    <div class="col s3">
+                        <div class='left'>
+                            <a id="input-event-execute" title="Goto State" class="btn-floating btn btn-small waves-effect waves-light orange">
+                                <i class="material-icons" my-icon="iconEvent"></i>
+                            </a>
+                        </div>
+                        <div class='right'>
+                            <a id="input-event-rename" title="Rename Event" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
+                                <i class="material-icons" my-icon="iconRename"></i>
+                            </a>
+                            <a id="input-event-remove" title="Delete Event" class="btn-floating btn btn-small waves-effect waves-light red">
+                                <i class="material-icons" my-icon="iconDelete"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col s3">
+                        <label for="input-event-tfunction" class="active">Function</label>
+                        <input type="text" id="input-event-tfunction">
+                    </div>
+                </div>
+                <div id="input-table-machine" class="input-table row">
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix" my-icon="iconMachine"></i>
+                        <input type="text" id="input-machine-name" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <label for="input-machine-name" class="active">Machine Name</label>
+                    </div>
+                    <div class="input-field col s3">
+                        <div class='right'>
+                            <a id="input-state-add" title="Add State" class="btn-floating btn btn-small waves-effect waves-light teal">
+                                <i class="material-icons" my-icon="iconStateAdd"></i>
+                            </a>
+                            <a id="input-timer-add" title="Add Timer" class="btn-floating btn btn-small waves-effect waves-light teal">
+                                <i class="material-icons" my-icon="iconTimer"></i>
+                            </a>
+                            <a id="input-autolink-add" title="Add Autolink" class="btn-floating btn btn-small waves-effect waves-light teal">
+                                <i class="material-icons" my-icon="iconLinkAuto"></i>
+                            </a>
+                            <a id="input-machine-rename" title="Rename Machine" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
+                                <i class="material-icons" my-icon="iconRename"></i>
+                            </a>
+                            <a id="input-machine-remove" title="Delete Machine" class="btn-floating btn btn-small waves-effect waves-light red">
+                                <i class="material-icons" my-icon="iconDelete"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix" my-icon="iconStateAdd"></i>
+                        <select id="input-machine-states" class "select-input-states">
+                            <option value="" selected>Undefined</option>
+                        </select>
+                        <label>Default State</label>
+                    </div>
+                </div>
+                <div id="input-table-state" class="input-table row">
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix" my-icon="iconState"></i>
+                        <input type="text" id="input-state-name" minlength="2" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <label for="input-state-name" class="active">State</label>
+                    </div>
+                    <div class="col s3">
+                        <div class='left'>
+                            <a id="input-state-execute" title="Goto State" class="btn-floating btn btn-small waves-effect waves-light orange">
+                                <i class="material-icons" my-icon="iconEvent"></i>
+                            </a>
+                        </div>
+                        <div class='right'>
+                            <a id="input-link-add" title="Add Link" class="btn-floating btn btn-small waves-effect waves-light teal">
+                                <i class="material-icons" my-icon="iconLink"></i>
+                            </a>
+                            <a id="input-state-rename" title="Rename State" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
+                                <i class="material-icons" my-icon="iconRename"></i>
+                            </a>
+                            <a id="input-state-remove" title="Delete State" class="btn-floating btn btn-small waves-effect waves-light red">
+                                <i class="material-icons" my-icon="iconDelete"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div id="input-table-timer" class="input-table row">
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix" my-icon="iconTimer"></i>
+                        <input type="text" id="input-timer-name" minlength="2" maxlength="20" pattern="^(\d+w\s*)?(\d+d\s*)?(\d+h\s*)?(\d+m(?!s)\s*)?(\d+)?(m?s)?\s*$"
+                            title="Start with number and then (w,d,h,m,s,ms)">
+                        <label for="input-timer-name" class="active">State</label>
+                    </div>
+                    <div class="col s3">
+                        <div class='left'>
+                            <a title="Goto State" class="btn-floating btn waves-effect waves-light orange">
+                                <i class="material-icons" my-icon="iconEvent"></i>
+                            </a>
+                        </div>
+                        <div class='right'>
+                            <a title="Add Link" title="Add Link" class="btn-floating btn btn-small waves-effect waves-light teal">
+                                <i class="material-icons" my-icon="iconLink"></i>
+                            </a>
+                            <a id="input-timer-rename" title="Change Timer" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
+                                <i class="material-icons" my-icon="iconRename"></i>
+                            </a>
+                            <a id="input-timer-remove" title="Delete Timer" class="btn-floating btn btn-small waves-effect waves-light red">
+                                <i class="material-icons" my-icon="iconDelete"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div id="input-timeout-state" class="input-field col s3">
+                        <i class="material-icons prefix" my-icon="iconTimeout"></i>
+                        <select id="input-state-timeout" class "select-input-states">
+                            <option value="" disabled selected>select timeout</option>
+                        </select>
+                        <label>Timeout State</label>
+                    </div>
+                </div>
+                <div id="input-table-link" class="input-table row">
+                    <div id="input-link-state" class="input-field col s3">
+                        <i id="input-link-icon" class="material-icons prefix" my-icon="iconLink"></i>
+                        <select id="input-link-tostate" class "select-input-states">
+                            <option value="" disabled selected>select timeout</option>
+                        </select>
+                        <label id="input-link-from">from</label>
+                    </div>
+                    <div class="col s3">
+                        <div class='left'>
+                            <a id="input-link-execute" title="Goto State" class="btn-floating btn btn-small waves-effect waves-light orange">
+                                <i class="material-icons" my-icon="iconEvent"></i>
+                            </a>
+                        </div>
+                        <div class='right'>
+                            <a id="input-link-rename" title="Save Change" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
+                                <i class="material-icons" my-icon="iconRename"></i>
+                            </a>
+                            <a id="input-link-remove" title="Delete State" class="btn-floating btn btn-small waves-effect waves-light red">
+                                <i class="material-icons" my-icon="iconDelete"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col s3">
+                        <label for="input-event-function" class="active">Function</label>
+                        <input type="text" id="input-event-function">
+                    </div>
+                </div>
+                <div id="input-event-data" class="input-table row">
+                    <div class "col s12">
+                        <i class="material-icons prefix" my-icon="iconEvent"></i>
+                        <a id="input-event-id" title="Insert Id" class="btn-floating btn btn-small right waves-effect waves-light teal">
+                            <i class="material-icons" my-icon="input">input</i>
+                        </a>
+                        <label>Event list, current id: </label>
+                        <span id="input-event-test"></span>
+                        <div id="input-event-chips" class="chips"></div>
+                    </div>
+                    <div class="col s1">
+                    </div>
+                    <div class="col s3 event-ids">
+                        <input type="checkbox" id="input-event-ack" />
+                        <label for="input-event-ack">Ack</label>
+                        <br>
+                        <input type="checkbox" id="input-event-change" />
+                        <label for="input-event-change">On change only</label>
+                    </div>
+                    <div class="input-field col s4 event-ids">
+                        <select id='input-event-compare'>
+                            <option value="" selected>Any</option>
+                            <option value="+">+ true</option>
+                            <option value="-">- false</option>
+                            <option value="=">= equal</option>
+                            <option value="!=">!= not equal</option>
+                            <option value=">">&gt; greater than</option>
+                            <option value=">=">&gt;= gt or equal</option>
+                            <option value="<">&lt; less than</option>
+                            <option value="<=">&lt;= lt or equal</option>
+                            <option value="^">^ Starts with</option>
+                            <option value="$">$ ends with</option>
+                            <option value="?">? includes</option>
+                            <option value="#"># includes not</option>
+                        </select>
+                        <label for="input-event-compare">Logic:</label>
+                    </div>
+                    <div class="col s4 event-ids">
+                        <label for="input-event-with" class="active">Value (last if empty)</label>
+                        <input type="text" id="input-event-with">
+                    </div>
+                    <div class="col s4 event-timers">
+                        <label id="input-event-label-timer">each</label>
+                        <div id="input-event-timer-data"></div>
+                    </div>
+                    <div class="col s4 event-timers event-timers-every">
+                        <label for="input-event-timers" class="active">Every:</label>
+                        <input type="text" id="input-event-timers" minlength="2" pattern="^\s*(\d+w)?\s*(\d+d)?\s*(\d+h)?\s*(\d+m)?\s*(\d+s?)?$\s*"
+                            title="Start with number and the one of (w,d,h,m,s)!">
+                    </div>
+                </div>
             </div>
         </div>
-
+        <div class="section row">
+            <span>Output:</span>
+            <div class="row">
+                <div class="col s6">
+                    <label for="input_output">Input/output machines</label>
+                    <textarea id="input_output" class="materialize-textarea input-output"></textarea>
+                </div>
+                <div class="col 6">
+                    <pre id="eventSpan" style="font-size: 0.8em"></pre>
+                </div>
+            </div>
+        </div>
     </div>
+    <div id="dialog-modal" class="modal">
+        <div class="modal-content">
+            <div class="row">
+                <div class="col s2">
+                    <i id="modalIcon" class="material-icons large" my-icon="iconFolder">check</i>
+                </div>
+                <div id="modalText" class="col s10">
+                    <h4>Title</h4>
+                    <p>text</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="modalOk" class="modal-action modal-close waves-effect waves-light btn" type="submit">
+                <i class="material-icons left">check</i>
+                <span>OK</span>
+            </button>
+            <button id="modalExit" class="modal-action modal-close waves-effect waves-light btn brown">
+                <i class="material-icons left">close</i>
+                <span>cancel</span>
+            </button>
+        </div>
+    </div>
+    <div id="id-modal" class="modal">
+        <div class="modal-content">
+            <div class="row">
+                <div class="col s12">
+                    <table id="tree-id" class='highlight bordered responsive-table'>
+                        <thead>
+                            <tr>
+                                <th class="center" width="30%">id</th>
+                                <th class="center" width="20%">name</th>
+                                <th class="center" width="10%">type</th>
+                                <th class="center" width="10%">role</th>
+                                <th class="center" width="20%">value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-id-data" class='scrollable' height="30vh">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="modalIdOk" class="modal-action modal-close waves-effect waves-light btn" type="submit">
+                <i class="material-icons left">check</i>
+                <span>OK</span>
+            </button>
+            <button id="modalIdExit" class="modal-action modal-close waves-effect waves-light btn brown">
+                <i class="material-icons left">close</i>
+                <span>cancel</span>
+            </button>
+        </div>
+    </div>
+    <div id="input-modal" class="modal">
+        <div class="modal-content">
+            <div class="row">
+                <div class="row">
+                    <div class="row">
+                        <h4>
+                            <span id="input-modal-title">Title</span>
+                        </h4>
+                        <p>
+                            <span id="input-modal-text">Text</span>
+                        </p>
+                    </div>
+                    <div id="input-modal-inputs"></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" type="submit" id="input-modal-button">OK</a>
+            <a href="#" class="modal-close waves-effect waves-green btn-flat " id="input-modal-cancel">Cancel</a>
+        </div>
+    </div>
+
 
 </body>
 

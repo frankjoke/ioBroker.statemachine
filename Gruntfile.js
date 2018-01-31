@@ -18,17 +18,17 @@ module.exports = function (grunt) {
     var fs        = require('fs');
 
     // check arguments
-    if (process.argv[2] == 'rename') {
+    if (process.argv[2] === 'rename') {
 		console.log('Try to rename to "' + newname + '"');
         if (!newname) {
             console.log('Please write the new template name, like: "grunt rename --name=mywidgetset" --author="Author Name"');
             process.exit();
         }
-        if (newname.indexOf(' ') != -1) {
+        if (newname.indexOf(' ') !== -1) {
             console.log('Name may not have space in it.');
             process.exit();
         }
-        if (newname.toLowerCase() != newname) {
+        if (newname.toLowerCase() !== newname) {
             console.log('Name must be lower case.');
             process.exit();
         }
