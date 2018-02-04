@@ -32,18 +32,20 @@
         "mode": "daemon",
         "icon": "statemachine.png",
         "enabled": true,
-        "singleton": true,
+        "singleton": false,
         "extIcon": "https://raw.githubusercontent.com/frankjoke/ioBroker.statemachine/master/admin/statemachine.png",
-        "keywords": ["statemachine", "timer, scripts, programming"],
+        "keywords": ["statemachine", "timer", "events", "scripts", "programming", "rules", "automate"],
         "readme": "https://github.com/frankjoke/ioBroker.info/blob/master/README.md",
         "loglevel": "info",
+        "localLink": "#tab-statemachine",
         "type": "script",
+        "noConfig":                 true,
         "messagebox": true,
         "subscribe": "messagebox",
         "adminTab": {
             "singleton": true,
             "name": "StateMachine",
-            "fa-icon": "fa-statemachine-circle"
+            "fa-icon": "settings"
         }
     },
     "objects": []

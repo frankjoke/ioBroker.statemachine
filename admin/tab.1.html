@@ -366,9 +366,7 @@
             socket: io.connect(),
             systemLang: 'en',
             adapterConfig: {},
-            //            adapterConfigId: 'system.adapter.statemachine.0',
-            adapterConfigId: 'statemachine.config',
-            adapterConfigIds: [],
+            adapterConfigId: 'system.adapter.statemachine.0',
 
             //            socket: io.connect(location.protocol + '//' + location.host, {
             //                query: 'ws=true'
@@ -469,20 +467,17 @@
                             var an = obj._id.split('.')[2];
                             if (obj.common && obj.common.icon)
                                 main.icons[id] = '/adapter/' + id.split('.')[0] + obj.common.icon;
-                            if (an && obj.type == "adapter") {
+                            if (an && obj.type == "adapter")
                                 main.icons[an] = '/adapter/' + an + '/' + obj.common.icon;
-                            }
-                            if (obj.type === 'instance') {
-                                main.instances.push(id);
-                                if (id.startsWith('system.adapter.statemachine.'))
-                                    main.adapterConfigIds.push(id.slice(15));
-                            }
+                            if (obj.type === 'instance') main.instances.push(id);
                             //                        if (obj.type === 'channel' && id.match(/^script\.js\./)) main.groups.push(id);
                             if (obj.type === 'host') main.hosts.push(id);
                         }
                         main.objectsLoaded = true;
-                        if (main.adapterConfigIds.length > 0)
-                            main.adapterConfigId = 'system.adapter.' + main.adapterConfigIds[0];
+
+                        //                    main.prepare();
+                        //                    main.init();
+
                         if (typeof callback === 'function') callback();
                     }, 0);
                 });
@@ -725,6 +720,154 @@
             return w;
         }
 
+        function createIdTree() {
+            var wi = [];
+
+            function createIds() {
+                function count(x) {
+                    var c = 0;
+                    for (var i of ownKeys(x)) {
+                        if (i == '_$id$_') {
+                            ++c;
+                            continue;
+                        }
+                        if (count(x[i]))
+                            ++c;
+                        else
+                            delete x[i];
+                    }
+                    return c;
+                }
+
+                ids = {};
+                for (var id of ownKeys(main.objects).sort()) {
+                    var ida = id.split('.');
+                    if (ida[0] !== 'system' || !noSystem) {
+                        if (/^\d+$/.test(ida[1])) {
+                            ida.splice(0, 2, ida[0] + '.' + ida[1]);
+                        }
+                        var st = main.states[id];
+                        if (st) {
+                            var idx = ids;
+                            while (ida.length > 0) {
+                                var e0 = ida.shift();
+                                if (!idx[e0])
+                                    idx[e0] = {};
+                                ldx = idx;
+                                idx = idx[e0];
+                            }
+                            idx._$id$_ = id;
+                        }
+                    }
+                    //                idx._$o_ = main.objects[id];
+                }
+
+                count(ids);
+                return ids;
+            }
+
+            function createEntry(parent, ids) {
+                var html = '';
+                for (var idn of ownKeys(ids))
+                    if (idn != '_$id$_') {
+                        var idc = parent + (parent ? '.' : '') + idn;
+                        var wic = 0;
+                        html +=
+                            `<tr data-tt-id="${idc}"${parent ? ' data-tt-parent-id="' + parent +'"' : ''}><td class="ft" width="${wi[wic++]}">&nbsp;${idn}</td>`;
+                        if (ids[idn]._$id$_) {
+                            var o = main.objects[ids[idn]._$id$_];
+                            var s = main.states[ids[idn]._$id$_];
+                            if (o && s) {
+                                for (var x of [o.common.name, o.common.type, o.common.role])
+                                    html += `<td class="fd" width="${wi[wic++]}">${x}</td>`
+                                html +=
+                                    `<td class="state-value fd right-align" width="${wi[wic++]}" data-tt-id="${idc}"></td>`;
+                            }
+                        }
+                        html += '</tr>\n';
+                        html += createEntry(idc, ids[idn]);
+                    }
+                return html;
+            }
+            ids = ids || createIds();
+
+            if (!$idModal) {
+                $idModal = $('#id-modal').modal(modalOpts);
+
+                $idData = $('#table-id-data');
+                $idModalOk = $('#modalIdOk');
+                $treeId = $('#tree-id');
+                wi = getWidths($treeId);
+                $idData.html(createEntry('', ids));
+                $treeId.treetable({
+                    expandable: true,
+                    initialState: "collapsed", // collapsed or expanded
+                    //                    _onNodeCollapse: function () {
+                    //                        var node = this;
+                    //                    table.treetable("unloadBranch", node);
+                    //                    },
+                    indent: 24,
+                    stringCollapse: "Collapse",
+                    stringExpand: "Expand",
+                    onNodeExpand: function (mynode) {
+                        var node = this.id;
+                        if (!this.parentId) {
+                            $idData.find('.expanded').each(function (i) {
+                                var id = $(this).data('ttId');
+                                if (id && !$(this).data('ttParentId') && node != id)
+                                    $treeId.treetable('collapseNode', id);
+                            });
+                        }
+                    }
+                });
+                $idModalOk.mousedown(function () {
+                    $idModal.data('OK', $idModal.data('OK') ? $idModal.data('OK') : $idModal.data('OKS'));
+                });
+                $idData.find('tr').mousedown(function (event) {
+                    $idData.find("tr.selected").removeClass("selected blue lighten-4");
+                    if ($(this).children().length > 2) {
+                        $idModal.data('OKS', $(this).data('ttId'));
+                        $(this).addClass("selected blue lighten-4");
+                    } else {
+                        $idModal.data('OKS', '');
+                        if (event.target.nodeName == "A")
+                            return true;
+                        if ($(this).hasClass('expanded'))
+                            $treeId.treetable("collapseNode", $(this).data("ttId"));
+                        else
+                            $treeId.treetable("expandNode", $(this).data("ttId"));
+
+                    }
+                });
+                $idData.find('tr').dblclick(function () {
+                    if ($(this).children().length > 2) {
+                        $idModal.data('OK', $(this).data('ttId'));
+                        $idModalOk.click();
+                    } else $idModal.data('OKS', '');
+                });
+            }
+            $idModal.data('OK', '');
+            $idModal.data('OKS', '');
+            $idData.find("tr.selected").removeClass("selected blue lighten-4");
+            $idData.find('td.state-value').each(function () {
+                var id = $(this).data('ttId');
+                var t = getValue(id, true);
+                if (typeof t === 'string')
+                    $(this).html(`<span s-v= "${id}">${t}</span>`);
+                /*                
+                                if (main.states[id]) {
+                                    if (t.length <= 50)
+                                        $(this).text(t);
+                                    else {
+                                        $(this).text(t);
+                                        var escaped = $(this).html().replace(/"/g, '&quot;');
+                                        $(this).html(`<a href="#!" title="${escaped}">${t.slice(0,30) + '...'}</a>`);
+                                    }
+                                }
+                */
+            });
+        }
+
         function getValue(id, html) {
             var s = main.states[id];
             if (!s)
@@ -767,6 +910,13 @@
                 else
                     obj[id] = val;
             }
+        }
+
+        function showIdModal(cb) {
+            createIdTree();
+            $idModal.data('callback', cb);
+            $idModal.data('OK', false);
+            $idModal.modal('open');
         }
 
         function showModal(o) {
@@ -925,8 +1075,7 @@
 
         var curMachine, curState, curEdge, curVar, curFolder = '',
             $table, $debugLevel, curId, curPar, curChip,
-            curEvent, fromNode, idList = {},
-            workTree, wi = [];
+            curEvent, fromNode;
 
         const icons = {
                 iconFolder: 'folder',
@@ -945,7 +1094,6 @@
                 iconDelete: 'delete',
             },
             fields = {
-                default: ' default',
                 expanded: ' expanded',
                 type: ' type',
                 disabled: ' disabled',
@@ -957,8 +1105,8 @@
             },
             regStateName = /^[$_A-Za-z][\-$\w]{1,19}$/,
             regTimerName = /^(\d+w\s*)?(\d+d\s*)?(\d+h\s*)?(\d+m(?!s)\s*)?(\d+)?(m?s)?\s*$/,
-            regMachineName = /^[$_A-Za-z][\-$\w]{2,19}$/,
-            txt = {
+            regMachineName = /^[$_A-Za-z][\-$\w]{2,19}$/;
+        const txt = {
                 createFolder: 'Add Folder',
                 createMachine: 'Add Machine',
                 createLink: 'Add Link',
@@ -967,7 +1115,51 @@
                 createEvent: 'Add Event',
                 rename: 'Rename Item',
                 delete: 'Delete Item',
+            },
+            testconfig = {
+                debugLevel: 2,
+                folders: {
+                    Folder1: {
+                        Machine1: {
+                            [fields.disabled]: true,
+                            State1: {
+                                "2m": {}
+                            },
+                            "2m": {
+                                [fields.timeout]: 'state1',
+                                "2m": {}
+                            },
+                        },
+                        Event1: {},
+                        Machine2: {
+                            [fields.disabled]: true,
+                            State1: {
+                                "2m": {}
+                            },
+                            "2m": {
+                                [fields.timeout]: 'State1',
+                                "2m": {}
+                            },
+                        },
+                        Event2: {
+                            [fields.disabled]: true,
+                        }
+                    },
+                    "": {
+                        machine3: {
+                            State1: {
+                                "2m": {}
+                            },
+                            "2m": {
+                                [fields.timeout]: 'State1',
+                            },
+                        },
+                        Event3: {}
+                    }
+                }
             };
+        var idList = {},
+            workTree, wi = [];
 
 
         function setDebug(level) {
@@ -980,7 +1172,6 @@
                 //                options.locale = main.systemLang;
                 //            alert('Selection length:' + $("#node-popUp").length + ', ' + $("#nodepopUp").length+ ', ' + $("#nodePopUp").length)
                 workTree = cloneObject(main.adapterConfig);
-
                 if (cb && typeof cb === 'function')
                     cb();
             });
@@ -1022,6 +1213,42 @@
             newClick('#importButton', importNetwork);
             newClick('#exportButton', exportNetwork);
             newClick('#saveButton', main.saveConfig);
+            /*
+                        newClick('#test1Button', function (event) {
+                            //                createIdTree();
+                            showIdModal(function (ok) {
+                                showMessage('modalId returned: ' + ok);
+                            });
+                            showInputTable('state');
+
+                        });
+                        newClick('#test2Button', function (event) {
+                            showInputTable('event');
+
+                            showInputModal({
+                                title: "test2",
+                                text: 'testText',
+                                button: 'Button',
+                                fields: [
+                                    ["Whatever", "create", "Whatever Create "],
+                                    ["Select", "ask", ["select", "create", "ask", "tast"]]
+                                ],
+                                callback: function (ok) {
+                                    if (ok)
+                                        setTimeout(showInputModal, 1000,
+                                            `test3|test3Text:${ok}|Test3|Test3|cancel|test3`);
+                                }
+                            });
+                        });
+                        newClick('#test3Button', function (event) {
+                            addEvent(createConfig(), 'test1');
+                            showInputTable('folder');
+                        });
+                        newClick('#test4Button', function (event) {
+                            addEvent(createConfig(true), 'test1')
+                            showInputTable('machine');
+                        });
+            */
             newClick('#reloadButton', function (event) {
                 confirmMessage('Do you really want to reaload before saving any changes?',
                     'Reload config', 'alert',
@@ -1052,7 +1279,7 @@
                 validateInput($(this));
                 enableDisable('#input-event-rename', curEvent != $(this).val());
             });
-            $('div.input-table').hide();
+            showInputTable('none');
             newClick('#folder-add', function (e) {
                 var ok = $('#input-folder').val();
                 if (ok) {
@@ -1101,14 +1328,61 @@
             })
             newClick(
                 '#input-folder-remove,#input-machine-remove,#input-event-remove,#input-link-remove,#input-state-remove',
-                () => setTimeout(doDelete, 20));
-            newClick('#input-timer-add', () => setTimeout(doCreateTimer, 20, '1m', curId));
-            newClick('#input-state-add', () => setTimeout(doCreateState, 20, 'new', curId));
-            newClick('.input-link-add', () => setTimeout(doCreateLink, 20));
-            newClick($('div.table-interface').find('a.orange'), () => showMessage('Execute for ' + curId));
+                function () {
+                    setTimeout(doDelete, 30);
+                });
+            newClick('#input-timer-add', function () {
+                setTimeout(doCreateTimer, 30, '1m', curId);
+            });
+            newClick('#input-state-add', function () {
+                setTimeout(doCreateState, 30, 'new', curId);
+            });
+            newClick('#input-link-add,#input-autolink-add', function () {
+                setTimeout(doCreateLink, 30);
+            });
+            newClick($('div.table-interface').find('a.orange'), function () {
+                showMessage('Execute for ' + curId)
+            });
             newClick('#tab-events-content thead tr', function () {
                 selectRow($(this));
             });
+            newClick('#input-event-id', function () {
+                showIdModal(function (id) {
+                    if (id) {
+                        var n = main.objects[id] && main.objects[id].common && main.objects[id].common.name;
+                        if (n && main.sstate[n])
+                            id = n;
+                        $('#input-event-chips input').val(id).focus();
+                    }
+                });
+            });
+            newClick('#input-event-ack', function (e) {
+                update3check($(this), 1 + $(this).data('checked'));
+            }).data('checked', null).prop('indeterminate', false).prop('checked', false);
+            $('#div.event-timers').hide();
+        }
+
+        function update3check(el, val) {
+            if (val === undefined)
+                val = parseInt(el.data('checked'));
+            else val = val % 3;
+            switch (val) {
+                // unchecked, going indeterminate
+                case 1:
+                    el.prop('indeterminate', true);
+                    break;
+                    // indeterminate, going checked
+                case 2:
+                    el.prop('indeterminate', false);
+                    el.prop('checked', true);
+                    break;
+                    // checked, going unchecked
+                default:
+                    el.prop('indeterminate', false);
+                    el.prop('checked', false);
+                    val = 0;
+            }
+            el.data('checked', val);
         }
 
         var nameData;
@@ -1134,6 +1408,30 @@
             return ac;
         }
 
+        function makeChips($ic, data, auto) {
+            var opt = {
+                data: data,
+                placeholder: 'Enter an event',
+                secondaryPlaceholder: '+event',
+            };
+            if (auto)
+                opt.autocompleteOptions = {
+                    data: auto,
+                    limit: Infinity,
+                    minLength: 1
+                }
+
+            $ic.material_chip(opt);
+        }
+
+        function updateChips($ic, object, gotoId) {
+            var chips = $ic.material_chip('data').sort((a, b) => a.id - b.id);
+            if (idList[object] && gotoId)
+                idList[object][gotoId] = chips.map(c => c.tag);
+            makeChips($ic, chips, getNameData());
+            setTimeout(checkConfig, 10);
+        }
+
         function offOn($s, e, fun) {
             if (typeof $s === 'string')
                 $s = $($s);
@@ -1141,180 +1439,153 @@
         }
 
         function parseActionChip(name) { // timedistance
-            var c = {};
-            if (typeof name === 'object') {
-                c = cloneObject(name);
-                name = c.tag;
-            }
-            c.tag = name = name ? name.trim() : '';
-            var m; // evry xxx timer
-            if (m = name.match(/^\s*(\d+m)?\s*(\d+s)?\s*(\d+(?:ms)?)?\s*$/)) {
-                var a = [];
-                var ts = 0;
-                for (var i = 1; i < 4; ++i) {
-                    var s = m[i];
-                    if (s) {
-                        while (s[s.length - 1] > '9')
-                            s = s.slice(0, -1);
-                        s = parseInt(s);
-                        ts += s * [0, 60 * 1000, 1000, 1][i];
-                        var ns = '' + s + ['', ' Minute', ' Second', ' MilliSecond'][i];
-                        if (s)
-                            a.push(ns + (s > 1 ? 's' : ''));
-                    }
+                var c = {};
+                if (typeof name === 'object') {
+                    c = cloneObject(name);
+                    name = c.tag;
                 }
-                if (ts) {
-                    c.text = 'Timer: ' + a.join(', ');
-                    c.timems = ts;
-                    c.name = name;
-                    c.image = 'lib/img/hourglass.png';
+                c.tag = name = name ? name.trim() : '';
+                var m; // evry xxx timer
+                if (m = name.match(/^\s*(\d+m)?\s*(\d+s)?\s*(\d+(?:ms)?)?\s*$/)) {
+                    var a = [];
+                    var ts = 0;
+                    for (var i = 1; i < 4; ++i) {
+                        var s = m[i];
+                        if (s) {
+                            while (s[s.length - 1] > '9')
+                                s = s.slice(0, -1);
+                            s = parseInt(s);
+                            ts += s * [0, 60 * 1000, 1000, 1][i];
+                            var ns = '' + s + ['', ' Minute', ' Second', ' MilliSecond'][i];
+                            if (s)
+                                a.push(ns + (s > 1 ? 's' : ''));
+                        }
+                    }
+                    if (ts) {
+                        c.text = 'Timer: ' + a.join(', ');
+                        c.timems = ts;
+                        c.name = name;
+                        c.image = 'lib/img/hourglass.png';
+                        return c;
+                    }
+                } // exec command on system
+                if (m = name.match(/^\s*\$\s*(.+)$/)) {
+                    c.cmd = m[1] ? m[1].trim() : undefined;
+                    c.text = 'Exec: ' + c.cmd;
+                    c.image = 'lib/img/exe.png';
+                    return c;
+                } // eval javascript
+                if (m = name.match(/^\s*(\(.+\))\s*$/)) {
+                    c.eval = m[1] ? m[1].trim() : undefined;
+                    c.text = 'Eval: ' + c.eval;
+                    c.image = 'lib/img/js.png';
                     return c;
                 }
-            } // exec command on system
-            if (m = name.match(/^\s*\$\s*(.+)$/)) {
-                c.cmd = m[1] ? m[1].trim() : undefined;
-                c.text = 'Exec: ' + c.cmd;
-                c.image = 'lib/img/exe.png';
-                return c;
-            } // eval javascript
-            if (m = name.match(/^\s*(\(.+\))\s*$/)) {
-                c.eval = m[1] ? m[1].trim() : undefined;
-                c.text = 'Eval: ' + c.eval;
-                c.image = 'lib/img/js.png';
+                if (!(m = name.match( // id + verifier
+                        /^\s*([&!]{0,2})\s*([^\=\~]+)(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=.+|\=\?\s*|\s*)$/
+                    )))
+                    return null;
+                c.exec = m[3] ? m[3].trim() : undefined;
+                c.ack = m[1] && m[1].indexOf('!') >= 0;
+                c.queue = m[1] && m[1].indexOf('&') >= 0;
+                //                c.ack = m[1] ? m[1] : undefined;
+                c.idn = m[2] ? m[2].trim() : undefined;
+                c.text = 'Id : ' + c.idn + (c.idn != main.sstate[c.idn] ? ' (' + main.sstate[c.idn] + ')' : '');
+                if (c.queue)
+                    c.text += ' queued';
+                if (c.ack)
+                    c.text += ' ack';
+                if (c.exec)
+                    c.text += ' with ' + c.exec;
+                c.image = getIcon(c.idn);
+                if (!c.image)
+                    c.image = 'lib/img/run.png';
                 return c;
             }
-            if (!(m = name.match( // id + verifier
-                    /^\s*([&!]{0,2})\s*([^\=\~]+)(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=.+|\=\?\s*|\s*)$/
-                )))
-                return null;
-            c.exec = m[3] ? m[3].trim() : undefined;
-            c.ack = m[1] && m[1].indexOf('!') >= 0;
-            c.queue = m[1] && m[1].indexOf('&') >= 0;
-            //                c.ack = m[1] ? m[1] : undefined;
-            c.idn = m[2] ? m[2].trim() : undefined;
-            c.text = 'Id : ' + c.idn + (c.idn != main.sstate[c.idn] ? ' (' + main.sstate[c.idn] + ')' : '');
-            if (c.queue)
-                c.text += ' queued';
-            if (c.ack)
-                c.text += ' ack';
-            if (c.exec)
-                c.text += ' with ' + c.exec;
-            c.image = getIcon(c.idn);
-            if (!c.image)
-                c.image = 'lib/img/run.png';
-            return c;
-        }
 
-        function parseEventChip(name) { // timedistance
-            var c = {};
-            if (typeof name === 'object') {
-                c = cloneObject(name);
-                name = c.tag;
-            }
-            c.tag = name = name ? name.trim() : '';
-            var m; // evry xxx timer
-            if (m = name.match(/^(\d+w)?\s*(\d+d)?\s*(\d+h)?\s*(\d+m)?\s*(\d+s?)?$/)) {
-                var a = [];
-                var ts = 0;
-                for (var i = 1; i < 6; ++i) {
-                    var s = m[i];
-                    if (s) {
-                        if (s[s.length - 1] > '9')
-                            s = s.slice(0, -1);
-                        s = parseInt(s);
-                        ts += s * [0, 7 * 24 * 60 * 60, 24 * 60 * 60, 60 * 60, 60, 1][i];
-                        var ns = '' + s + ['', ' Week', ' Day', ' Hour', ' Minute', ' Second'][i];
-                        if (s)
-                            a.push(ns + (s > 1 ? 's' : ''));
+            function parseEventChip(name) { // timedistance
+                var c = {};
+                if (typeof name === 'object') {
+                    c = cloneObject(name);
+                    name = c.tag;
+                }
+                c.tag = name = name ? name.trim() : '';
+                var m; // evry xxx timer
+                if (m = name.match(/^(\d+w)?\s*(\d+d)?\s*(\d+h)?\s*(\d+m)?\s*(\d+s?)?$/)) {
+                    var a = [];
+                    var ts = 0;
+                    for (var i = 1; i < 6; ++i) {
+                        var s = m[i];
+                        if (s) {
+                            if (s[s.length - 1] > '9')
+                                s = s.slice(0, -1);
+                            s = parseInt(s);
+                            ts += s * [0, 7 * 24 * 60 * 60, 24 * 60 * 60, 60 * 60, 60, 1][i];
+                            var ns = '' + s + ['', ' Week', ' Day', ' Hour', ' Minute', ' Second'][i];
+                            if (s)
+                                a.push(ns + (s > 1 ? 's' : ''));
+                        }
                     }
-                }
-                if (ts) {
-                    c.timer = a.join(', ');
-                    c.text = 'Every ' + c.timer;
-                    c.times = ts;
+                    if (ts) {
+                        c.timer = a.join(', ');
+                        c.text = 'Every ' + c.timer;
+                        c.times = ts;
+                        c.name = name;
+                        c.image = 'lib/img/timer-icon-timelapse.png';
+                        return c;
+                    }
+                } // time
+                if (m = name.match(/^([\d\-\*\,\/]+)\s*:\s*([\d\-\*\,\/]+)\s*(?::\s*([\d\-\*\,\/]+))?$/)) {
+                    if (m[3] == undefined)
+                        m[3] = 0;
+                    c.schedule = m[3] + ' ' + m[2] + ' ' + m[1] + ' * * *';
+                    c.text = 'At ' + c.schedule;
+                    c.image = 'lib/img/schedule_24h.png';
                     c.name = name;
-                    c.image = 'lib/img/timer-icon-timelapse.png';
                     return c;
-                }
-            } // time
-            if (m = name.match(/^([\d\-\*\,\/]+)\s*:\s*([\d\-\*\,\/]+)\s*(?::\s*([\d\-\*\,\/]+))?$/)) {
-                if (m[3] == undefined)
-                    m[3] = 0;
-                c.schedule = m[3] + ' ' + m[2] + ' ' + m[1] + ' * * *';
-                c.text = 'At ' + c.schedule;
-                c.image = 'lib/img/schedule_24h.png';
-                c.name = name;
+                } // schedule
+                if (m = name.match(
+                        /^((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?\s*){5}((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?)?$/
+                    )) {
+                    c.schedule = (!m[2] ? '* ' : '') + name;
+                    c.text = 'Schedule ' + c.schedule;
+                    c.timer = name;
+                    c.image = 'lib/img/timer-icon-schedule.png';
+                    return c;
+                };
+                if (!(m = name.match( // id + verifier
+                        /^([\/\!]?)(~?)([^\?]+)(\?\+(?=\s*$)|\?\-(?=\s*$)|\?\=|\?\!=|\?\>\=|\?\>|\?\<|\?\<\=|\?\?|\?\^|\?\$|\?\#|$)\s*(.*)$/
+                    )))
+                    return null;
+                c.onchange = !!m[2];
+                c.ack = m[1];
+                c.idn = m[3].trim();
+                c.image = getIcon(c.idn);
+                if (!c.image)
+                    c.image = 'lib/img/flash.png';
+                if (m[5])
+                    c.test = m[5].trim();
+                c.check = m[4];
+                c.text = c.onchange ? 'On change ' : '' ;
+                c.text += c.ack =='/' ? 'No Ack ' : ( c.ack=='!' ? 'Witch Ack ' : 'Any Ack ');
+                c.text += c.idn;
+                if (c.idn != main.sstate[c.idn])
+                    c.text += ' (' + main.sstate[c.idn] + ') ';
+                c.text += c.check + ' ' + c.test;
                 return c;
-            } // schedule
-            if (m = name.match(
-                    /^((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?\s*){5}((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?)?$/
-                )) {
-                c.schedule = (!m[2] ? '* ' : '') + name;
-                c.text = 'Schedule ' + c.schedule;
-                c.timer = name;
-                c.image = 'lib/img/timer-icon-schedule.png';
-                return c;
-            };
-            if (!(m = name.match( // id + verifier
-                    /^([\/\!]?)(~?)([^\?]+)(\?\+(?=\s*$)|\?\-(?=\s*$)|\?\=|\?\!=|\?\>\=|\?\>|\?\<|\?\<\=|\?\?|\?\^|\?\$|\?\#|$)\s*(.*)$/
-                )))
-                return null;
-            c.onchange = !!m[2];
-            c.ack = m[1];
-            c.idn = m[3].trim();
-            c.image = getIcon(c.idn);
-            if (!c.image)
-                c.image = 'lib/img/flash.png';
-            if (m[5])
-                c.test = m[5].trim();
-            c.check = m[4];
-            c.text = c.onchange ? 'On change ' : '';
-            c.text += c.ack == '/' ? 'No Ack ' : (c.ack == '!' ? 'Witch Ack ' : 'Any Ack ');
-            c.text += c.idn;
-            if (c.idn != main.sstate[c.idn])
-                c.text += ' (' + main.sstate[c.idn] + ') ';
-            c.text += c.check ? c.check.slice(1) + ' ' + c.test : '';
-            return c;
-        }
+            }
 
-        function rebindActionData(inputArea, oid, field, parser, icon, text) {
+        function rebindActionData(inputArea, oid, field, parser) {
             function parseChip(chip) {
                 var fun = $ia.data('parsed-fun');
                 return fun ? fun(chip) : null;
             }
-
-            function makeChips(data, auto) {
-                var opt = {
-                    data: data,
-                    placeholder: 'Enter an event',
-                    secondaryPlaceholder: '+event',
-                };
-                if (auto)
-                    opt.autocompleteOptions = {
-                        data: auto,
-                        limit: Infinity,
-                        minLength: 1
-                    }
-
-                $ic.material_chip(opt);
-            }
-
-            function updateChips(object, gotoId) {
-                var chips = $ic.material_chip('data').sort((a, b) => a.id - b.id);
-                if (idList[object] && gotoId)
-                    idList[object][gotoId] = chips.map(c => c.tag);
-                makeChips(chips, getNameData());
-                setTimeout(checkConfig, 10);
-            }
-
 
             var $ia = $(inputArea);
             $ia.data('d-id', oid).data('parsed-fun', parser);
             var $ic = $ia.find('.chips');
             var $ii = $ic.find('input');
             var $it = $ia.find('span.input-text');
-            $ia.find('label.data-title').text(text);
-            $ia.find('.data-icon').text(icon);
             var obj = oid && idList[oid];
             var chips = obj && obj[field];
             chips = chips || [];
@@ -1324,7 +1595,8 @@
                 p.id = id++;
                 return p;
             });
-            makeChips(data, getNameData(field != fields.fire));
+            //            $ia.data('updateFun', updateEventInput);
+            makeChips($ic, data, getNameData(field != fields.fire));
             offOn($ii, 'input', function () {
                 var v = $(this).val().trim();
                 var c = parseChip(v);
@@ -1346,7 +1618,7 @@
                     chip[i] = c[i];
                 $ia.data('parsed-chip', c);
                 setTimeout(function () {
-                    updateChips(oid, field)
+                    updateChips($ic, oid, field)
                     //                    $ia.find('div.chip.selected').removeClass('selected');
                     $ic.find('div.chip').last().addClass('selected');
                     selectChip($ia, chip);
@@ -1358,7 +1630,7 @@
                 addEvent(chip, 'Chip.Delete');
                 addEvent($ic.material_chip('data'), 'All chips');
                 $ia.data('parsed-chip', null);
-                updateChips(oid, field);
+                updateChips($ic, oid, field);
             });
             offOn($ic, 'chip.select', function (e, chip) {
                 if (chip.oid === undefined)
@@ -1367,16 +1639,13 @@
                     chip.otag = chip.tag
                 selectChip($ia, chip);
             });
-            offOn($ia.find('a.show-help'), 'click', function () {
-                var $h = $(this).closest('.input-table');
-                if (!$h.next('.input-table-help').length > 0)
-                    $h = $h.next();
-                $h = $h.next('.input-table-help');
-                var s = !$h.data('shown');
-                $h.data('shown', s);
-                showHide($h, s);
-            })
             $ia.show();
+        }
+
+        function updateInput($ia) {
+            var fun = $ia.data('updateFun');
+            if (fun)
+                setTimeout(fun, 10, $ia);
         }
 
         function selectChip($ia, chip) {
@@ -1387,8 +1656,196 @@
             addEvent(chip, 'Chip.select');
             $ia.find('span.input-text').text(chip ? chip.text : '');
             $ia.find('.chips input').val(chip.tag);
+            updateInput($ia);
         }
 
+
+        function rebindEventData(inputArea, oid) {
+            function updateEventInput($ia) {
+                var c = $ia.data('parsed-chip');
+                var $ic = $ia.find('.chips');
+                $('#input-event-data .event-ids').hide();
+                $('#input-event-data .event-timers').hide();
+                if (c && (c.timer || c.schedule)) {
+                    //                $('#input-event-data .event-ids').hide();
+                    $('#input-event-data .event-timers').show();
+                    $('#input-event-data .event-timers-every').hide();
+                    $('#input-event-label-timer').text(c.schedule ? 'at cron:' : 'each:');
+                    if (c.schedule) {
+                        function iCheck() {
+                            var s, a = [];
+                            $i.each(function () {
+                                var v = $(this).val().trim();
+                                //                           if (a.length<3 && !isNaN(parseInt(v)))
+                                //                               $(this).val(v = v <= 0 ? '00' : v>9 ? v : '0'+parseInt(v));
+                                a.push(v);
+                            });
+                            if ((a[3] === '*' || a[3] === '') && (a[4] === '*' || a[4] === '') && (a[5] === '*' || a[5] ===
+                                    '')) {
+                                s = a[2] + ':' + a[1];
+                                if (a[0] != '' && a[0] != '0' && a[0] != '00')
+                                    s += ':' + a[0]
+                            } else s = a.join(' ');
+                            $('#input-event-test').text('@ ' + s);
+                            //                        $ic.find('input').val(s);
+                        }
+                        var html = `<table><thead><tr><th>`;
+                        var sch = c.schedule.split(/\s+/);
+                        html += ['Seconds', 'Minutes', 'Hours', 'Day/Month', 'Day/Year', 'Day/Week'].join('</th><th>');
+                        html += `</th></tr></thead><tbody><tr>`;
+                        for (var i in sch) {
+                            var t = sch[i];
+                            if (i < 3 && parseInt(t) < 10)
+                                t = '0' + parseInt(t);
+                            html +=
+                                `<td><input type="text" class="scheduleinput${!t.match(
+                            /^((?:(?:[0-5]?\d)(?:[\-][0-5]?\d)?)(?:\,(?:[0-5]?\d)(?:[\-][0-5]?\d)?)*|\*)?(?:\/([0-3]?\d))?$/) ? ' invalid' : ''}" value="${t}"></td>`;
+                        }
+                        html += `</td></tr></tbody></table>`;
+                        var $i = $('#input-event-timer-data');
+                        $i.html(html);
+                        $i = $i.find('input');
+                        $i.on('input', function () {
+                            var $t = $(this);
+                            var v = $t.val().trim();
+                            $t.toggleClass('invalid', !v.match(
+                                /^((?:(?:[0-5]?\d)(?:[\-][0-5]?\d)?)(?:\,(?:[0-5]?\d)(?:[\-][0-5]?\d)?)*|\*)?(?:\/([0-3]?\d))?$/
+                            ));
+                            iCheck();
+                        });
+                        iCheck();
+                    } else {
+                        $('#input-event-data .event-timers-every').show();
+                        $('#input-event-timer-data').text(c.timer);
+                        validateInput($('#input-event-timers').val(c.name));
+                    }
+                } else if (c) {
+                    //              $('#input-event-data .event-timers').hide();
+                    $('#input-event-data .event-ids').show();
+                    $('#input-event-change').prop('checked', c.onchange);
+                    update3check($('#input-event-ack'), ["", "/", "!"].indexOf(c.ack));
+                    var xd = c && c.idn && main.sstate[c.idn];
+                    var cd = c && c.idn ? c.idn.trim() : '';
+                    if (xd && xd != cd)
+                        cd += ' (' + xd + ')';
+                    if (!cd)
+                        cd = '';
+                    $('#input-event-test').text(cd);
+                    //            $('#input-event-compare').select(c.check);
+                    msValue($('#input-event-compare'), c.check);
+                    $('#input-event-with').prop('disabled', ["", "-", "+"].indexOf(c.check) >= 0);
+                    //            $('#input-event-compare').val(c.check).change();
+                    $('#input-event-with').val(c.test);
+                }
+            }
+
+
+
+            var chips = oid && idList[oid] && idList[oid][fields.fire];
+            if (!chips)
+                chips = [];
+            var id = 0;
+            var data = chips.map(function (c) {
+                var p = parseChip(c);
+                p.id = id++;
+                return p;
+            });
+            var $ia = $(inputArea);
+            $ia.data('d-id', oid);
+            $ia.data('updateFun', updateEventInput);
+            $ia.data('parsed-fun', parseChip);
+            $('#input-event-value').attr('s-v', 'statemachine.0.' + oid).html(getValue(oid, true));
+            var $ic = $ia.find('.chips');
+            makeChips($ic, data, getNameData());
+            offOn($ic.find('input'), 'input', function () {
+                var v = $(this).val();
+                var c = parseChip(v);
+                $ia.data('parsed-chip', c);
+                if (c) {
+                    addEvent(c, 'Chip...');
+                    setTimeout(updateEventInput, 20, $ia);
+                }
+            });
+            offOn($ic, 'chip.add', function (e, chip) {
+                chip.id = id++;
+                var c = parseChip(chip);
+                for (var i of ownKeys(c))
+                    chip[i] = c[i];
+                $ia.data('parsed-chip', c);
+                setTimeout(function () {
+                    updateChips($ic, oid, fields.fire)
+                    //                    $ia.find('div.chip.selected').removeClass('selected');
+                    $ic.find('div.chip').last().addClass('selected');
+                    selectChip($ia, chip);
+                }, 10);
+                addEvent(c, 'Chip.add');
+                return true;
+            });
+            offOn($ic, 'chip.delete', function (e, chip) {
+                addEvent(chip, 'Chip.Delete');
+                addEvent($ic.material_chip('data'), 'All chips');
+                $ia.data('parsed-chip', null);
+                updateChips($ic, oid, fields.fire);
+            });
+            offOn($ic, 'chip.select', function (e, chip) {
+                if (!chip.oid)
+                    chip.oid = chip.id;
+                if (!chip.otag)
+                    chip.otag = chip.tag
+                selectChip($ia, chip);
+            });
+            $ia.show();
+            offOn('#input-event-compare', 'change', function () {
+                var c = $ia.data('parsed-chip');
+                if (c) {
+                    c.check = $(this).val();
+                    //                addEvent(c,'compare changed');
+                    rebuildChip($ia, c);
+                }
+            });
+            offOn('#input-event-ack', 'change', function () {
+                var c = $ia.data('parsed-chip');
+                if (c) {
+                    var a = $(this).data('checked');
+                    a = ['', '/', '!'][a];
+                    c.ack = a || '';
+                    //                  addEvent(c,'ack changed');
+                    rebuildChip($ia, c);
+                }
+            });
+            offOn('#input-event-change', 'change', function () {
+                var c = $ia.data('parsed-chip');
+                if (c) {
+                    c.onchange = this.checked ? '~' : '';
+                    //                    addEvent(c,'onchange changed');
+                    rebuildChip($ia, c);
+                }
+            });
+            offOn('#input-event-with', 'input', function () {
+                var c = $ia.data('parsed-chip');
+                if (c) {
+                    c.test = $(this).val();
+                    addEvent(c, 'onchange changed');
+                    rebuildChip($ia, c);
+                }
+            });
+            offOn('#input-event-timers', 'input', function () {
+                validateInput($(this));
+                var v = $(this).val().trim();
+                if (v === '')
+                    v = '0';
+                var c = $ia.data('parsed-chip');
+                var n = parseChip(v);
+                if (n && c && n.timer != c.timer) {
+                    c.name = v;
+                    c.timer = n.timer;
+                    addEvent(c, 'onchange changed');
+                    $('#input-event-timer-data').text(c.timer);
+                    rebuildChip($ia, c);
+                }
+            });
+            updateEventInput($ia);
+        }
 
         function getIcon(id) {
             if (main.icons[id])
@@ -1422,6 +1879,7 @@
             }
             c.tag = s;
             $ia.data('parsed-chip', c);
+            setTimeout(updateEventInput, 10, $ia);
             $ia.find('.chips input').val(s);
         }
 
@@ -1430,6 +1888,22 @@
             selector.material_select();
         }
 
+
+        function showInputTable(name, obj) {
+            $('div.input-table').hide();
+            $('#input-table-' + name).show();
+            var show = [];
+            switch (name) {
+                case 'event':
+                    //                    rebindEventData('#input-event-data', obj && obj[fields.fire]);
+                    rebindEventData('#input-event-data', obj);
+                    rebindActionData('#input-action-data', obj, fields.onFire);
+                    break;
+                case 'link':
+                    rebindEventData('#input-event-data', obj);
+                    break;
+            }
+        }
 
         function validateInput($this) {
             if (typeof $this === 'string')
@@ -1529,19 +2003,7 @@
             }
 
             if (!workTree.folders)
-                workTree.folders = {
-                    "": {
-                        TestMachine: {
-                            TestState: {
-                                "2m": {}
-                            },
-                            "2m": {
-                                [fields.timeout]: 'TestState',
-                            },
-                        },
-                        TestEvent: {}
-                    }
-                };
+                workTree.folders = cloneObject(testconfig.folders);
             setDebug(workTree.debugLevel);
 
             var html = '';
@@ -1605,11 +2067,7 @@
             if (typeof m == 'string')
                 m = idList[m];
             var html = '';
-            if (!val)
-                val = '';
             var ss = val.startsWith('~') ? '~' : '';
-            if (val === '')
-                html += `<option value="" selected>Not set</option>`;
 
             getStates(m).forEach(function (s) {
                 html += `<option value="${ss+s}"${val == s ? ' selected' : ''}>${ss+s}</option>`;
@@ -1630,7 +2088,7 @@
             curId = $this.data('ttId');
             curPar = $this.data('ttParentId');
             if (!curId)
-                $('div.input-table').hide();
+                return showInputTable(null);
             var ido = idList[curId];
             var ty = ido[fields.type];
             var ids = curId.split('.');
@@ -1652,9 +2110,6 @@
                 $('#input-event-name').val(curEvent);
             }
             $('input.mach-val').removeClass('invalid');
-            $('div.input-table').hide();
-            $('#input-table-' + ty).show();
-            var show = [];
             switch (ty) {
                 case 'folder':
                     $('#input-folder-name').val(curFolder);
@@ -1670,8 +2125,6 @@
                         isAnyChanged('#input-link-tostate', '#input-link-rename');
                     });
                     enableDisable('#input-link-rename');
-                    rebindActionData('#input-event-data', curId, fields.fire, parseEventChip, icons.iconEvent,
-                        'Events for new state, current id:');
                     break;
                 case 'state':
                     $('#input-state-name').val(getThisName(curId)).data('old', getThisName(curId)).unbind(
@@ -1680,10 +2133,6 @@
                         isAnyChanged('#input-state-name', '#input-state-rename');
                     });
                     enableDisable('#input-state-rename');
-                    rebindActionData('#input-action-data', curId, fields.onEnter, parseActionChip, 'gps_fixed',
-                        'Actions on Enter, current id:');
-                    rebindActionData('#input-action-data1', curId, fields.onExit, parseActionChip, 'gps_off',
-                        'Actions on Exit, current id:');
                     break;
                 case 'timer':
                     $('#input-timer-name').val(getThisName(curId)).data('old', getThisName(curId)).unbind(
@@ -1698,25 +2147,11 @@
                                 '#input-state-rename');
                         });
                     enableDisable('#input-timer-rename');
-                    rebindActionData('#input-action-data', curId, fields.onEnter, parseActionChip, 'gps_fixed',
-                        'Actions on Enter, current id:');
-                    rebindActionData('#input-action-data1', curId, fields.onExit, parseActionChip, 'gps_off',
-                        'Actions on Exit, current id:');
-                    break;
-                case 'event':
-                    rebindActionData('#input-event-data', curId, fields.fire, parseEventChip, icons.iconEvent,
-                        'Events which fire, current id:');
-                    rebindActionData('#input-action-data', curId, fields.onFire, parseActionChip, 'directions_run',
-                        'Action when fired, current id:');
-                    break;
-                case 'machine':
-                    offOn(popStates('#input-machine-states', curId, ido[fields.default]), 'change', function () {
-                        ido[fields.default] = $(this).val();
-                        setTimeout(checkConfig, 10);
-                    });
                     break;
             }
+            showInputTable(ty, curId);
             Materialize.updateTextFields();
+            //                showMessage($this.data('ttId'));
             addEvent(ido, "Select Row");
             $this.addClass("selected blue lighten-4");
         }
@@ -1853,10 +2288,10 @@
                         else if (idList[fs + ok])
                             showMessage('Name already used, please change!');
                         else {
-                            addId(ok, folder, icons.iconState, idList[curId][ok] = {});
-                            return setTimeout(selectId, 20, folder + '.' + ok);
+                            addId(ok, folder, icons.iconState);
+                            return setTimeout(selectId, 30, folder + '.' + ok);
                         }
-                        setTimeout(doCreateState, 30, txt, folder);
+                        setTimeout(doCreateState, 50, txt, folder);
                     }
                 }
             });
@@ -1943,15 +2378,7 @@
         $(function () {
             pageInit(function () { // this is called when initialization happened and all objects are loaded!
                 createFolderTree(true);
-                //                createIdTree();
-                if (main.adapterConfigIds.length > 1) {
-                    var ah = '';
-                    for (var ai of main.adapterConfigIds)
-                        ah += ` <option value="${ai}" ${ah == '' ? ' selected' : ''}>${ai}</option>`;
-                    $('#adapter-instances').html(ah).material_select().change(function () {
-                        var i = $(this).val();
-                    });
-                } else $('.instance-config').hide();
+                createIdTree();
             });
         });
     </script>
@@ -1965,15 +2392,8 @@
                     <img src="/adapter/statemachine/statemachine0.png" style="width: 2.5em; height: 2.5em" onclick="window.location.reload();">
                 </div>
             </div>
-            <div class="col s4 m4 l2">
+            <div class="col s10 m10 l5">
                 <h5>StateMachine Setup</h5>
-            </div>
-            <div class="col s2 m2 l1">
-                <label class=" instance-config">Statemachine Instance to configure</label>
-            </div>
-            <div class="col s4 m4 l2">
-                <select id="adapter-instances" class="instance-config">
-                </select>
             </div>
             <div class="col s12 m12 l6">
                 <h6>Control &amp; Options</h6>
@@ -2031,6 +2451,33 @@
                         <button id="reloadButton" class="waves-effect waves-light btn not-ok-cancel w100 btn-small">
                             <i class="material-icons left">loop</i>
                             <span>Reload</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="divider clear10"></div>
+                <div class="row">
+                    <div class="col s3">
+                        <button id="test1Button" class="waves-effect waves-light btn btn-small w100">
+                            <i class="material-icons left">filter_1</i>
+                            <span>Test1</span>
+                        </button>
+                    </div>
+                    <div class="col s3">
+                        <button id="test2Button" class="waves-effect waves-light btn blue btn-small w100">
+                            <i class="material-icons left">filter_2</i>
+                            <span>Test2</span>
+                        </button>
+                    </div>
+                    <div class="col s3">
+                        <button id="test3Button" class="waves-effect waves-light btn btn-small w100">
+                            <i class="material-icons left">filter_3</i>
+                            <span>Test3</span>
+                        </button>
+                    </div>
+                    <div class="col s3">
+                        <button id="test4Button" class="waves-effect waves-light btn blue btn-small w100">
+                            <i class="material-icons left">filter_4</i>
+                            <span>Test4</span>
                         </button>
                     </div>
                 </div>
@@ -2135,7 +2582,7 @@
                             <a id="input-timer-add" title="Add Timer" class="btn-floating btn btn-small waves-effect waves-light teal">
                                 <i class="material-icons" my-icon="iconTimer"></i>
                             </a>
-                            <a title="Add Autolink" class="btn-floating btn btn-small waves-effect waves-light teal input-link-add">
+                            <a id="input-autolink-add" title="Add Autolink" class="btn-floating btn btn-small waves-effect waves-light teal">
                                 <i class="material-icons" my-icon="iconLinkAuto"></i>
                             </a>
                             <a id="input-machine-rename" title="Rename Machine" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
@@ -2153,10 +2600,6 @@
                         </select>
                         <label>Default State</label>
                     </div>
-                    <div class="col s3">
-                        <label for="input-event-value" class="active">Current State</label>
-                        <p s-v="" id="input-machine-value"></p>
-                    </div>
                 </div>
                 <div id="input-table-state" class="input-table row">
                     <div class="input-field col s3">
@@ -2171,7 +2614,7 @@
                             </a>
                         </div>
                         <div class='right'>
-                            <a title="Add Link" class="btn-floating btn btn-small waves-effect waves-light teal input-link-add">
+                            <a id="input-link-add" title="Add Link" class="btn-floating btn btn-small waves-effect waves-light teal">
                                 <i class="material-icons" my-icon="iconLink"></i>
                             </a>
                             <a id="input-state-rename" title="Rename State" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
@@ -2197,7 +2640,7 @@
                             </a>
                         </div>
                         <div class='right'>
-                            <a title="Add Link" class="btn-floating btn btn-small waves-effect waves-light teal input-link-add">
+                            <a title="Add Link" title="Add Link" class="btn-floating btn btn-small waves-effect waves-light teal">
                                 <i class="material-icons" my-icon="iconLink"></i>
                             </a>
                             <a id="input-timer-rename" title="Change Timer" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
@@ -2246,62 +2689,74 @@
                 </div>
                 <div id="input-event-data" class="input-table row">
                     <div class "col s12">
-                        <i class="material-icons data-icon prefix" my-icon="iconEvent"></i>
-                        <a class="btn-floating btn btn-small right waves-effect waves-light teal show-help">
-                            <i class="material-icons show-help" my-icon="help">help</i>
+                        <i class="material-icons prefix" my-icon="iconEvent"></i>
+                        <a id="input-event-id" title="Insert Id" class="btn-floating btn btn-small right waves-effect waves-light teal">
+                            <i class="material-icons" my-icon="input">input</i>
                         </a>
-                        <label class='data-title'>Event list, current id: </label>
-                        <span class="input-text"></span>
-                        <div class="chips"></div>
+                        <label>Event list, current id: </label>
+                        <span id="input-event-test"></span>
+                        <div id="input-event-chips" class="chips"></div>
                     </div>
-                </div>
-                <div id="input-event-help" class="input-table input-table-help row">
-                    <div class "col s12">
-                        <ul class="collapsible popout" data-collapsible="accordion">
-                            <li>
-                                <div class="collapsible-header">
-                                    <i class="material-icons">help</i>Help on Events!</div>
-                                <div class="collapsible-body">
-                                    <span>Lorem ipsum dolor sit amet.</span>
-                                </div>
-                            </li>
-                        </ul>
+                    <!--div class="col s1">
                     </div>
+                    <div class="col s3 event-ids">
+                        <input type="checkbox" id="input-event-ack" />
+                        <label for="input-event-ack">Ack</label>
+                        <br>
+                        <input type="checkbox" id="input-event-change" />
+                        <label for="input-event-change">On change only</label>
+                    </div>
+                    <div class="input-field col s4 event-ids">
+                        <select id='input-event-compare'>
+                            <option value="" selected>Any</option>
+                            <option value="+">+ true</option>
+                            <option value="-">- false</option>
+                            <option value="=">= equal</option>
+                            <option value="!=">!= not equal</option>
+                            <option value=">">&gt; greater than</option>
+                            <option value=">=">&gt;= gt or equal</option>
+                            <option value="<">&lt; less than</option>
+                            <option value="<=">&lt;= lt or equal</option>
+                            <option value="^">^ Starts with</option>
+                            <option value="$">$ ends with</option>
+                            <option value="?">? includes</option>
+                            <option value="#"># includes not</option>
+                        </select>
+                        <label for="input-event-compare">Logic:</label>
+                    </div>
+                    <div class="col s4 event-ids">
+                        <label for="input-event-with" class="active">Value (last if empty)</label>
+                        <input type="text" id="input-event-with">
+                    </div>
+                    <div class="col s4 event-timers">
+                        <label id="input-event-label-timer">each</label>
+                        <div id="input-event-timer-data"></div>
+                    </div>
+                    <div class="col s4 event-timers event-timers-every">
+                        <label for="input-event-timers" class="active">Every:</label>
+                        <input type="text" id="input-event-timers" minlength="2" pattern="^\s*(\d+w)?\s*(\d+d)?\s*(\d+h)?\s*(\d+m)?\s*(\d+s?)?$\s*"
+                            title="Start with number and the one of (w,d,h,m,s)!">
+                    </div-->
                 </div>
                 <div id="input-action-data" class="input-table row">
                     <div class "col s12">
-                        <i class="material-icons data-icon prefix" my-icon="directions_run">directions_run</i>
-                        <a class="btn-floating btn btn-small right waves-effect waves-light teal show-help">
-                            <i class="material-icons" my-icon="help">help</i>
+                        <i class="material-icons prefix" my-icon="directions_run">directions_run</i>
+                        <a id="input-action-id" title="Insert Id" class="btn-floating btn btn-small right waves-effect waves-light teal">
+                            <i class="material-icons" my-icon="input">input</i>
                         </a>
-                        <label class='data-title'>Action list, current id: </label>
+                        <label>Action list, current id: </label>
                         <span class="input-text"></span>
-                        <div class="chips"></div>
+                        <div id="input-action-chips" class="chips"></div>
                     </div>
-                </div>
-                <div id="input-action-data1" class="input-table row">
-                    <div class "col s12">
-                        <i class="material-icons data-icon prefix" my-icon="directions_run">directions_run</i>
-                        <a class="btn-floating btn btn-small right waves-effect waves-light teal show-help">
-                            <i class="material-icons" my-icon="help">help</i>
-                        </a>
-                        <label class='data-title'>Action list, current id: </label>
-                        <span class="input-text"></span>
-                        <div class="chips"></div>
-                    </div>
-                </div>
-                <div id="input-action-help" class="input-table input-table-help row">
-                    <div class "col s12">
-                        <ul class="collapsible popout" data-collapsible="accordion">
-                            <li>
-                                <div class="collapsible-header">
-                                    <i class="material-icons">help</i>Help on Actions!</div>
-                                <div class="collapsible-body">
-                                    <span>Lorem ipsum dolor sit amet.</span>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
+                    <ul class="collapsible popout" data-collapsible="accordion">
+                        <li>
+                            <div class="collapsible-header">
+                                <i class="material-icons">help</i>Help on Actions!</div>
+                            <div class="collapsible-body">
+                                <span>Lorem ipsum dolor sit amet.</span>
+                            </div>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
