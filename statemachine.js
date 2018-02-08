@@ -67,8 +67,8 @@ adapter.on('ready', function () {
 function main() {
     var v = 0;
     function tick() {
-        A.makeState('Event3',(v = 3-v));
-        A.makeState('timer',''+new Date(),true);
+        A.makeState({id:'Event3', write: true},(v = 3-v),false);
+        A.makeState({id:'timer', write: true},''+new Date(),false);
     }
     tick();
     setInterval(tick,60000);

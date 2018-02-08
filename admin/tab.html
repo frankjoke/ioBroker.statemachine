@@ -284,321 +284,299 @@
         }
 
         function ownKeys(obj) {
-            if (!obj)
-                return [];
-            return typeof obj == 'object' ? Object.keys(obj).filter(function (k) {
+            return typeof obj === 'object' ? Object.keys(obj).filter(function (k) {
                 return obj.hasOwnProperty(k);
-            }).sort() : [];
+            }) : [];
         }
 
+        function ownKeysSorted(obj) {
+            return ownKeys(obj).sort(function (a, b) {
+                    a = a.toLowerCase();
+                    b = b.toLowerCase();
+                    if (a == b) return 0;
+                    if (a > b) return 1;
+                    return -1;
+                });
+        }
 
         function cloneObject(obj) {
-            return JSON.parse(JSON.stringify(obj));
+            return !!obj ? JSON.parse(JSON.stringify(obj)) : obj;
         }
 
-
-        function showHide(sel, value) { //value = true = enabled
-            if (typeof sel == 'string')
-                sel = $(sel);
-            if (!value)
-                sel.hide();
-            else
-                sel.show();
-        }
 
         function newClick(sel, fun) {
-            if (typeof sel === 'string')
-                sel = $(sel);
-            sel.unbind('click');
-            if (typeof fun == 'function')
-                sel.click(fun)
-            return sel;
+            return offOn(sel, 'click', fun);
         }
-
-        // randomly create some nodes and edges
-        // create connections between people
-        // value corresponds with the amount of contact between two people
-        var data, container, $exportArea, selection;
-
-        function exportNetwork() {
-            $exportArea.val(JSON.stringify(createConfig(), undefined, 2));
-            $exportArea.trigger('autoresize');;
-        }
-
-        function importNetwork() {
-            var inputData = JSON.parse($exportArea.val());
-            if (Array.isArray(inputData) && inputData.length > 0) {}
-            // TODO: refresh table
-        }
-
-        var displayEvents = [];
 
         function addEvent(obj, type) {
-            if (displayEvents.length > 4)
-                displayEvents.pop();
-            var ne = $('#eventSpan').text(JSON.stringify(obj, null, 4)).html();
-            displayEvents.unshift('<h6>' + type + ' event:' + new Date().toISOString() + '</h6><code>' + ne + '</code>');
-            $('#eventSpan').html(displayEvents.join('\n'));
+            setTimeout(function (obj, type) {
+                if (displayEvents.length > 4)
+                    displayEvents.pop();
+                var ne = $('#eventSpan').text(JSON.stringify(obj, null, 4)).html();
+                displayEvents.unshift('<h6>' + type + ' event:' + new Date().toISOString() + '</h6><code>' + ne +
+                    '</code>');
+                $('#eventSpan').html(displayEvents.join('\n'));
+            }, 2, obj, type);
         }
 
+        var that = this,
+            displayEvents = [],
+            main = {
+                firstConnect: true,
+                objects: {},
+                states: {},
+                mstate: {},
+                sstate: {},
+                icons: {},
+                svalues: {},
+                currentId: null,
+                currentHost: '',
+                hosts: [],
+                instances: [],
+                that: this,
+                changed: false,
+                objectsLoaded: false,
+                waitForRestart: false,
+                connectCb: null,
+                changed: false,
+                socket: io.connect(),
+                systemLang: 'en',
+                adapterConfig: {},
+                //            adapterConfigId: 'system.adapter.statemachine.0',
+                adapterConfigId: 'statemachine.config',
+                adapterConfigIds: [],
 
-
-        var dialogMessage, $dialogConfirm, firstConnect = true,
-            that = this;
-
-        var main = {
-            objects: {},
-            states: {},
-            mstate: {},
-            sstate: {},
-            icons: {},
-            svalues: {},
-            currentId: null,
-            currentHost: '',
-            hosts: [],
-            instances: [],
-            that: this,
-            changed: false,
-            objectsLoaded: false,
-            waitForRestart: false,
-            connectCb: null,
-            changed: false,
-            socket: io.connect(),
-            systemLang: 'en',
-            adapterConfig: {},
-            //            adapterConfigId: 'system.adapter.statemachine.0',
-            adapterConfigId: 'statemachine.config',
-            adapterConfigIds: [],
-
-            //            socket: io.connect(location.protocol + '//' + location.host, {
-            //                query: 'ws=true'
-            //            }),
-            saveConfig: function () {
-                main.adapterConfig = createConfig();
-                var cconf = main.objects[main.adapterConfigId];
-                cconf.native = main.adapterConfig;
-                //                main.objectChange(main.adapterConfigId, cconf);
-                main.socket.emit('setObject', main.adapterConfigId, cconf, function (err) {
-                    if (err) {
-                        showError(err);
-                        //                        that.init(true);
-                    }
-                });
-                main.oldconfig = createConfig(true);
-                main.changed = false;
-                showMessage('Saved Adapter config which restarted the machines!');
-            },
-            addSState: function addSState(obj, id) {
-                if (obj.type === 'state' && !id.startsWith('system.adapter.')) {
-                    var n = obj.common.name;
-                    //                    var i = {id: id, icon: main.icons['system.adapter.'+split]};
-                    if (!main.mstate[n]) {
-                        if (main.sstate[n]) {
-                            main.sstate[id] = id;
-                            main.mstate[n] = [id];
-                            delete main.sstate[n];
-                        } else
-                            main.sstate[n] = id;
-                    } else {
-                        main.mstate[n].push(id);
-                        main.sstate[id] = id;
-                    }
-                }
-
-            },
-            objectChange: function (id, obj) {
-                if (obj) {
-                    if (obj._rev && main.objects[id]) main.objects[id]._rev = obj._rev;
-                    if (!main.objects[id] || JSON.stringify(main.objects[id]) != JSON.stringify(obj)) {
-                        main.objects[id] = obj;
-                    }
-                } else if (main.objects[id]) {
-                    var oldObj = {
-                        _id: id,
-                        type: main.objects[id].type
-                    };
-                    delete main.objects[id];
-                    if (id.match(/^system\.adapter\.[-\w]+\.[0-9]+$/)) { /// TODO
-                        // Disable statemachine tab if no one script engine instance found
-                        //                    var engines = main.fillEngines();
-                        //                    $('#tabs').tabs('option', 'disabled', (engines && engines.length) ? [] : [4]);
-                    }
-                }
-                addEvent(obj, `Object Change:${id}`);
-            },
-            stateChange: function (id, state) {
-                var os = cloneObject(main.states[id] || {});
-                var s = {
-                    ostate: os,
-                    nstate: cloneObject(state),
-                };
-                for (var k of ownKeys(state))
-                    if (k == 'ts' || s.ostate[k] == s.nstate[k]) {
-                        delete s.nstate[k];
-                        delete s.ostate[k];
-                    }
-                state.lc = s.nstate.lc = s.ostate.ts;
-                if (JSON.stringify(s.ostate) != JSON.stringify(s.nstate) && !id.match(/^system\./)) {
-                    addEvent(s, `State change of ${id}`);
-                    /// TODO: check machine states to display them!
-                }
-                //id = id ? id.replace(/[\s'"]/g, '_') : ''; /// TODO - do not know what it does!
-                //if (!id || !id.match(/\.messagebox$/)) {
-                //}
-                main.states[id] = state;
-                if (main.svalues[id])
-                    $(`span[s-v="${id}"`).html(getValue(id, true));
-            },
-            getStates: function (callback) {
-                main.socket.emit('getStates', function (err, res) {
-                    main.states = res;
-                    if (typeof callback === 'function')
-                        setTimeout(callback, 0);
-                });
-            },
-            getObjects: function (callback) {
-                main.socket.emit('getAllObjects', function (err, res) {
-                    setTimeout(function () {
-                        var obj;
-                        main.objects = res;
-                        for (var id in main.objects) {
-                            if (id.slice(0, 7) === '_design') continue;
-
-                            obj = res[id];
-                            main.addSState(obj, id);
-                            var an = obj._id.split('.')[2];
-                            if (obj.common && obj.common.icon)
-                                main.icons[id] = '/adapter/' + id.split('.')[0] + obj.common.icon;
-                            if (an && obj.type == "adapter") {
-                                main.icons[an] = '/adapter/' + an + '/' + obj.common.icon;
-                            }
-                            if (obj.type === 'instance') {
-                                main.instances.push(id);
-                                if (id.startsWith('system.adapter.statemachine.'))
-                                    main.adapterConfigIds.push(id.slice(15));
-                            }
-                            //                        if (obj.type === 'channel' && id.match(/^script\.js\./)) main.groups.push(id);
-                            if (obj.type === 'host') main.hosts.push(id);
+                //            socket: io.connect(location.protocol + '//' + location.host, {
+                //                query: 'ws=true'
+                //            }),
+                saveConfig: function () {
+                    if (checkMachines())
+                        return;
+                    main.adapterConfig = createConfig();
+                    var cconf = main.objects[main.adapterConfigId];
+                    cconf.native = main.adapterConfig;
+                    //                main.objectChange(main.adapterConfigId, cconf);
+                    main.socket.emit('setObject', main.adapterConfigId, cconf, function (err) {
+                        if (err) {
+                            showError(err);
+                            //                        that.init(true);
                         }
-                        main.objectsLoaded = true;
-                        if (main.adapterConfigIds.length > 0)
-                            main.adapterConfigId = 'system.adapter.' + main.adapterConfigIds[0];
-                        if (typeof callback === 'function') callback();
-                    }, 0);
-                });
-            },
-            /** 
-             * Read the settings for adapter
-             * @param {type} callback
-             */
-            readInstanceConfig: function (callback) {
-                main.systemConfig = main.objects['system.config'];
-                addEvent(main.systemConfig, "System Config");
-                if (main.systemConfig && main.systemConfig.common) {
-                    main.systemLang = main.systemConfig.common.language;
-                } else {
-                    main.systemLang = window.navigator.userLanguage || window.navigator.language;
+                    });
+                    main.oldconfig = createConfig(true);
+                    main.changed = false;
+                    showMessage('Saved Adapter config which restarted the machines!');
+                },
+                addSState: function addSState(obj, id) {
+                    if (obj.type === 'state' && !id.startsWith('system.adapter.')) {
+                        var n = obj.common.name;
+                        //                    var i = {id: id, icon: main.icons['system.adapter.'+split]};
+                        if (!main.mstate[n]) {
+                            if (main.sstate[n]) {
+                                main.sstate[id] = id;
+                                main.mstate[n] = [id];
+                                delete main.sstate[n];
+                            } else
+                                main.sstate[n] = id;
+                        } else {
+                            main.mstate[n].push(id);
+                            main.sstate[id] = id;
+                        }
+                    }
 
-                    //                    if (main.systemLang !== 'en' && main.systemLang !== 'de' && main.systemLang !== 'ru') {
-                    //                        main.systemConfig.common.language = 'en';
-                    //                        main.systemLang = 'en';
-                    //                    }
-                }
-                main.adapterConfig = main.objects[main.adapterConfigId];
-                if (main.adapterConfig && main.adapterConfig.native)
-                    main.adapterConfig = main.adapterConfig.native;
-                else
-                    main.adapterConfig = null;
+                },
+                objectChange: function (id, obj) {
+                    if (obj) {
+                        if (obj._rev && main.objects[id]) main.objects[id]._rev = obj._rev;
+                        if (!main.objects[id] || JSON.stringify(main.objects[id]) != JSON.stringify(obj)) {
+                            main.objects[id] = obj;
+                        }
+                    } else if (main.objects[id]) {
+                        var oldObj = {
+                            _id: id,
+                            type: main.objects[id].type
+                        };
+                        delete main.objects[id];
+                        if (id.match(/^system\.adapter\.[-\w]+\.[0-9]+$/)) { /// TODO
+                            // Disable statemachine tab if no one script engine instance found
+                            //                    var engines = main.fillEngines();
+                            //                    $('#tabs').tabs('option', 'disabled', (engines && engines.length) ? [] : [4]);
+                        }
+                    }
+                    addEvent(obj, `Object Change:${id}`);
+                },
+                stateChange: function (id, state) {
+                    var os = cloneObject(main.states[id] || {});
+                    var s = {
+                        ostate: os,
+                        nstate: cloneObject(state),
+                    };
+                    for (var k of ownKeys(state))
+                        if (k == 'ts' || s.ostate[k] == s.nstate[k]) {
+                            delete s.nstate[k];
+                            delete s.ostate[k];
+                        }
+                    state.lc = s.nstate.lc = s.ostate.ts;
+                    if (JSON.stringify(s.ostate) != JSON.stringify(s.nstate) && id.match(/^statemachine\.\d+/)) {
+                        addEvent(s, `State change of ${id}`);
+                        if (main.svalues[id])
+                            $(`span[s-v="${id}"`).html(getValue(id, true));
+                        /// TODO: check machine states to display them!
+                    }
+                    //id = id ? id.replace(/[\s'"]/g, '_') : ''; /// TODO - do not know what it does!
+                    //if (!id || !id.match(/\.messagebox$/)) {
+                    //}
+                    main.states[id] = state;
+                },
+                getStates: function (callback) {
+                    main.socket.emit('getStates', function (err, res) {
+                        main.states = res;
+                        if (typeof callback === 'function')
+                            setTimeout(callback, 0);
+                    });
+                },
+                getObjects: function (callback) {
+                    main.socket.emit('getAllObjects', function (err, res) {
+                        setTimeout(function () {
+                            var obj;
+                            main.objects = res;
+                            for (var id in main.objects) {
+                                if (id.slice(0, 7) === '_design') continue;
 
-                addEvent({
-                    adapterConfig: main.adapterConfig,
-                    language: systemLang,
-                    states: ownKeys(main.states).length,
-                    objects: ownKeys(main.objects).length,
-                    hosts: ownKeys(main.hosts).length,
-                    mstates: ownKeys(main.mstate).length,
-                    sstates: ownKeys(main.sstate).length,
-                }, "Adapter Config")
-                if (typeof callback === 'function') {
-                    callback();
-                }
-            },
-            init: function (callb) {
-                if (callb)
-                    main.connectCb = callb;
-                main.socket.on('permissionError', function (err) {
-                    showMessage(_('Has no permission to %s %s %s', err.operation, err.type, (err.id ||
-                        '')));
-                });
-                main.socket.on('objectChange', function (id, obj) {
-                    setTimeout(main.objectChange, 0, id, obj);
-                });
-                main.socket.on('onUpdate', function (id, obj) {
-                    setTimeout(main.stateChange, 0, id, obj);
-                });
-                main.socket.on('stateChange', function (id, obj) {
-                    setTimeout(main.stateChange, 0, id, obj);
-                });
-                main.socket.on('connect', function () {
-                    $('#connecting').hide();
-                    if (firstConnect) {
-                        firstConnect = false;
-
-                        main.socket.emit('getUserPermissions', function (err, acl) {
-                            main.acl = acl;
-                            // Read system configuration
-                            main.socket.emit('getObject', 'system.config', function (err, data) {
-                                main.systemConfig = data;
-                                if (!err && main.systemConfig && main.systemConfig.common) {
-                                    systemLang = main.systemConfig.common.language;
-                                } else {
-                                    systemLang = window.navigator.userLanguage ||
-                                        window.navigator.language;
-
-                                    if (systemLang !== 'en' && systemLang !== 'de' &&
-                                        systemLang !==
-                                        'ru') {
-                                        main.systemConfig.common.language = 'en';
-                                        systemLang = 'en';
-                                    }
+                                obj = res[id];
+                                main.addSState(obj, id);
+                                var an = obj._id.split('.')[2];
+                                if (obj.common && obj.common.icon)
+                                    main.icons[id] = '/adapter/' + id.split('.')[0] + obj.common.icon;
+                                if (an && obj.type == "adapter") {
+                                    main.icons[an] = '/adapter/' + an + '/' + obj.common.icon;
                                 }
+                                if (obj.type === 'instance') {
+                                    main.instances.push(id);
+                                    if (id.startsWith('system.adapter.statemachine.'))
+                                        main.adapterConfigIds.push(id.slice(15));
+                                }
+                                //                        if (obj.type === 'channel' && id.match(/^script\.js\./)) main.groups.push(id);
+                                if (obj.type === 'host') main.hosts.push(id);
+                            }
+                            main.objectsLoaded = true;
+                            if (main.adapterConfigIds.length > 0)
+                                main.adapterConfigId = 'system.adapter.' + main.adapterConfigIds[0];
+                            if (typeof callback === 'function') callback();
+                        }, 0);
+                    });
+                },
+                /** 
+                 * Read the settings for adapter
+                 * @param {type} callback
+                 */
+                readInstanceConfig: function (callback) {
+                    main.systemConfig = main.objects['system.config'];
+                    addEvent(main.systemConfig, "System Config");
+                    if (main.systemConfig && main.systemConfig.common) {
+                        main.systemLang = main.systemConfig.common.language;
+                    } else {
+                        main.systemLang = window.navigator.userLanguage || window.navigator.language;
 
-                                translateAll();
+                        //                    if (main.systemLang !== 'en' && main.systemLang !== 'de' && main.systemLang !== 'ru') {
+                        //                        main.systemConfig.common.language = 'en';
+                        //                        main.systemLang = 'en';
+                        //                    }
+                    }
+                    main.adapterConfig = main.objects[main.adapterConfigId];
+                    if (main.adapterConfig && main.adapterConfig.native)
+                        main.adapterConfig = main.adapterConfig.native;
+                    else
+                        main.adapterConfig = null;
 
-                                main.getStates(function () {
-                                    main.getObjects(function () {
-                                        main.readInstanceConfig(
-                                            function () {
-                                                if (main.connectCb)
-                                                    main.connectCb();
-                                            })
-                                    })
+                    addEvent({
+                        adapterConfig: main.adapterConfig,
+                        language: systemLang,
+                        states: ownKeys(main.states).length,
+                        objects: ownKeys(main.objects).length,
+                        hosts: ownKeys(main.hosts).length,
+                        mstates: ownKeys(main.mstate).length,
+                        sstates: ownKeys(main.sstate).length,
+                    }, "Adapter Config")
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
+                },
+                init: function (callb) {
+                    if (callb)
+                        main.connectCb = callb;
+                    main.socket.on('permissionError', function (err) {
+                        showMessage(_('Has no permission to %s %s %s', err.operation, err.type, (err.id ||
+                            '')));
+                    });
+                    main.socket.on('objectChange', function (id, obj) {
+                        setTimeout(main.objectChange, 0, id, obj);
+                    });
+                    main.socket.on('onUpdate', function (id, obj) {
+                        setTimeout(main.stateChange, 0, id, obj);
+                    });
+                    main.socket.on('stateChange', function (id, obj) {
+                        setTimeout(main.stateChange, 0, id, obj);
+                    });
+                    main.socket.on('connect', function () {
+                        $('#connecting').hide();
+                        if (main.firstConnect) {
+                            main.firstConnect = false;
+
+                            main.socket.emit('getUserPermissions', function (err, acl) {
+                                main.acl = acl;
+                                // Read system configuration
+                                main.socket.emit('getObject', 'system.config', function (err, data) {
+                                    main.systemConfig = data;
+                                    if (!err && main.systemConfig && main.systemConfig.common) {
+                                        systemLang = main.systemConfig.common.language;
+                                    } else {
+                                        systemLang = window.navigator.userLanguage ||
+                                            window.navigator.language;
+
+                                        if (systemLang !== 'en' && systemLang !== 'de' &&
+                                            systemLang !==
+                                            'ru') {
+                                            main.systemConfig.common.language = 'en';
+                                            systemLang = 'en';
+                                        }
+                                    }
+
+                                    translateAll();
+
+                                    main.getStates(function () {
+                                        main.getObjects(function () {
+                                            main.readInstanceConfig(
+                                                function () {
+                                                    if (main.connectCb)
+                                                        main.connectCb();
+                                                })
+                                        })
+                                    });
                                 });
                             });
-                        });
-                    }
-                    if (main.waitForRestart) {
+                        }
+                        if (main.waitForRestart) {
+                            location.reload();
+                        }
+                    });
+                    main.socket.on('disconnect', function () {
+                        $('#connecting').show();
+                    });
+                    main.socket.on('reconnect', function () {
+                        $('#connecting').hide();
+                        if (main.waitForRestart) {
+                            location.reload();
+                        }
+                    });
+                    main.socket.on('reauthenticate', function () {
                         location.reload();
-                    }
-                });
-                main.socket.on('disconnect', function () {
-                    $('#connecting').show();
-                });
-                main.socket.on('reconnect', function () {
-                    $('#connecting').hide();
-                    if (main.waitForRestart) {
-                        location.reload();
-                    }
-                });
-                main.socket.on('reauthenticate', function () {
-                    location.reload();
-                });
-                main.socket.on('log', function (message) {
-                    setTimeout(main.onLog, 0, message);
-                });
+                    });
+                    main.socket.on('log', function (message) {
+                        setTimeout(main.onLog, 0, message);
+                    });
 
-            }
-        };
+                }
+            };
 
         var modalOpts = {
             dismissible: true, // Modal can be dismissed by clicking outside of the modal
@@ -644,85 +622,7 @@
                 return sel.forEach(function (id) {
                     enableDisable(id, value);
                 })
-            else if (typeof sel == 'string')
-                sel = $(sel);
-            sel.toggleClass('disabled', !value);
-            return sel;
-        }
-
-        function disEn(sel, val) {
-            if (sel && sel[0]) {
-                switch (sel[0].nodeName) {
-                    case 'BUTTON':
-                        enableDisable(sel, val);
-                        break;
-                    case 'DIV':
-                        if (val)
-                            sel.show();
-                        else
-                            sel.hide();
-                        break;
-
-                        //                        sel.prop('disabled', !val);
-                    default:
-                        break;
-                }
-            }
-        }
-
-        function enableDisableChange(sel, text, icon) { //value = true = enabled
-            if (Array.isArray(sel))
-                return sel.forEach(function (id) {
-                    enableDisableChange(id, text, icon);
-                })
-            else if (typeof sel == 'string')
-                sel = $(sel);
-
-            var ch = sel.children();
-            var t = sel.data('mytype');
-            if (!text)
-                text = '';
-            if (t) {
-                sel.removeClass(t);
-                sel.data('mytype', null);
-            }
-            if (text) {
-                var m = text.match(/^\s*\(([\w\s*]+)\)\s*(.*)\s*$/);
-                if (m) {
-                    sel.data('mytype', m[1])
-                    sel.addClass(m[1]);
-                    text = m[2];
-                }
-                disEn(sel, true);
-                if (ch.length > 1)
-                    ch[1].innerHTML = text;
-            }
-            if (icon && ch.length > 0)
-                ch[0].innerHTML = icon;
-            disEn(sel, text || icon);
-        }
-
-        function changeButtonText(sel, text, icon) {
-            if (typeof sel == 'string')
-                sel = $(sel);
-            var ch = sel.children();
-            if (icon)
-                ch[0].innerHTML = icon;
-            if (text && ch.length > 1)
-                ch[1].innerHTML = text;
-        }
-
-        var $idModal, $idData, $idModalOk, $treeId, noSystem = true,
-            ids;
-
-        function getWidths($sel) {
-            if (typeof $sel === 'string')
-                $sel = $($sel);
-            var w = [];
-            $sel.find('thead tr th').each(function () {
-                w.push($(this).prop('width'));
-            });
-            return w;
+            return makeSel(sel).toggleClass('disabled', !value);
         }
 
         function getValue(id, html) {
@@ -754,48 +654,6 @@
 
             }
             return t;
-        }
-
-        function getOpt(obj, id) {
-            return obj && obj[id];
-        }
-
-        function setOpt(obj, id, val) {
-            if (obj && id) {
-                if (val === false || val === undefined)
-                    delete obj[id];
-                else
-                    obj[id] = val;
-            }
-        }
-
-        function showModal(o) {
-            if (typeof o === 'string')
-                o = {
-                    text: o
-                };
-            else if (typeof o !== 'object')
-                o = {};
-            var t = $('#modalText').children();
-            t[0].innerHTML = o.title || "Information";
-            t[1].innerHTML = o.text || ' ';
-            o.buttons = o.buttons || 1;
-            if (typeof o.buttons === 'string')
-                o.buttons = o.buttons.split(',');
-            else if (!Array.isArray(o.buttons)) {
-                o.buttons = o.buttons == 1 ? ['OK'] : ['OK', 'cancel'];
-            }
-            $('#modalIcon').text(o.icon || o.buttons.length > 1 ? 'help' : "info");
-            enableDisableChange('#modalOk', o.buttons[0])
-            if (o.buttons.length == 1)
-                $('#modalExit').hide();
-            else {
-                enableDisableChange('#modalExit', o.buttons[1])
-                $('#modalExit').show();
-            }
-            $('#dialog-modal').data('callback', o.callback);
-            $('#dialog-modal').data('OK', false);
-            $('#dialog-modal').modal('open');
         }
 
         function showInputModal(o, fun) {
@@ -863,6 +721,50 @@
         }
 
         function confirmMessage(message, title, icon, buttons, callback) {
+            function disEn(sel, val) {
+                if (sel && sel[0]) {
+                    switch (sel[0].nodeName) {
+                        case 'BUTTON':
+                            enableDisable(sel, val);
+                            break;
+                        case 'DIV':
+                            if (val)
+                                sel.show();
+                            else
+                                sel.hide();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            function enableDisableChange(sel, text, icon) { //value = true = enabled
+                sel = makeSel(sel);
+                var ch = sel.children();
+                var t = sel.data('mytype');
+                if (!text)
+                    text = '';
+                if (t) {
+                    sel.removeClass(t);
+                    sel.data('mytype', null);
+                }
+                if (text) {
+                    var m = text.match(/^\s*\(([\w\s*]+)\)\s*(.*)\s*$/);
+                    if (m) {
+                        sel.data('mytype', m[1])
+                        sel.addClass(m[1]);
+                        text = m[2];
+                    }
+                    disEn(sel, true);
+                    if (ch.length > 1)
+                        ch[1].innerHTML = text;
+                }
+                if (icon && ch.length > 0)
+                    ch[0].innerHTML = icon;
+                disEn(sel, text || icon);
+            }
+
             if (typeof icon == 'function') {
                 callback = icon;
                 icon = undefined,
@@ -872,37 +774,40 @@
                 buttons = 2;
             }
 
-            showModal({
-                text: message,
-                title: title,
-                icon: icon,
-                buttons: buttons,
-                callback: callback,
-            });
+            var t = $('#modalText').children();
+            t[0].innerHTML = title || "Information";
+            t[1].innerHTML = message || ' ';
+            buttons = buttons || 1;
+            if (typeof buttons === 'string')
+                buttons = buttons.split(',');
+            else if (!Array.isArray(buttons)) {
+                buttons = buttons == 1 ? ['OK'] : ['OK', 'cancel'];
+            }
+            $('#modalIcon').text(icon || buttons.length > 1 ? 'help' : "info");
+            enableDisableChange('#modalOk', buttons[0])
+            if (buttons.length == 1)
+                $('#modalExit').hide();
+            else {
+                enableDisableChange('#modalExit', buttons[1])
+                $('#modalExit').show();
+            }
+            $('#dialog-modal').data('callback', callback);
+            $('#dialog-modal').data('OK', false);
+            $('#dialog-modal').modal('open');
         }
 
-        function createConfig(comp) {
-            function traverse(obj) {
-                var n = {};
-                ownKeys(obj).forEach(function (k) {
-                    var o = obj[k];
-                    if (typeof o === 'object')
-                        n[k] = traverse(o);
-                    else
-                        n[k] = cloneObject(o);
-                });
-                return n;
-            }
 
+
+        function createConfig(comp) {
             if (!comp)
                 return cloneObject(workTree);
             var all = {};
             all.debugLevel = parseInt(workTree.debugLevel);
-            all.folders = traverse(workTree.folders);
+            all.queueTime = parseInt(workTree.queueTime);
+            all.queueAll = !!workTree.queueAll;
+            all.folders = cloneObject(workTree.folders);
             return JSON.stringify(all);
         }
-
-        var oldconf;
 
         function checkConfig() {
             if (oldconf)
@@ -918,31 +823,36 @@
 
         }
 
-        function makeIcon(icon, title, color) {
-            return `<a class="t-button btn-floating btn-small waves-effect waves-light ${color} lighten-2" title="${title}"><i class="material-icons">${icon}</i></a>&nbsp;`;
-        }
-
-
         var curMachine, curState, curEdge, curVar, curFolder = '',
-            $table, $debugLevel, curId, curPar, curChip,
+            $table, $debugLevel, curId, curPar, curChip, curScene, oldconf,
             curEvent, fromNode, idList = {},
-            workTree, wi = [];
+            workTree, nameData, wi = [];
 
         const icons = {
-                iconFolder: 'folder',
-                iconFolderAd: 'create_new_folder',
-                iconMachine: 'settings',
-                iconMachineAdd: 'settings_applications',
-                iconLink: 'insert_link',
-                iconState: 'location_searching',
-                iconStateAdd: 'my_location',
-                iconTimer: 'timer',
-                iconTimeout: 'timer_off',
-                iconEvent: 'flash_on',
-                iconEventAdd: 'flash_auto',
-                iconLinkAuto: 'call_split',
-                iconRename: 'edit',
-                iconDelete: 'delete',
+                Folder: 'folder',
+                FolderAd: 'create_new_folder',
+                Machine: 'settings',
+                MachineAdd: 'settings_applications',
+                Link: 'insert_link',
+                State: 'location_searching',
+                StateAdd: 'my_location',
+                Timer: 'timer',
+                Timeout: 'timer_off',
+                Event: 'flash_on',
+                EventAdd: 'flash_auto',
+                LinkAuto: 'star_border',
+                Rename: 'edit',
+                Delete: 'delete',
+                Scene: 'list'
+            },
+            ticons = {
+                machine: icons.Machine,
+                state: icons.State,
+                link: icons.Link,
+                scene: icons.Scene,
+                event: icons.Event,
+                folder: icons.Folder,
+                timer: icons.Timer
             },
             fields = {
                 default: ' default',
@@ -953,22 +863,13 @@
                 fire: ' fire',
                 onFire: ' onfire',
                 onEnter: ' onenter',
-                onExit: ' on exit'
+                onExit: ' onexit',
+                function: ' function'
             },
             regStateName = /^[$_A-Za-z][\-$\w]{1,19}$/,
             regTimerName = /^(\d+w\s*)?(\d+d\s*)?(\d+h\s*)?(\d+m(?!s)\s*)?(\d+)?(m?s)?\s*$/,
             regMachineName = /^[$_A-Za-z][\-$\w]{2,19}$/,
-            txt = {
-                createFolder: 'Add Folder',
-                createMachine: 'Add Machine',
-                createLink: 'Add Link',
-                createTimer: 'Add Timer',
-                createState: 'Add State',
-                createEvent: 'Add Event',
-                rename: 'Rename Item',
-                delete: 'Delete Item',
-            };
-
+            autoLink = "*";
 
         function setDebug(level) {
             $('#debugLevel').val(workTree.debugLevel = parseInt(level));
@@ -1002,25 +903,84 @@
                 $(this).text(icons[$(this).attr('my-icon')]);
             });
 
-            $exportArea = $('#input_output');
             $('#dialog-modal').modal(modalOpts);
             $('#input-modal').modal(modalOpts);
             newClick('#modalOk', function (event) {
                 $('#dialog-modal').data('OK', true);
             });
             enableDisable('button.ok-cancel', false);
-            newClick('#cancelData', function (e) {
-                enableDisable('button.ok-cancel', false);
-                fromNode = null;
-                prepareMenu();
-            });
-
             $debugLevel = $('#debugLevel').unbind('change').change(function () {
                 setDebug($(this).val());
             });
             $('#tab-events-content').show();
-            newClick('#importButton', importNetwork);
-            newClick('#exportButton', exportNetwork);
+            offOn('#importButton', 'mousedown', function (evt) {
+                evt.preventDefault();
+                $('#fileJsonInput').click();
+                return false;
+            });
+            offOn('#fileJsonInput', 'change', function (evt) {
+                evt.preventDefault();
+                if (evt.target.files.length <= 0)
+                    return false;
+                var reader = new FileReader();
+                reader.onerror = function (evt) {
+                    switch (evt.target.error.code) {
+                        case evt.target.error.NOT_FOUND_ERR:
+                            alert('File Not Found!');
+                            break;
+                        case evt.target.error.NOT_READABLE_ERR:
+                            alert('File is not readable');
+                            break;
+                        case evt.target.error.ABORT_ERR:
+                            alert('File read cancelled');
+                            break; // noop
+                        default:
+                            alert('An error occurred reading this file.');
+                    };
+                };
+                reader.onloadend = function (evt) {
+                    if (evt.target.readyState == FileReader.DONE)
+                        try {
+                            var nc = JSON.parse(evt.target.result);
+                            confirmMessage('Do you really want to import and loose any changes?',
+                                'Import config', 'alert', ok => {
+                                    if (ok) {
+                                        addEvent(nc, 'Import File');
+                                        workTree = nc;
+                                        setTimeout(createFolderTree, 1);
+                                        checkConfig();
+                                    }
+                                });
+                        } catch (e) {
+                            return showError('JSON file error! ' + e)
+                        }
+                };
+                reader.readAsText(evt.target.files[0]);
+                evt.target.value = "";
+                // TODO: refresh table
+                return false;
+            });
+            newClick('#exportButton', function (e) {
+                e.preventDefault();
+                var s = createConfig();
+                if (checkMachines())
+                    return;
+                s.saved = (new Date()).toString();
+                s = JSON.stringify(s, undefined, 2);
+                var fileName = 'statemachine.json';
+                if (window.navigator.msSaveOrOpenBlob) {
+                    var blobObject = new Blob([s]);
+                    window.navigator.msSaveOrOpenBlob(blobObject, fileName);
+                } else {
+                    var url = "data:text/javascript;charset=utf-8," + encodeURIComponent(s);
+                    var link = document.createElement('a');
+                    document.body.appendChild(link);
+                    $(link).attr("download", fileName).attr("href", url).text('download');
+                    link.click();
+                    $('body').children('a').last().remove();
+                }
+                return false;
+            });
             newClick('#saveButton', main.saveConfig);
             newClick('#reloadButton', function (event) {
                 confirmMessage('Do you really want to reaload before saving any changes?',
@@ -1033,24 +993,37 @@
                     });
             });
             $('select').material_select();
-            $('input.mach-val').unbind('input').bind('input', function (e) {
-                validateInput($(this));
-                e.target.checkValidity();
+            offOn('input.mach-val', 'input', function (e) {
+                var $t = $(this);
+                var v = validateInput($t);
+                var nid = $('#input-folder').val();
+                if (this.id != 'input-folder')
+                    nid = (nid ? nid + '.' : '') + $t.val();
+                if (idList[nid])
+                    $t.toggleClass('invalid', !(v = false));
+                enableDisable($t.closest('div').find('a'), v);
+                //                e.target.checkValidity();
                 addEvent({
-                    val: e.target.validity
-                });
+                    val: v,
+                    v: $t.val(),
+                    nid: nid
+                }, 'input ' + $t[0].toString());
             });
-            $('#input-folder-name').unbind('input').bind('input', function () {
+            offOn('#input-name-folder', 'input', function () {
                 validateInput($(this));
-                enableDisable('#input-folder-rename', curFolder != $(this).val());
+                enableDisable('#input-rename-folder', curFolder != $(this).val());
             });
-            $('#input-machine-name').unbind('input').bind('input', function () {
+            offOn('#input-name-machine', 'input', function () {
                 validateInput($(this));
-                enableDisable('#input-machine-rename', curMachine != $(this).val());
+                enableDisable('#input-rename-machine', curMachine != $(this).val());
             });
-            $('#input-event-name').unbind('input').bind('input', function () {
+            offOn('#input-name-event', 'input', function () {
                 validateInput($(this));
-                enableDisable('#input-event-rename', curEvent != $(this).val());
+                enableDisable('#input-rename-event', curEvent != $(this).val());
+            });
+            offOn('#input-name-scene', 'input', function () {
+                validateInput($(this));
+                enableDisable('#input-rename-scene', curScene != $(this).val());
             });
             $('div.input-table').hide();
             newClick('#folder-add', function (e) {
@@ -1061,9 +1034,25 @@
                     else if (idList[ok])
                         showMessage('Name already used, please change!');
                     else {
-                        addId(ok, null, icons.iconFolder);
-                        selectId(ok);
+                        addId(ok, null, icons.Folder, workTree.folders[ok] = {});
+                        regenSelect(ok);
                     }
+                }
+            });
+            newClick('#scene-add', function (e) {
+                var ok = $('#input-scene').val();
+                curFolder = $('#input-folder').val();
+                if (curFolder && (!idList[curFolder] || idList[curFolder][fields.type] != 'folder'))
+                    return showMessage(`Folder '${curFolder}' not existing!`);
+                var nid = curFolder ? curFolder + '.' + ok : ok;
+                var f = curFolder ? idList[curFolder] : workTree.folders[''];
+                if (!regMachineName.test(ok))
+                    showMessage('invalid name, please change $-_A-Za-z0-9 3-20 chars!');
+                else if (idList[nid])
+                    showMessage('Name already used, please change!');
+                else {
+                    addId(ok, curFolder, icons.Scene, f[ok] = {});
+                    regenSelect(nid);
                 }
             });
             newClick('#event-add', function (e) {
@@ -1072,13 +1061,14 @@
                 if (curFolder && (!idList[curFolder] || idList[curFolder][fields.type] != 'folder'))
                     return showMessage(`Folder '${curFolder}' not existing!`);
                 var nid = curFolder ? curFolder + '.' + ok : ok;
+                var f = curFolder ? idList[curFolder] : workTree.folders[''];
                 if (!regMachineName.test(ok))
                     showMessage('invalid name, please change $-_A-Za-z0-9 3-20 chars!');
                 else if (idList[nid])
                     showMessage('Name already used, please change!');
                 else {
-                    addId(ok, curFolder, icons.iconEvent);
-                    selectId(nid);
+                    addId(ok, curFolder, icons.Event, f[ok] = {});
+                    regenSelect(nid);
                 }
             });
             newClick('#machine-add', function (e) {
@@ -1087,31 +1077,61 @@
                 if (curFolder && (!idList[curFolder] || idList[curFolder][fields.type] != 'folder'))
                     return showMessage(`Folder '${curFolder}' not existing!`);
                 var nid = curFolder ? curFolder + '.' + m : m;
+                var f = curFolder ? idList[curFolder] : workTree.folders[''];
                 if (!regMachineName.test(m))
                     showMessage('invalid name, please change $-_A-Za-z0-9 3-20 chars!');
                 else if (idList[nid])
                     showMessage('Name already used, please change!');
                 else {
-                    var nm = {};
-                    addId(m, curFolder, icons.iconMachine, nm);
+                    var nm = f[m] = {};
+                    addId(m, curFolder, icons.Machine, nm);
                     nm.Off = {};
-                    addId('Off', nid, icons.iconState, nm.Off);
-                    selectId(nid);
+                    addId('Off', nid, icons.State, nm.Off);
+                    regenSelect(nid);
                 }
-            })
-            newClick(
-                '#input-folder-remove,#input-machine-remove,#input-event-remove,#input-link-remove,#input-state-remove',
-                () => setTimeout(doDelete, 20));
-            newClick('#input-timer-add', () => setTimeout(doCreateTimer, 20, '1m', curId));
-            newClick('#input-state-add', () => setTimeout(doCreateState, 20, 'new', curId));
-            newClick('.input-link-add', () => setTimeout(doCreateLink, 20));
-            newClick($('div.table-interface').find('a.orange'), () => showMessage('Execute for ' + curId));
-            newClick('#tab-events-content thead tr', function () {
-                selectRow($(this));
             });
-        }
+            newClick('a.input-remove',
+                () => setTimeout(function () {
+                    var id = curId;
+                    var par = curPar;
+                    s = idList[par];
+                    if (s && s[fields.type] == 'machine') {
+                        if (getStates(s).length < 2)
+                            return showError(`cannot delete last state/timer of machine!`)
+                    }
 
-        var nameData;
+                    confirmMessage(`do you really want to delete '${id}'?`, 'Delete ' + id,
+                        function (ok) {
+                            if (ok) {
+                                $table.treetable('removeNode', id);
+                                var p = idList[par];
+                                var name = id.split('.');
+                                name = name[name.length - 1];
+                                if (typeof p !== 'object') {
+                                    p = workTree.folders[''];
+                                    if (!p[name])
+                                        p = workTree.folders;
+                                }
+                                delete p[name];
+                                delete idList[id];
+                                curId = null;
+                                rebindTableCommands();
+                            }
+                        });
+                }, 10));
+            newClick('#input-add-timer', () => setTimeout(doCreateTimer, 20, '1m', curId));
+            newClick(
+                '#input-add-state', () => setTimeout(doCreateState, 20, 'new', curId));
+            newClick(
+                '.input-add-link', () => setTimeout(doCreateLink, 20));
+            newClick($('div.table-interface').find(
+                'a.input-execute'), () => showMessage('Execute for ' + curId));
+            newClick(
+                '#tab-events-content thead tr',
+                function () {
+                    selectRow($(this));
+                });
+        }
 
         function getNameData(write) {
             if (nameData && !write)
@@ -1122,10 +1142,11 @@
                 if (!write || (main.objects[id] && main.objects[id].common.write))
                     ac[as] = getIcon(as);
             }
-            for (var am in idList) {
-                if (['machine', 'event'].indexOf(idList[am][fields.type]) >= 0)
+            for (var am of ownKeys(idList)) {
+                var ty = ['machine', 'event', 'scene'].indexOf(idList[am][fields.type]);
+                if (ty >= 0)
                     if (!ac[am])
-                        ac[am] = getIcon('statemachine');
+                        ac[am] = getIcon(am);
             }
             if (!write) {
                 nameData = ac;
@@ -1135,9 +1156,7 @@
         }
 
         function offOn($s, e, fun) {
-            if (typeof $s === 'string')
-                $s = $($s);
-            return $s.off(e).on(e, fun);
+            return makeSel($s).off(e).on(e, fun);
         }
 
         function parseActionChip(name) { // timedistance
@@ -1184,21 +1203,31 @@
                 return c;
             }
             if (!(m = name.match( // id + verifier
-                    /^\s*([&!]{0,2})\s*([^\=\~]+)(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=.+|\=\?\s*|\s*)$/
+                    // /^\s*([&!]{0,2})\s*([^\=\~]+)(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=.+|\=\?\s*|\s*)$/
+                    /^\s*([^\!\&\=\~]+)(&\s*)?(!\s*)?(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=\?\s*|\=.+|\s*)$/
                 )))
                 return null;
-            c.exec = m[3] ? m[3].trim() : undefined;
-            c.ack = m[1] && m[1].indexOf('!') >= 0;
-            c.queue = m[1] && m[1].indexOf('&') >= 0;
+            c.exec = m[4] ? m[4].trim() : '';
+            c.ack = !!m[3];
+            c.queue = !!m[2];
             //                c.ack = m[1] ? m[1] : undefined;
-            c.idn = m[2] ? m[2].trim() : undefined;
-            c.text = 'Id : ' + c.idn + (c.idn != main.sstate[c.idn] ? ' (' + main.sstate[c.idn] + ')' : '');
+            c.idn = m[1] ? m[1].trim() : undefined;
+            var id = main.sstate[c.idn];
+            var ce = {
+                '': 'Set from Input ',
+                '~': "Toggle ",
+                '=+': "Set On ",
+                '=-': "Set Off ",
+                '=!': 'Set Not Input ',
+                '=?': 'Set Input ',
+            };
+            c.text = ce[c.exec] ? ce[c.exec] : c.exec + ' ';
+            c.text += id ? '' : 'Undefined Id! '
+            c.text += c.idn + (id && c.idn != id ? ' (' + id + ')' : '');
             if (c.queue)
                 c.text += ' queued';
             if (c.ack)
-                c.text += ' ack';
-            if (c.exec)
-                c.text += ' with ' + c.exec;
+                c.text += ' with ack';
             c.image = getIcon(c.idn);
             if (!c.image)
                 c.image = 'lib/img/run.png';
@@ -1297,6 +1326,48 @@
                     }
 
                 $ic.material_chip(opt);
+                offOn($ic.find('input'), 'focusin', function () {
+                    var v = $(this).val().trim();
+                    var c = parseChip(v);
+                    var o = $ia.data('parsed-chip');
+                    var s = $ic.find('.chip.selected').text();
+                    if (o && o.otag) {
+                        o.tag = v;
+                        c = parseChip(o);
+                    }
+                    $ia.data('parsed-chip', c);
+                    if (c) {
+                        addEvent(c, 'Focus...');
+                        $it.text(c.text);
+                    }
+                });
+                offOn($ic.find('input'), 'input', function () {
+                    var v = $(this).val().trim();
+                    var c = parseChip(v);
+                    var o = $ia.data('parsed-chip');
+                    var s = $ic.find('.chip.selected').text();
+                    if (o && o.otag) {
+                        o.tag = v;
+                        c = parseChip(o);
+                    }
+                    $ia.data('parsed-chip', c);
+                    if (c) {
+                        addEvent(c, 'Chip...');
+                        $it.text(c.text);
+                    }
+                });
+                offOn($ic.find('div.chip'), 'mousedown', function () {
+                    var v = $(this)[0].childNodes[1].nodeValue;
+                    var o = $ia.data('parsed-chip');
+                    if (o && o.tag === v)
+                        setTimeout(function (t, o) {
+                            $ia.data('parsed-chip', null);
+                            addEvent(o, "deselect");
+                            $ic.find('input').val('');
+                            $ia.find('span.input-text').text('');
+                        }, 10, this, o);
+
+                });
             }
 
             function updateChips(object, gotoId) {
@@ -1304,14 +1375,12 @@
                 if (idList[object] && gotoId)
                     idList[object][gotoId] = chips.map(c => c.tag);
                 makeChips(chips, getNameData());
-                setTimeout(checkConfig, 10);
+                checkConfig();
             }
 
 
             var $ia = $(inputArea);
             $ia.data('d-id', oid).data('parsed-fun', parser);
-            var $ic = $ia.find('.chips');
-            var $ii = $ic.find('input');
             var $it = $ia.find('span.input-text');
             $ia.find('label.data-title').text(text);
             $ia.find('.data-icon').text(icon);
@@ -1321,24 +1390,14 @@
             var id = 0;
             var data = chips.map(function (c) {
                 var p = parseChip(c);
-                p.id = id++;
+                if (p)
+                    p.id = id++;
+                else
+                    p = {};
                 return p;
             });
+            var $ic = $ia.find('.chips');
             makeChips(data, getNameData(field != fields.fire));
-            offOn($ii, 'input', function () {
-                var v = $(this).val().trim();
-                var c = parseChip(v);
-                var o = $ia.data('parsed-chip');
-                if (o && o.otag) {
-                    o.tag = v;
-                    c = parseChip(o);
-                }
-                $ia.data('parsed-chip', c);
-                if (c) {
-                    addEvent(c, 'Chip...');
-                    $it.text(c.text);
-                }
-            });
             offOn($ic, 'chip.add', function (e, chip) {
                 chip.id = id++;
                 var c = parseChip(chip);
@@ -1346,10 +1405,11 @@
                     chip[i] = c[i];
                 $ia.data('parsed-chip', c);
                 setTimeout(function () {
-                    updateChips(oid, field)
+                    updateChips(oid, field);
+                    $it.val('');
                     //                    $ia.find('div.chip.selected').removeClass('selected');
-                    $ic.find('div.chip').last().addClass('selected');
-                    selectChip($ia, chip);
+                    //                   $ic.find('div.chip').last().addClass('selected');
+                    //                   selectChip($ia, chip);
                 }, 10);
                 addEvent(c, 'Chip.add');
                 return true;
@@ -1374,9 +1434,62 @@
                 $h = $h.next('.input-table-help');
                 var s = !$h.data('shown');
                 $h.data('shown', s);
-                showHide($h, s);
+                if (!s)
+                    $h.hide();
+                else
+                    $h.show();
             })
             $ia.show();
+            setDebug(workTree.debugLevel);
+            offOn('a.input-rename', 'click', function () {
+                var $t = $(this);
+                var $h = $(this).closest('.input-table');
+                var $i = $h.find('.input-field input');
+                var nname = $i.val().trim();
+                var aname = curId.split('.');
+                var oname = aname.slice(-1)[0];
+                var pname = aname.slice(0, -1).join('.');
+                var nid = (pname ? pname + '.' : '') + nname;
+                if (idList[nid])
+                    return showError(`New id ${nid} already in use!`);
+                confirmMessage(
+                    `Do you really want to rename '${oname}' to '${nname}'?<br>You need to change the names manually in events or actions!`,
+                    'Rename', 'help', 2,
+                    function (ok) {
+                        if (!ok)
+                            return;
+                        var p = pname ? idList[pname] : workTree.folders[""];
+                        var no = p[nname] = p[oname];
+                        delete p[oname];
+                        idList[nid] = idList[curId];
+                        delete idList[curId];
+                        if (p[fields.type] === 'machine') {
+                            if (p[fields.default] == oname)
+                                p[fields.default] = nname;
+                            for (var s of ownKeys(p))
+                                if (!s.startsWith(' ')) {
+                                    if (s.startsWith(autoLink)) {
+                                        if (s.slice(1) == oname) {
+                                            p[autoLink + nname] = p[s];
+                                            delete p[s];
+                                        }
+                                    } else {
+                                        var os = p[s];
+                                        if (os[fields.type] == 'timer' && os[fields.timeout] == oname)
+                                            os[fields.timeout] = nname;
+                                        for (var nk of ownKeys(os))
+                                            if (!nk.startsWith(' '))
+                                                if (nk == oname) {
+                                                    os[nname] = os[nk];
+                                                    delete os[nk];
+                                                }
+
+                                    }
+                                }
+                        }
+                        regenSelect(nid);
+                    });
+            });
         }
 
         function selectChip($ia, chip) {
@@ -1386,50 +1499,31 @@
             $ia.data('parsed-chip', chip);
             addEvent(chip, 'Chip.select');
             $ia.find('span.input-text').text(chip ? chip.text : '');
-            $ia.find('.chips input').val(chip.tag);
+            if (chip)
+                $ia.find('.chips input').val(chip.tag);
         }
 
 
         function getIcon(id) {
             if (main.icons[id])
                 return main.icons[id];
+            if (idList[id])
+                return getIcon(['statemachine', 'flash.png', 'list.png'][
+                    ['machine', 'event', 'scene'].indexOf(idList[id][fields.type])
+                ]);
             if (main.sstate[id])
                 id = main.sstate[id];
             if (main.icons[id])
                 return main.icons[id];
             if (main.icons[id.split('.').slice(0, -1).join('.')])
                 return main.icons[id.split('.').slice(0, -1).join('.')];
-            if (idList[id])
-                return main.icons['statemachine'];
+            if (id.endsWith('.png'))
+                return 'lib/img/' + id;
             id = id.split('.')[0];
             if (main.icons[id])
                 return main.icons[id];
             return null;
         }
-
-        function rebuildChip($ia, c) {
-            var s = '';
-            if (c.name)
-                s = c.name;
-            else if (c.idn) {
-                s = c.ack + (c.onchange ? '~' : '') + c.idn;
-                if (c.check)
-                    s += '?' + c.check;
-                if (["", "-", "+"].indexOf(c.check) < 0)
-                    s += c.test ? c.test : '';
-                else
-                    delete c.test;
-            }
-            c.tag = s;
-            $ia.data('parsed-chip', c);
-            $ia.find('.chips input').val(s);
-        }
-
-        function msValue(selector, value) {
-            selector.val(value);
-            selector.material_select();
-        }
-
 
         function validateInput($this) {
             if (typeof $this === 'string')
@@ -1451,23 +1545,24 @@
             }
             $this.next().attr('data-error', nok === true ? '' : nok);
             $this.toggleClass('invalid', !!nok);
+            return !nok;
         }
 
-        function makeTr(id, parent, name, icon, obj) {
-            idList[id] = obj;
+        function makeTr(id, parent, name, icon, obj, dis) {
+            //            idList[id] = obj;
             var wic = 0;
-            var disabled = obj && obj[fields.disabled];
+            var disabled = (obj && obj[fields.disabled]) || dis;
             var type;
             var html =
                 `<tr data-tt-id="${id}"${parent ? ' data-tt-parent-id="' + parent +'"' : ''}><td  class="ft ${disabled ? ' disabled' : ''}" width="${wi[wic++]}"><span><i class="material-icons tiny right">${icon}</i>&nbsp;${name}</span>&nbsp;&nbsp;</td>`;
             html +=
                 `<td class="fd" width="${wi[wic++]}">${id}</td><td class="fd" width="${wi[wic++]}">`
-            if ([icons.iconMachine, icons.iconFolder, icons.iconEvent].indexOf(icon) >= 0)
+            if ([icons.Machine, icons.Folder, icons.Event, icons.Scene].indexOf(icon) >= 0)
                 //                        html += `<span><input type="checkbox" id="d-${id}" ${disabled ? '' : 'checked="checked"'}/><label for="d-${id}">Enabled</label></span>`;
                 html +=
                 `<div class="switch left"><label>Off<input class="is-disabled" type="checkbox" ${disabled ? '' : 'checked="checked"'}><span class="lever"></span>On</label></div>`;
             html += '&nbsp;';
-            if ([icons.iconMachine, icons.iconEvent].indexOf(icon) >= 0)
+            if ([icons.Machine, icons.Event, icons.Scene].indexOf(icon) >= 0)
                 html +=
                 `<span s-v="${'statemachine.0.'+id}" class="right">${getValue('statemachine.0.'+id,true)}</span>`;
 
@@ -1476,86 +1571,48 @@
         }
 
         function createFolderTree(complete) {
-            function traverseConfig(id, name, parent, icon, obj) {
-                var items = ownKeys(obj).sort();
+            function traverseConfig(id, name, parent, obj, dis) {
+                var items = ownKeysSorted(obj);
                 var hasitems = items.length > 0 && !items[items.length - 1].startsWith(' ');
                 var id = id || name;
-                //                    var nparent = (parent ? parent + '-' : '') + name;
-                var nicon = icons.iconMachine;
                 var timer = (items.indexOf(fields.timeout) >= 0) ? obj[fields.timeout] : '';
-                var type;
-                switch (icon) {
-                    case icons.iconLink:
-                        type = 'link';
-                        nicon = null;
-                        break;
-                    case icons.iconLinkAuto:
-                        type = 'link'
-                        nicon = null;
-                        break;
-                    case icons.iconFolder:
-                        type = 'folder';
-                        break;
-                    case icons.iconMachine:
-                        icon = hasitems ? icons.iconMachine : icons.iconEvent;
-                        type = hasitems ? 'machine' : 'event';
-                        nicon = icons.iconState;
-                        break;
-                    case icons.iconState:
-                        if (timer) {
-                            icon = icons.iconTimer;
-                            type = 'timer';
-                        } else
-                            type = 'state';
-                        nicon = icons.iconLink;
-                        break;
-                    default:
-                        nicon = null;
-                        break;
-                }
-                if (obj && type && !obj[type])
-                    obj[fields.type] = type;
+                var type = obj[fields.type];
+                var icon = ticons[type];
+                dis = dis || obj[fields.disabled];
+                if (type === 'link' && name.startsWith(autoLink))
+                    icon = icons.LinkAuto;
                 if (name)
-                    html += makeTr(id, parent, name, icon, obj);
-                if (!nicon)
-                    return;
-                items.forEach(function (k) {
-                    if (k.startsWith(' '))
-                        return;
-                    nobj = obj[k];
-                    if (typeof nobj === 'object')
-                        traverseConfig(id ? id + '.' + k : k, k, id, nicon, nobj);
-                });
+                    html += makeTr(id, parent, name, icon, obj, dis);
+                if (id)
+                    idList[id] = obj;
+                for (var k of items)
+                    if (!k.startsWith(' ')) {
+                        nobj = obj[k];
+                        if (typeof nobj === 'object')
+                            traverseConfig(id ? id + '.' + k : k, k, id, nobj, dis);
+                    }
             }
 
-            if (!workTree.folders)
-                workTree.folders = {
-                    "": {
-                        TestMachine: {
-                            TestState: {
-                                "2m": {}
-                            },
-                            "2m": {
-                                [fields.timeout]: 'TestState',
-                            },
-                        },
-                        TestEvent: {}
-                    }
-                };
-            setDebug(workTree.debugLevel);
-
             var html = '';
-            wi = getWidths('#tree');
-            ownKeys(workTree.folders).forEach(function (m) {
-                traverseConfig('', m, '', icons.iconFolder, workTree.folders[m]);
+            wi = [];
+            $('#tree').find('thead tr th').each(function () {
+                wi.push($(this).prop('width'));
             });
+            idList = {};
+            workTree.folders = copySorted(workTree.folders);
+            for (var m of ownKeysSorted(workTree.folders))
+                traverseConfig('', m, '', workTree.folders[m], false);
             $('#table-data').html(html);
             $table.treetable({
                 expandable: true,
                 onNodeExpand: function () {
+                    if (idList[this.id] && ['machine','state','timer','folder'].indexOf(idList[this.id][fields.type])>=0)
+                        idList[this.id][fields.expanded] = true;
                     checkConfig();
                 },
                 onNodeCollapse: function () {
+                    if (idList[this.id])
+                        delete idList[this.id][fields.expanded];
                     checkConfig();
                 },
                 indent: 24,
@@ -1564,7 +1621,7 @@
             }, true);
 
             function autoexpand(obj, id) {
-                if (getOpt(obj, fields.expanded))
+                if (obj && obj[fields.expanded])
                     $table.treetable("expandNode", id);
                 ownKeys(obj).forEach(function (k) {
                     autoexpand(obj[k], id ? id + '.' + k : k);
@@ -1573,6 +1630,7 @@
             }
             autoexpand(workTree.folders, '');
             // Highlight selected row
+            nameData = null;
             rebindTableCommands();
             var idt = {}
             $('[id]').each(function () {
@@ -1583,40 +1641,124 @@
             });
         }
 
-        function isAnyChanged(str, disable) {
-            var ch = false;
-            for (var i of str.split('|'))
-                ch = ch || isChanged(i);
-            if (disable)
-                enableDisable(disable, ch);
+        function checkMachines() {
+            var states = {},
+                machines = {},
+                ids = {},
+                err = 0;
+
+            function se(str) {
+                showError(str);
+                err++;
+            }
+
+            function setst(parent, state) {
+                var name = parent ? parent + '.' + state : state;
+                states[name] = states[name] ? states[name] + 1 : 1;
+                return name;
+            }
+
+            function checkItem(parent, name, obj, pobj) {
+                var typ = obj[fields.type];
+                var par = parent ? parent : '';
+                var nam2 = name.startsWith(autoLink) ? name.slice(1) : name;
+                var oid = parent ? parent + '.' + name : name;
+                var id = parent ? parent + '.' + nam2 : nam2;
+                ids[oid] = obj;
+                for (var i of ownKeys(obj))
+                    if (!i.startsWith(' ')) {
+                        var nobj = obj[i];
+                        var ntyp = nobj[fields.type];
+                        switch (ntyp) {
+                            case 'state':
+                                ids[id + '.' + i] = nobj;
+                                machines[id] = machines[id] ? machines[id] + 1 : 1;
+                                break;
+                            case 'timer':
+                                ids[id + '.' + i] = nobj;
+                                machines[id] = machines[id] ? machines[id] + 1 : 1;
+                                break;
+                            case 'link':
+                                if (i.startsWith(autoLink))
+                                    setst(id, i.slice(1));
+                                else
+                                    setst(parent, i);
+                        }
+                    } else switch (i) {
+                        case fields.timeout:
+                            setst(parent, obj[fields.timeout]);
+                            break;
+                    }
+                for (var i of ownKeys(obj))
+                    if (!i.startsWith(' '))
+                        checkItem(id, i, obj[i], obj);
+
+                var t = ownKeys(obj).filter(x => !x.startsWith(' ') && !x.startsWith(autoLink));
+                switch (typ) {
+                    case 'machine':
+                        if (obj[fields.default])
+                            if (!obj[obj[fields.default]])
+                                se(`Machine '${id}' has invalid default state '${obj[fields.default]}'`);
+                        if (t.length < 2)
+                            se(`Machine '${id}' has less than two states (${t})!`)
+                        for (var s of t)
+                            if (!states[id + '.' + s])
+                                se(`State '${id+'.'+s}' has no links pointing to it!`)
+                        break;
+                    case 'state':
+                        if (t.length < 1)
+                            se(`State '${id}' needs at least one Link!`)
+                        break;
+                    case 'timer':
+                        if (obj[fields.timeout])
+                            if (!pobj[obj[fields.timeout]])
+                                se(`Timer '${id}' has invalid timeout state '${obj[fields.default]}'`);
+                        break;
+                    case 'link':
+                        if (name != nam2) {
+                            if (!pobj[nam2])
+                                se(`AutoLink '${id}' has invalid state '${nam2}'`);
+                        } else {
+                            var np = parent.split('.').slice(0, -1);
+                            np.push(name);
+                            np = np.join('.');
+                            if (!ids[np])
+                                se(`Link '${parent}' has invalid state '${name}'`);
+                        }
+
+                }
+            }
+            var folders = cloneObject(workTree.folders);
+            for (var i of ownKeys(folders))
+                checkItem("", i, folders[i], null);
+            return err;
         }
 
-        function isChanged($sel) {
-            if (typeof $sel === 'string')
-                $sel = $($sel);
-            var o = $sel.data('old');
-            var n = $sel.val();
-            return o != n;
+        function isAnyChanged(str) {
+            var o = (str = makeSel(str)).data('old');
+            var ch = o != str.val().trim();
+            enableDisable(str.closest('div.input-table').find('a.input-rename'), ch);
+        }
+
+        function makeSel($sel) {
+            return typeof $sel === 'string' ? $($sel) : $sel;
         }
 
         function popStates($sel, m, val) {
-            if (typeof $sel === 'string')
-                $sel = $($sel);
             if (typeof m == 'string')
                 m = idList[m];
             var html = '';
             if (!val)
                 val = '';
-            var ss = val.startsWith('~') ? '~' : '';
+            var ss = val.startsWith(autoLink) ? autoLink : '';
             if (val === '')
                 html += `<option value="" selected>Not set</option>`;
 
             getStates(m).forEach(function (s) {
-                html += `<option value="${ss+s}"${val == s ? ' selected' : ''}>${ss+s}</option>`;
+                html += `<option value="${ss+s}"${val == ss+s ? ' selected' : ''}>${ss+s}</option>`;
             });
 
-            $sel.html(html);
-            $sel.material_select();
+            ($sel = makeSel($sel)).html(html).material_select();
             return $sel;
         }
 
@@ -1625,18 +1767,33 @@
             selectRow($table.find('tr[data-tt-id="' + id + '"]'));
         }
 
+        function regenSelect(id) {
+            setTimeout(() => {
+                createFolderTree();
+                setTimeout(selectId, 100, id);
+                checkConfig();
+            }, 10);
+        }
+
+
+        function setOld($sel, val) {
+            return makeSel($sel).val(val).data('old', val);
+        }
+
         function selectRow($this) {
             $("#tab-events-content tr.selected").removeClass("selected blue lighten-4");
             curId = $this.data('ttId');
-            curPar = $this.data('ttParentId');
-            if (!curId)
+            if (!curId) {
                 $('div.input-table').hide();
+                return;
+            }
+            curPar = $this.data('ttParentId');
             var ido = idList[curId];
-            var ty = ido[fields.type];
+            var ty = ido && ido[fields.type];
             var ids = curId.split('.');
             var x = ids[0];
             $('#input-folder').val("");
-            if (idList[x][fields.type] === 'folder') {
+            if (idList[x] && idList[x][fields.type] === 'folder') {
                 $('#input-folder').val(curFolder = x);
                 if (ids.length > 1)
                     x += '.' + ids[1];
@@ -1644,67 +1801,96 @@
             var x2 = idList[x][fields.type];
             if (x2 === 'machine') {
                 $('#input-machine').val(curMachine = getThisName(x));
-                $('#input-event').val(curEvent = '');
-                $('#input-machine-name').val(curMachine);
+                $('#input-event,#input-scene').val(curEvent = '');
+                $('#input-name-machine').val(curMachine);
             } else if (x2 === 'event') {
-                $('#input-machine').val(curMachine = '');
+                $('#input-machine,#input-scene').val(curMachine = '');
                 $('#input-event').val(curEvent = getThisName(x));
-                $('#input-event-name').val(curEvent);
+                $('#input-name-event').val(curEvent);
+            } else if (x2 === 'scene') {
+                $('#input-machine,#input-event').val(curMachine = '');
+                $('#input-scene').val(curScene = getThisName(x));
+                $('#input-name-scene').val(curScene);
             }
             $('input.mach-val').removeClass('invalid');
             $('div.input-table').hide();
             $('#input-table-' + ty).show();
             var show = [];
+            enableDisable('#input-rename-' + ty);
+            offOn('input.input-function', 'input', function () {
+                ido[fields.function] = $(this).val();
+                checkConfig();
+            });
             switch (ty) {
                 case 'folder':
-                    $('#input-folder-name').val(curFolder);
+                    $('#input-name-folder').val(curFolder);
                     break;
                 case 'link':
                     x = curPar;
                     $('#input-link-from').text('From ' + getThisName(curPar) + ' to:');
                     if (idList[curPar][fields.type] === 'machine')
                         x = curId;
-                    $('#input-link-icon').text(x === curId ? icons.iconLinkAuto : icons.iconLink);
-                    popStates('#input-link-tostate', getParId(x), getThisName(curId)).data('old', ido[
-                        fields.timeout]).unbind('change').change(function () {
-                        isAnyChanged('#input-link-tostate', '#input-link-rename');
+                    $('#input-link-icon').text(x === curId ? icons.LinkAuto : icons.Link);
+                    offOn(setOld(popStates('#input-tostate-link', getParId(x), getThisName(curId)), ido[
+                        fields.timeout]), 'change', function () {
+                        var n = curId.split('.').slice(-1)[0];
+                        var p = idList[curPar];
+                        var ns = $(this).val();
+                        var nn = curPar + '.' + ns;
+                        if (p[ns])
+                            return showError(`State has already a link there!`)
+                        if (p && p[n] && n != ns) {
+                            p[ns] = p[n];
+                            delete p[n];
+                            setTimeout(createFolderTree, 10);
+                            setTimeout(selectId, 100, nn);
+                            checkConfig();
+                        }
                     });
-                    enableDisable('#input-link-rename');
-                    rebindActionData('#input-event-data', curId, fields.fire, parseEventChip, icons.iconEvent,
+                    offOn($('#input-function-link').val(ido[fields.function]), 'input', function () {
+                        ido[fields.function] = $(this).val();
+                        checkConfig();
+                    });
+                    rebindActionData('#input-event-data', curId, fields.fire, parseEventChip, icons.Event,
                         'Events for new state, current id:');
                     break;
                 case 'state':
-                    $('#input-state-name').val(getThisName(curId)).data('old', getThisName(curId)).unbind(
-                        'input').bind('input', function () {
-                        validateInput($(this));
-                        isAnyChanged('#input-state-name', '#input-state-rename');
-                    });
-                    enableDisable('#input-state-rename');
+                    offOn($('#input-name-state').val(getThisName(curId)).data('old', getThisName(curId)), 'input',
+                        function () {
+                            validateInput($(this));
+                            isAnyChanged('#input-name-state');
+                        });
                     rebindActionData('#input-action-data', curId, fields.onEnter, parseActionChip, 'gps_fixed',
                         'Actions on Enter, current id:');
                     rebindActionData('#input-action-data1', curId, fields.onExit, parseActionChip, 'gps_off',
                         'Actions on Exit, current id:');
                     break;
                 case 'timer':
-                    $('#input-timer-name').val(getThisName(curId)).data('old', getThisName(curId)).unbind(
-                        'input').bind('input', function () {
+                    offOn(setOld('#input-name-timer', getThisName(curId)), 'input', function () {
                         validateInput($(this));
-                        isAnyChanged('#input-table-name|#input-state-timeout',
-                            '#input-timer-rename');
+                        isAnyChanged('#input-name-timer');
                     });
-                    popStates('#input-state-timeout', curPar, ido[fields.timeout]).data('old', ido[fields.timeout])
-                        .unbind('change').change(function () {
-                            isAnyChanged('#input-state-name|#input-state-timeout',
-                                '#input-state-rename');
+                    offOn(popStates('#input-timeout-state', curPar, ido[fields.timeout])
+                        .data('old', ido[fields.timeout]), 'change',
+                        function () {
+                            ido[fields.timeout] = $(this).val();
+                            checkConfig();
                         });
-                    enableDisable('#input-timer-rename');
                     rebindActionData('#input-action-data', curId, fields.onEnter, parseActionChip, 'gps_fixed',
                         'Actions on Enter, current id:');
                     rebindActionData('#input-action-data1', curId, fields.onExit, parseActionChip, 'gps_off',
                         'Actions on Exit, current id:');
                     break;
+                case 'scene':
+                    rebindActionData('#input-action-data', curId, fields.onFire, parseActionChip, icons.Scene,
+                        'Scene list, current id:');
+                    break;
                 case 'event':
-                    rebindActionData('#input-event-data', curId, fields.fire, parseEventChip, icons.iconEvent,
+                    offOn($('#input-function-event').val(ido[fields.function]), 'input', function () {
+                        ido[fields.function] = $(this).val();
+                        checkConfig();
+                    });
+                    rebindActionData('#input-event-data', curId, fields.fire, parseEventChip, icons.Event,
                         'Events which fire, current id:');
                     rebindActionData('#input-action-data', curId, fields.onFire, parseActionChip, 'directions_run',
                         'Action when fired, current id:');
@@ -1712,7 +1898,7 @@
                 case 'machine':
                     offOn(popStates('#input-machine-states', curId, ido[fields.default]), 'change', function () {
                         ido[fields.default] = $(this).val();
-                        setTimeout(checkConfig, 10);
+                        checkConfig();
                     });
                     break;
             }
@@ -1722,27 +1908,32 @@
         }
 
         function rebindTableCommands() {
-            $('#table-data').find("tr").unbind('mousedown').mousedown(function () {
+            offOn($('#table-data').find("tr"), 'mousedown', function () {
                 if (curId == $(this).data('ttId'))
                     return;
                 selectRow($(this));
             });
 
-            $('#table-data').find("input.is-disabled").unbind('change').change(function (e) {
+            offOn($('#table-data').find("input.is-disabled"), 'change', function (e) {
                 var tr = $(this).closest('tr');
                 var id = tr.data('ttId');
-                if (this.checked) {
-                    if (idList[id])
-                        delete idList[id][fields.disabled];
-                    tr.find('td.ft').removeClass('disabled');
-                } else {
-                    if (idList[id])
-                        idList[id][fields.disabled] = true;;
-                    tr.find('td.ft').addClass('disabled');
-                }
+                var idl = idList[id];
+                var en = this.checked;
+                tr.find('td.ft').toggleClass('disabled', !en);
+                if (en && idl)
+                    delete idl[fields.disabled];
+                else if (!en && idl)
+                    idl[fields.disabled] = true;
+                $('#table-data').find("td.ft").each(function (i, e) {
+                    var cid = $(this).closest('tr').data('ttId');
+                    if (cid && cid.startsWith(id + '.'))
+                        $(this).toggleClass('disabled', !(en && (idList[cid] && !idList[cid][fields
+                            .disabled
+                        ])));
+                });
                 addEvent(idList[id], 'enabled/disabled id ' + id);
                 checkConfig();
-                showMessage(id + (this.checked ? ' enabled' : ' disabled'));
+                //                showMessage(id + (this.checked ? ' enabled' : ' disabled'));
             });
             checkConfig();
         }
@@ -1765,37 +1956,42 @@
             opt = opt || {};
             var idr, type, ids = parent ? parent + '.' + id : id;
             switch (icon) {
-                case icons.iconLink:
+                case icons.Link:
                     type = 'link';
                     break;
-                case icons.iconLinkAuto:
+                case icons.LinkAuto:
                     type = 'link'
                     break;
-                case icons.iconFolder:
+                case icons.Folder:
                     type = 'folder';
                     break;
-                case icons.iconMachine:
+                case icons.Machine:
                     type = 'machine';
                     break;
-                case icons.iconEvent:
+                case icons.Event:
                     type = 'event';
                     break;
-                case icons.iconState:
+                case icons.Scene:
+                    type = 'scene';
+                    break;
+                case icons.State:
                     type = 'state';
                     break;
-                case icons.iconTimer:
+                case icons.Timer:
                     type = 'timer';
                     break;
             }
             if (type && !opt[type])
                 opt[fields.type] = type;
 
-            if (icon == icons.iconFolder)
+            if (icon == icons.Folder)
                 idr = workTree.folders;
             else
                 idr = parent ? idList[parent] : workTree.folders[''];
             if (!idr || idList[ids])
                 return showError(`cannot add id type '${icon}' '${id}' to parent '${parent}'!`);
+            else
+                idList[ids] = opt;
             var html = makeTr(ids, parent, id, icon, opt);
             $table.treetable('loadBranch', (parent ? getTreeNode(parent) : null), html);
             if (parent)
@@ -1808,33 +2004,16 @@
             rebindTableCommands();
         }
 
-        function doDelete() {
-            var id = curId;
-            var par = curPar;
-            s = idList[par];
-            if (s && s[fields.type] == 'machine') {
-                if (getStates(s).length < 2)
-                    return showError(`cannot delete last state/timer of machine!`)
+        function copySorted(obj) {
+            if (!obj)
+                return obj;
+            if (typeof obj !== 'object' || Array.isArray(obj))
+                return cloneObject(obj);
+            var n = {};
+            for (var k of ownKeysSorted(obj)) {
+                n[k] = copySorted(obj[k]);
             }
-
-            confirmMessage(`do you really want to delete '${id}'?`, 'Delete ' + id,
-                function (ok) {
-                    if (ok) {
-                        $table.treetable('removeNode', id);
-                        var p = idList[par];
-                        var name = id.split('.');
-                        name = name[name.length - 1];
-                        if (typeof p !== 'object') {
-                            p = workTree.folders[''];
-                            if (!p[name])
-                                p = workTree.folders;
-                        }
-                        delete p[name];
-                        delete idList[id];
-                        curId = null;
-                        rebindTableCommands();
-                    }
-                });
+            return n;
         }
 
         function doCreateState(txt, folder) {
@@ -1844,7 +2023,7 @@
                 text: '',
                 button: 'Create',
                 fields: [
-                    ['State Name', icons.iconState, txt]
+                    ['State Name', icons.State, txt]
                 ],
                 callback: function (ok) {
                     if (ok && (ok = ok[0].trim())) {
@@ -1853,8 +2032,8 @@
                         else if (idList[fs + ok])
                             showMessage('Name already used, please change!');
                         else {
-                            addId(ok, folder, icons.iconState, idList[curId][ok] = {});
-                            return setTimeout(selectId, 20, folder + '.' + ok);
+                            addId(ok, folder, icons.State, idList[curId][ok] = {});
+                            return regenSelect(folder + '.' + ok);
                         }
                         setTimeout(doCreateState, 30, txt, folder);
                     }
@@ -1865,39 +2044,41 @@
         function getStates(m) {
             if (typeof m === 'string')
                 m = idList[m];
-            return m && ownKeys(m).filter(s => !s.startsWith(' ') && !s.startsWith('~'))
+            return m && ownKeysSorted(m).filter(s => !s.startsWith(' ') && !s.startsWith(autoLink))
         }
 
         function doCreateLink() {
             var s = idList[curId][fields.type];
-            var icon = icons.iconLinkAuto;
+            var icon = icons.LinkAuto;
             var m = curId;
+            var t = 'Autolink';
             if (s !== 'machine') {
                 m = getParId(curId);
-                icon = icons.iconLink;
+                icon = icons.Link;
+                t = 'Link';
             }
             var xs = getStates(m);
             if (!xs)
-                return showError(`Cold not create link for '${curId}'`);
-            if (icon == icons.iconLinkAuto)
-                xs = xs.map(x => '~' + x);
+                return showError(`Cold not create ${t} for '${curId}'`);
+            if (icon == icons.LinkAuto)
+                xs = xs.map(x => autoLink + x);
             showInputModal({
-                title: (icon == icons.iconLinkAuto) ? 'Create Autolink' : 'Create Link',
+                title: 'Create ' + t,
                 text: '',
                 button: 'Create',
                 fields: [
-                    ['Timeout State', icon, xs]
+                    [t + ' from ' + curId, icon, xs]
                 ],
                 callback: function (ok) {
                     if (ok) {
                         var t = ok[0];
-                        if (t && t.startsWith('~'))
+                        if (t && t.startsWith(autoLink))
                             t = t.slice(1);
                         if (!idList[m + '.' + t])
                             showMessage('You need to select an existing state!');
                         else {
                             addId(ok[0], curId, icon, idList[curId][ok[0]] = {});
-                            return setTimeout(selectId, 30, curId + '.' + ok[0]);
+                            return regenSelect(curId + '.' + ok[0]);
                         }
                         setTimeout(doCreateLink, 50);
                     }
@@ -1916,8 +2097,8 @@
                 text: '',
                 button: 'Create',
                 fields: [
-                    ['Timeout time', icons.iconTimer, txt],
-                    ['Timeout state', icons.iconTimeout, xs]
+                    ['Timeout time', icons.Timer, txt],
+                    ['Timeout state', icons.Timeout, xs]
                 ],
                 callback: function (ok) {
                     if (ok) {
@@ -1929,12 +2110,12 @@
                         else if (!idList[fs + ok[1]])
                             showMessage('You need to select an existing tieout state!');
                         else {
-                            addId(t, folder, icons.iconTimer, m[t] = {});
-                            //                            addId(ok[1], folder + '.' + t, icons.iconTimeout);
+                            addId(t, folder, icons.Timer, m[t] = {});
+                            //                            addId(ok[1], folder + '.' + t, icons.Timeout);
                             idList[folder + '.' + t][fields.timeout] = ok[1];
-                            return setTimeout(selectId, 30, folder + '.' + t);
+                            return regen(folder + '.' + t);
                         }
-                        setTimeout(doCreateTimer, 50, t, folder);
+                        setTimeout(doCreateTimer, 30, t, folder);
                     }
                 }
             });
@@ -1947,11 +2128,25 @@
                 if (main.adapterConfigIds.length > 1) {
                     var ah = '';
                     for (var ai of main.adapterConfigIds)
-                        ah += ` <option value="${ai}" ${ah == '' ? ' selected' : ''}>${ai}</option>`;
+                        ah +=
+                        ` <option value="${ai}" ${ah == '' ? ' selected' : ''}>${ai}</option>`;
                     $('#adapter-instances').html(ah).material_select().change(function () {
                         var i = $(this).val();
                     });
                 } else $('.instance-config').hide();
+                offOn($('#queue-all'), 'change', function () {
+                    workTree.queueAll = this.checked;
+                    checkConfig();
+                }).prop('checked', !!workTree.queueAll);
+                offOn($('#input-queue'), 'input', function () {
+                    var n = $(this).val();
+                    var ok = parseInt(n) >= 10 && parseInt(n) < 1000;
+                    validateInput($(this));
+                    if (ok) {
+                        workTree.queueTime = parseInt(n);
+                        checkConfig();
+                    }
+                }).val('' + (workTree.queueTime || 10));
             });
         });
     </script>
@@ -1966,7 +2161,7 @@
                 </div>
             </div>
             <div class="col s4 m4 l2">
-                <h5>StateMachine Setup</h5>
+                <h5>Statemachine Setup</h5>
             </div>
             <div class="col s2 m2 l1">
                 <label class=" instance-config">Statemachine Instance to configure</label>
@@ -1975,8 +2170,21 @@
                 <select id="adapter-instances" class="instance-config">
                 </select>
             </div>
-            <div class="col s12 m12 l6">
+            <div class="col s6 m6 l2">
                 <h6>Control &amp; Options</h6>
+            </div>
+            <div class="col s3 m3 l2">
+                <div class="switch left">
+                    <label>Queue All Actions: Off
+                        <input id="queue-all" type="checkbox">
+                        <span class="lever"></span>On</label>
+                </div>
+            </div>
+            <div class="col s2 m2 l1">
+                <label for="input-queue" class="active">Queue Time in ms</label>
+            </div>
+            <div class="col s1 m1 l1">
+                <input type="text" id="input-queue" minlength="2" maxlength="3" pattern="^\d+$" title="2 to 5 digit number">
             </div>
         </div>
         <div class="row">
@@ -2012,13 +2220,14 @@
                     </div>
                     <div class="col s2">
                         <button id="exportButton" class="waves-effect waves-light btn not-ok-cancel w100 btn-small">
-                            <i class="material-icons left">file_download</i>
+                            <i class="material-icons left">file_upload</i>
                             <span>Export</span>
                     </div>
                     <div class="col s2">
                         <button id="importButton" class="waves-effect waves-light btn not-ok-cancel w100 btn-small">
-                            <i class="material-icons left">file_upload</i>
+                            <i class="material-icons left">file_download</i>
                             <span>Import</span>
+                            <input type="file" id="fileJsonInput" name="fileInput" />
                         </button>
                     </div>
                     <div class="col s2">
@@ -2037,216 +2246,245 @@
                 <div class="divider clear10"></div>
                 <div class="row">
                     <div class="input-field col s3">
-                        <i class="material-icons prefix" my-icon="iconFolder"></i>
-                        <input type="text" id="input-folder" class="mach-val" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <i class="material-icons prefix" my-icon="Folder"></i>
                         <label for="input-folder" class="active">Folder</label>
-                    </div>
-                    <div class="col s1">
-                        <a id="folder-add" title="Add Folder" class="btn-floating btn btn-small waves-effect waves-light teal">
+                        <a id="folder-add" title="Add Folder" class="btn-floating btn btn-small waves-effect waves-light teal right disabled">
                             <i class="material-icons">add</i>
                         </a>
+                        <input type="text" id="input-folder" class="mach-val" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
                     </div>
                     <div class="input-field col s3">
-                        <i class="material-icons prefix" my-icon="iconMachine"></i>
-                        <input type="text" id="input-machine" class="mach-val" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <i class="material-icons prefix" my-icon="Machine"></i>
                         <label for="input-machine" class="active">Machine</label>
-                    </div>
-                    <div class="col s1">
-                        <a id="machine-add" title="Add Machine" class="btn-floating btn btn-small waves-effect waves-light teal">
+                        <a id="machine-add" title="Add Machine" class="btn-floating btn btn-small waves-effect waves-light teal right disabled">
                             <i class="material-icons">add</i>
                         </a>
+                        <input type="text" id="input-machine" class="mach-val" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
                     </div>
                     <div class="input-field col s3">
-                        <i class="material-icons prefix" my-icon="iconEvent"></i>
-                        <input type="text" id="input-event" class="mach-val" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <i class="material-icons prefix" my-icon="Event"></i>
                         <label for="input-event" class="active">Event</label>
-                    </div>
-                    <div class="col s1">
-                        <a id="event-add" title="Add Event" class="btn-floating btn btn-small waves-effect waves-light teal">
+                        <a id="event-add" title="Add Event" class="btn-floating btn btn-small waves-effect waves-light teal right  disabled">
                             <i class="material-icons">add</i>
                         </a>
+                        <input type="text" id="input-event" class="mach-val" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                    </div>
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix" my-icon=" Scene"></i>
+                        <label for="input-scene" class="active">Scene</label>
+                        <a id="scene-add" title="Add Scene" class="btn-floating btn btn-small waves-effect waves-light teal right disabled">
+                            <i class="material-icons">add</i>
+                        </a>
+                        <input type="text" id="input-scene" class="mach-val" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
                     </div>
                 </div>
                 <div class="divider clear15"></div>
                 <div id="input-table-folder" class="input-table row">
                     <div class="input-field col s3">
-                        <i class="material-icons prefix" my-icon="iconFolder"></i>
-                        <input type="text" id="input-folder-name" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
-                        <label for="input-folder-name" class="active">Folder Name</label>
+                        <i class="material-icons prefix" my-icon="Folder"></i>
+                        <input type="text" id="input-name-folder" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <label for="input-name-folder" class="active">Folder Name</label>
                     </div>
                     <div class="col s3">
                         <div class='right'>
-                            <!--a id="input-machine-add" title="Add Machine" class="btn-floating btn waves-effect waves-light teal">
-                                <i class="material-icons" my-icon="iconMachineAdd"></i>
+                            <!--a id="input-add-machine" title="Add Machine" class="btn-floating btn waves-effect waves-light teal">
+                                <i class="material-icons" my-icon="MachineAdd"></i>
                             </a>
-                            <a id="input-event-add" title="Add Event" class="btn-floating btn waves-effect waves-light teal">
-                                <i class="material-icons" my-icon="iconEventAdd"></i>
+                            <a id="input-add-event" title="Add Event" class="btn-floating btn waves-effect waves-light teal">
+                                <i class="material-icons" my-icon="EventAdd"></i>
                             </a-->
-                            <a id="input-folder-rename" title="Rename Folder" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
-                                <i class="material-icons" my-icon="iconRename"></i>
-                            </a>
-                            <a id="input-folder-remove" title="Delete Folder" class="btn-floating btn btn-small waves-effect waves-light red">
-                                <i class="material-icons" my-icon="iconDelete"></i>
+                            <a id="input-rename-folder" title="Rename Folder" class="input-rename btn-floating btn btn-small waves-effect waves-light blue disabled">
+                                <i class="material-icons" my-icon="Rename"></i>
+                                <a title="Delete Folder" class="input-remove btn-floating btn btn-small waves-effect waves-light red">
+                                    <i class="material-icons" my-icon="Delete"></i>
+                                </a>
+                        </div>
+                    </div>
+                </div>
+                <div id="input-table-scene" class="input-table row">
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix" my-icon=" Scene"></i>
+                        <input type="text" id="input-name-scene" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <label for="input-name-scene" class="active">Scene Name</label>
+                    </div>
+                    <div class="col s3">
+                        <div class='left'>
+                            <a title="Run Scene" class="input-execute btn-floating btn btn-small waves-effect waves-light orange">
+                                <i class="material-icons" my-icon="Event"></i>
                             </a>
                         </div>
+                        <div class='right'>
+                            <a id="input-rename-scene" title="Rename Scene" class="input-rename btn-floating btn btn-small waves-effect waves-light blue disabled">
+                                <i class="material-icons" my-icon="Rename"></i>
+                            </a>
+                            <a title="Delete Scene" class="input-remove btn-floating btn btn-small waves-effect waves-light red">
+                                <i class="material-icons" my-icon="Delete"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col s3">
+                    </div>
+                    <div class="col s3">
+                        <label for="input-value-scene" class="active">Current Value</label>
+                        <p s-v="" id="input-value-scene"></p>
                     </div>
                 </div>
                 <div id="input-table-event" class="input-table row">
                     <div class="input-field col s3">
-                        <i class="material-icons prefix" my-icon="iconEvent"></i>
-                        <input type="text" id="input-event-name" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
-                        <label for="input-event-name" class="active">Event Name</label>
+                        <i class="material-icons prefix" my-icon="Event"></i>
+                        <input type="text" id="input-name-event" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <label for="input-name-event" class="active">Event Name</label>
                     </div>
                     <div class="col s3">
                         <div class='left'>
-                            <a id="input-event-execute" title="Goto State" class="btn-floating btn btn-small waves-effect waves-light orange">
-                                <i class="material-icons" my-icon="iconEvent"></i>
+                            <a title="Goto State" class="input-execute btn-floating btn btn-small waves-effect waves-light orange">
+                                <i class="material-icons" my-icon="Event"></i>
                             </a>
                         </div>
                         <div class='right'>
-                            <a id="input-event-rename" title="Rename Event" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
-                                <i class="material-icons" my-icon="iconRename"></i>
+                            <a id="input-rename-event" title="Rename Event" class="input-rename btn-floating btn btn-small waves-effect waves-light blue disabled">
+                                <i class="material-icons" my-icon="Rename"></i>
                             </a>
-                            <a id="input-event-remove" title="Delete Event" class="btn-floating btn btn-small waves-effect waves-light red">
-                                <i class="material-icons" my-icon="iconDelete"></i>
+                            <a title="Delete Event" class="input-remove btn-floating btn btn-small waves-effect waves-light red">
+                                <i class="material-icons" my-icon="Delete"></i>
                             </a>
                         </div>
                     </div>
                     <div class="col s3">
-                        <label for="input-event-tfunction" class="active">Function</label>
-                        <input type="text" id="input-event-tfunction">
+                        <label for="input-function-event" class="active">Function</label>
+                        <input type="text" id="input-function-event" class="input-function">
                     </div>
                     <div class="col s3">
-                        <label for="input-event-value" class="active">Current Value</label>
-                        <p s-v="" id="input-event-value"></p>
+                        <label for="input-value-event" class="active">Current Value</label>
+                        <p s-v="" id="input-value-event"></p>
                     </div>
                 </div>
                 <div id="input-table-machine" class="input-table row">
                     <div class="input-field col s3">
-                        <i class="material-icons prefix" my-icon="iconMachine"></i>
-                        <input type="text" id="input-machine-name" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
-                        <label for="input-machine-name" class="active">Machine Name</label>
+                        <i class="material-icons prefix" my-icon="Machine"></i>
+                        <input type="text" id="input-name-machine" minlength="3" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <label for="input-name-machine" class="active">Machine Name</label>
                     </div>
                     <div class="input-field col s3">
                         <div class='right'>
-                            <a id="input-state-add" title="Add State" class="btn-floating btn btn-small waves-effect waves-light teal">
-                                <i class="material-icons" my-icon="iconStateAdd"></i>
+                            <a id="input-add-state" title="Add State" class="btn-floating btn btn-small waves-effect waves-light teal">
+                                <i class="material-icons" my-icon="StateAdd"></i>
                             </a>
-                            <a id="input-timer-add" title="Add Timer" class="btn-floating btn btn-small waves-effect waves-light teal">
-                                <i class="material-icons" my-icon="iconTimer"></i>
+                            <a id="input-add-timer" title="Add Timer" class="btn-floating btn btn-small waves-effect waves-light teal">
+                                <i class="material-icons" my-icon="Timer"></i>
                             </a>
-                            <a title="Add Autolink" class="btn-floating btn btn-small waves-effect waves-light teal input-link-add">
-                                <i class="material-icons" my-icon="iconLinkAuto"></i>
+                            <a title="Add Autolink" class="btn-floating btn btn-small waves-effect waves-light teal input-add-link">
+                                <i class="material-icons" my-icon="LinkAuto"></i>
                             </a>
-                            <a id="input-machine-rename" title="Rename Machine" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
-                                <i class="material-icons" my-icon="iconRename"></i>
+                            <a id="input-rename-machine" title="Rename Machine" class="input-rename btn-floating btn btn-small waves-effect waves-light blue disabled">
+                                <i class="material-icons" my-icon="Rename"></i>
                             </a>
-                            <a id="input-machine-remove" title="Delete Machine" class="btn-floating btn btn-small waves-effect waves-light red">
-                                <i class="material-icons" my-icon="iconDelete"></i>
+                            <a title="Delete Machine" class="input-remove btn-floating btn btn-small waves-effect waves-light red">
+                                <i class="material-icons" my-icon="Delete"></i>
                             </a>
                         </div>
                     </div>
                     <div class="input-field col s3">
-                        <i class="material-icons prefix" my-icon="iconStateAdd"></i>
+                        <i class="material-icons prefix" my-icon="StateAdd"></i>
                         <select id="input-machine-states" class "select-input-states">
                             <option value="" selected>Undefined</option>
                         </select>
                         <label>Default State</label>
                     </div>
                     <div class="col s3">
-                        <label for="input-event-value" class="active">Current State</label>
-                        <p s-v="" id="input-machine-value"></p>
+                        <label for="input-value-machine" class="active">Current State</label>
+                        <p s-v="" id="input-value-machine"></p>
                     </div>
                 </div>
                 <div id="input-table-state" class="input-table row">
                     <div class="input-field col s3">
-                        <i class="material-icons prefix" my-icon="iconState"></i>
-                        <input type="text" id="input-state-name" minlength="2" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
-                        <label for="input-state-name" class="active">State</label>
+                        <i class="material-icons prefix" my-icon="State"></i>
+                        <input type="text" id="input-name-state" minlength="2" maxlength="20" pattern="^[$_A-Za-z][\-$\w]+$" title="Start with leetter and follow with letter|number|$|-|_">
+                        <label for="input-name-state" class="active">State</label>
                     </div>
                     <div class="col s3">
                         <div class='left'>
-                            <a id="input-state-execute" title="Goto State" class="btn-floating btn btn-small waves-effect waves-light orange">
-                                <i class="material-icons" my-icon="iconEvent"></i>
+                            <a title="Goto State" class="input-execute btn-floating btn btn-small waves-effect waves-light orange">
+                                <i class="material-icons" my-icon="Event"></i>
                             </a>
                         </div>
                         <div class='right'>
-                            <a title="Add Link" class="btn-floating btn btn-small waves-effect waves-light teal input-link-add">
-                                <i class="material-icons" my-icon="iconLink"></i>
+                            <a title="Add Link" class="btn-floating btn btn-small waves-effect waves-light teal input-add-link">
+                                <i class="material-icons" my-icon="Link"></i>
                             </a>
-                            <a id="input-state-rename" title="Rename State" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
-                                <i class="material-icons" my-icon="iconRename"></i>
+                            <a title="Rename State" class="input-rename btn-floating btn btn-small waves-effect waves-light blue disabled">
+                                <i class="material-icons" my-icon="Rename"></i>
                             </a>
-                            <a id="input-state-remove" title="Delete State" class="btn-floating btn btn-small waves-effect waves-light red">
-                                <i class="material-icons" my-icon="iconDelete"></i>
+                            <a title="Delete State" class="input-remove btn-floating btn btn-small waves-effect waves-light red">
+                                <i class="material-icons" my-icon="Delete"></i>
                             </a>
                         </div>
                     </div>
                 </div>
                 <div id="input-table-timer" class="input-table row">
                     <div class="input-field col s3">
-                        <i class="material-icons prefix" my-icon="iconTimer"></i>
-                        <input type="text" id="input-timer-name" minlength="2" maxlength="20" pattern="^(\d+w\s*)?(\d+d\s*)?(\d+h\s*)?(\d+m(?!s)\s*)?(\d+)?(m?s)?\s*$"
+                        <i class="material-icons prefix" my-icon="Timer"></i>
+                        <input type="text" id="input-name-timer" minlength="2" maxlength="20" pattern="^(\d+w\s*)?(\d+d\s*)?(\d+h\s*)?(\d+m(?!s)\s*)?(\d+)?(m?s)?\s*$"
                             title="Start with number and then (w,d,h,m,s,ms)">
-                        <label for="input-timer-name" class="active">State</label>
+                        <label for="input-name-timer" class="active">State</label>
                     </div>
                     <div class="col s3">
                         <div class='left'>
                             <a title="Goto State" class="btn-floating btn btn-small waves-effect waves-light orange">
-                                <i class="material-icons" my-icon="iconEvent"></i>
+                                <i class="material-icons" my-icon="Event"></i>
                             </a>
                         </div>
                         <div class='right'>
-                            <a title="Add Link" class="btn-floating btn btn-small waves-effect waves-light teal input-link-add">
-                                <i class="material-icons" my-icon="iconLink"></i>
+                            <a title="Add Link" class="btn-floating btn btn-small waves-effect waves-light teal input-add-link">
+                                <i class="material-icons" my-icon="Link"></i>
                             </a>
-                            <a id="input-timer-rename" title="Change Timer" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
-                                <i class="material-icons" my-icon="iconRename"></i>
+                            <a title="Change Timer" class="input-rename btn-floating btn btn-small waves-effect waves-light blue disabled">
+                                <i class="material-icons" my-icon="Rename"></i>
                             </a>
-                            <a id="input-timer-remove" title="Delete Timer" class="btn-floating btn btn-small waves-effect waves-light red">
-                                <i class="material-icons" my-icon="iconDelete"></i>
+                            <a title="Delete Timer" class="input-remove btn-floating btn btn-small waves-effect waves-light red">
+                                <i class="material-icons" my-icon="Delete"></i>
                             </a>
                         </div>
                     </div>
-                    <div id="input-timeout-state" class="input-field col s3">
-                        <i class="material-icons prefix" my-icon="iconTimeout"></i>
-                        <select id="input-state-timeout" class "select-input-states">
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix" my-icon="Timeout"></i>
+                        <select id="input-timeout-state" class "select-input-states">
                             <option value="" disabled selected>select timeout</option>
                         </select>
-                        <label>Timeout State</label>
+                        <label for="input-timeout-state">Timeout State</label>
                     </div>
                 </div>
                 <div id="input-table-link" class="input-table row">
                     <div id="input-link-state" class="input-field col s3">
-                        <i id="input-link-icon" class="material-icons prefix" my-icon="iconLink"></i>
-                        <select id="input-link-tostate" class "select-input-states">
+                        <i id="input-link-icon" class="material-icons prefix" my-icon="Link"></i>
+                        <select id="input-tostate-link" class "select-input-states">
                             <option value="" disabled selected>select timeout</option>
                         </select>
                         <label id="input-link-from">from</label>
                     </div>
                     <div class="col s3">
                         <div class='left'>
-                            <a id="input-link-execute" title="Goto State" class="btn-floating btn btn-small waves-effect waves-light orange">
-                                <i class="material-icons" my-icon="iconEvent"></i>
+                            <a title="Goto State" class="input-execute btn-floating btn btn-small waves-effect waves-light orange">
+                                <i class="material-icons" my-icon="Event"></i>
                             </a>
                         </div>
                         <div class='right'>
-                            <a id="input-link-rename" title="Save Change" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
-                                <i class="material-icons" my-icon="iconRename"></i>
-                            </a>
-                            <a id="input-link-remove" title="Delete State" class="btn-floating btn btn-small waves-effect waves-light red">
-                                <i class="material-icons" my-icon="iconDelete"></i>
+                            <!--a id="input-rename-link" title="Save Change" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
+                                <i class="material-icons" my-icon="Rename"></i>
+                            </a-->
+                            <a title="Delete State" class="input-remove btn-floating btn btn-small waves-effect waves-light red">
+                                <i class="material-icons" my-icon="Delete"></i>
                             </a>
                         </div>
                     </div>
                     <div class="col s3">
-                        <label for="input-event-function" class="active">Function</label>
-                        <input type="text" id="input-event-function">
+                        <label for="input-function-link" class="active">Function</label>
+                        <input type="text" id="input-function-link">
                     </div>
                 </div>
                 <div id="input-event-data" class="input-table row">
                     <div class "col s12">
-                        <i class="material-icons data-icon prefix" my-icon="iconEvent"></i>
+                        <i class="material-icons data-icon prefix" my-icon="Event"></i>
                         <a class="btn-floating btn btn-small right waves-effect waves-light teal show-help">
                             <i class="material-icons show-help" my-icon="help">help</i>
                         </a>
@@ -2303,17 +2541,10 @@
                         </ul>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="section row">
-            <span>Output:</span>
-            <div class="row">
-                <div class="col s6">
-                    <label for="input_output">Input/output machines</label>
-                    <textarea id="input_output" class="materialize-textarea input-output"></textarea>
-                </div>
-                <div class="col 6">
-                    <pre id="eventSpan" style="font-size: 0.8em"></pre>
+                <div class="section row">
+                    <div class="col s8">
+                        <pre id="eventSpan" style="font-size: 0.8em"></pre>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2322,7 +2553,7 @@
         <div class="modal-content">
             <div class="row">
                 <div class="col s2">
-                    <i id="modalIcon" class="material-icons large" my-icon="iconFolder">check</i>
+                    <i id="modalIcon" class="material-icons large" my-icon="Folder">check</i>
                 </div>
                 <div id="modalText" class="col s10">
                     <h4>Title</h4>
