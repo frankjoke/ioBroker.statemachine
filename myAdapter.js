@@ -128,8 +128,8 @@ class MyAdapter {
     static J( /** string */ str, /** function */ reviewer) {
         let res;
         if (!str)
-            return null;
-        if (this.T(str) !== 'string')
+            return str;
+        if (typeof str !== 'string')
             str = str.toString();
         try {
             res = JSON.parse(str, reviewer);
@@ -322,12 +322,22 @@ class MyAdapter {
         return (Object.keys(obj).filter(x => obj.hasOwnProperty(x)).map(i => obj[i]));
     }
     static includes(obj, value) {
-        return this.T(obj, {}) ? obj[value] !== undefined :
-            this.T(obj, []) ? obj.find(x => x === value) !== undefined : obj === value;
+        return this.T(obj) === 'object' ? obj[value] !== undefined :
+            Array.isArray(obj) ? obj.find(x => x === value) !== undefined : obj === value;
     }
 
     static ownKeys(obj) {
-			return this.T(obj, {}) ? Object.keys(obj).filter(k => obj.hasOwnProperty(k)) : [];
+			return this.T(obj) === 'object' ? Object.keys(obj).filter(k => obj.hasOwnProperty(k)) : [];
+    }
+
+    static ownKeysSorted(obj) {
+        return this.ownKeys(obj).sort(function (a, b) {
+                a = a.toLowerCase();
+                b = b.toLowerCase();
+                if (a > b) return 1;
+                if (a < b) return -1;
+                return 0;
+            });
     }
 
     static stop(dostop, callback) {
@@ -416,7 +426,7 @@ class MyAdapter {
     }
 
     static exec(command) {
-        assert(this.T(command,""), 'exec (fn) error: fn is not a string!');
+        assert(typeof command === "string", 'exec (fn) error: fn is not a string!');
         const istest = command.startsWith('!');
         return new Promise((resolve, reject) => {
             exec(istest ? command.slice(1) : command, (error, stdout, stderr) => {
@@ -431,7 +441,7 @@ class MyAdapter {
 
     static url(turl, opt) {
         //        this.D(`mup start: ${this.O(turl)}: ${this.O(opt)}`);
-        if (this.T(turl) === 'string')
+        if (typeof turl === 'string')
             turl = url.parse(turl.trim(), true);
         if (this.T(opt) === 'object') {
             opt = this.clone(opt);
@@ -445,7 +455,7 @@ class MyAdapter {
     }
 
     static request(opt, value, transform) {
-        if (this.T(opt) === 'string')
+        if (typeof opt === 'string')
             opt = this.url(opt.trim());
         if (!(opt instanceof url.Url)) { 
             if (this.T(opt) !== 'object' || !opt.hasOwnProperty('url')) 

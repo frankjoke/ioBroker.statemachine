@@ -6,8 +6,8 @@
     <!--link href="lib/fonts/micons/material-design-icons.css" rel="stylesheet"-->
     <link rel="stylesheet" type="text/css" href="lib/css/materialize.css">
 
-    <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
-    <!--script type="text/javascript" src="../../lib/js/jquery-1.11.2.min.js"></script-->
+    <!--script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script-->
+    <script type="text/javascript" src="../../lib/js/jquery-1.11.2.min.js"></script>
     <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
     <script type="text/javascript" src="../../lib/js/translate.js"></script>
     <script type="text/javascript" src="../../lib/js/loStorage.js"></script>
@@ -118,14 +118,25 @@
             height: 4em
         }
 
-        #tab-events-content {
+        #log-data {
+            height: 45vh;
+        }
+        #tab-events-content, #log-data {
             /* box-sizing: border-box; */
             /* position: relative; */
             /* width: 100%; */
             /* height: 50vh; */
             border: 2px solid lightgray;
         }
-
+        
+        .event-span {
+            border: 2px solid lightgray;
+            height: 45vh;
+        }
+        #eventSpan {
+            height: 44vh;
+            
+        }
         .card-header {
             font-size: 1.2rem;
             font-weight: 400;
@@ -159,14 +170,17 @@
             font-size: 0.8rem;
         }
 
-        td,
-        th {
+        table.treetable td,
+        table.treetable th {
             padding: 4px 3px;
         }
 
+        #script-output td {
+            padding: 2px 2px;
+        }
         td.ft {
             font-weight: 500;
-            cursor: pointer;
+            /* cursor: pointer; */
         }
 
         td.fd {
@@ -235,8 +249,12 @@
 
         #tree tbody {
             display: block;
-            height: 50vh;
+            height: 45vh;
             overflow: auto;
+        }
+
+        .no-padding {
+            padding: 0 0 0 0;
         }
 
         #tree thead,
@@ -270,6 +288,15 @@
          * @param {type} word
          * @returns {String}
          */
+
+        const testdebug = true;
+
+        function debug(str) {
+            if (testdebug)
+                console.log(str);
+        }
+        debug('start load!');
+
         function _(word) {
             var text = translateWord(word, systemLang, systemDictionary);
 
@@ -291,12 +318,17 @@
 
         function ownKeysSorted(obj) {
             return ownKeys(obj).sort(function (a, b) {
-                    a = a.toLowerCase();
-                    b = b.toLowerCase();
-                    if (a == b) return 0;
-                    if (a > b) return 1;
-                    return -1;
-                });
+                a = a.toLowerCase();
+                b = b.toLowerCase();
+                if (a == b) return 0;
+                if (a > b) return 1;
+                return -1;
+            });
+        }
+
+        function getTimeString(time) {
+            const tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
+            return (new Date(+time - tzoffset)).toISOString().slice(11, -1);
         }
 
         function cloneObject(obj) {
@@ -410,22 +442,25 @@
                         ostate: os,
                         nstate: cloneObject(state),
                     };
-                    for (var k of ownKeys(state))
-                        if (k == 'ts' || s.ostate[k] == s.nstate[k]) {
-                            delete s.nstate[k];
-                            delete s.ostate[k];
+                    main.states[id] = state;
+                    if (id.match(/^statemachine\.\d+\./)) {
+                        for (var k of ownKeys(state))
+                            if (k == 'ts' || s.ostate[k] == s.nstate[k]) {
+                                delete s.nstate[k];
+                                delete s.ostate[k];
+                            }
+//                        state.lc = 
+                        s.nstate.lc = s.ostate.ts;
+                        if (JSON.stringify(s.ostate) != JSON.stringify(s.nstate)) {
+                            addEvent(s, `State change of ${id}`);
+                            if (main.svalues[id])
+                                $(`span[s-v="${id}"`).html(getValue(id, true));
+                            /// TODO: check machine states to display them!
                         }
-                    state.lc = s.nstate.lc = s.ostate.ts;
-                    if (JSON.stringify(s.ostate) != JSON.stringify(s.nstate) && id.match(/^statemachine\.\d+/)) {
-                        addEvent(s, `State change of ${id}`);
-                        if (main.svalues[id])
-                            $(`span[s-v="${id}"`).html(getValue(id, true));
-                        /// TODO: check machine states to display them!
                     }
                     //id = id ? id.replace(/[\s'"]/g, '_') : ''; /// TODO - do not know what it does!
                     //if (!id || !id.match(/\.messagebox$/)) {
                     //}
-                    main.states[id] = state;
                 },
                 getStates: function (callback) {
                     main.socket.emit('getStates', function (err, res) {
@@ -465,11 +500,53 @@
                         }, 0);
                     });
                 },
+
+                onLog: function (message) {
+                    //                    addEvent(message, ' On Log:');
+                    if (!main.$parentOutput) main.$parentOutput = $('#script-output').parent().parent();
+
+                    //{"message":"javascript.0 Stop script script.js.Script4","severity":"info","from":"javascript.0","ts":1455490697111,"_id":364}
+                    if (message.message.indexOf('statemachine.') !== -1) {
+                        const color = {
+                            debug: "blue lighten-4",
+                            error: "red lighten-4",
+                            warning: "orange lighten-4",
+                            info: "white"
+                        }
+                        var text = '<tr class="' + color[message.severity] + '"><td>' + getTimeString(new Date(
+                                message.ts)) +
+                            '</td><td>[' + message.severity + ']</td><td>' + message.message + '</td></tr>';
+                        var h = main.$parentOutput.height();
+
+                        var oldHeight = $('#script-output').height();
+                        var scrollTop = main.$parentOutput.scrollTop();
+                        var shiftToEnd = (scrollTop + h >= oldHeight - 5);
+
+                        if (oldHeight > 2000) {
+                            $('#script-output tr:first').remove();
+                            var oldHeight1 = $('#script-output').height();
+                            main.$parentOutput.scrollTop(scrollTop - (oldHeight - oldHeight1));
+
+                            oldHeight = oldHeight1;
+                        }
+
+                        var scrollTop = main.$parentOutput.scrollTop();
+                        var shiftToEnd = (scrollTop + h >= oldHeight - 5);
+
+                        $('#script-output').append(text);
+
+                        if (shiftToEnd) {
+                            main.$parentOutput.scrollTop(oldHeight + 50);
+                        }
+                    }
+                },
+
                 /** 
                  * Read the settings for adapter
                  * @param {type} callback
                  */
                 readInstanceConfig: function (callback) {
+                    debug('main.readInstanceConfig');
                     main.systemConfig = main.objects['system.config'];
                     addEvent(main.systemConfig, "System Config");
                     if (main.systemConfig && main.systemConfig.common) {
@@ -502,10 +579,12 @@
                     }
                 },
                 init: function (callb) {
+                    debug('main.init');
                     if (callb)
                         main.connectCb = callb;
                     main.socket.on('permissionError', function (err) {
-                        showMessage(_('Has no permission to %s %s %s', err.operation, err.type, (err.id ||
+                        showMessage(_('Has no permission to %s %s %s', err.operation, err.type, (
+                            err.id ||
                             '')));
                     });
                     main.socket.on('objectChange', function (id, obj) {
@@ -525,18 +604,22 @@
                             main.socket.emit('getUserPermissions', function (err, acl) {
                                 main.acl = acl;
                                 // Read system configuration
-                                main.socket.emit('getObject', 'system.config', function (err, data) {
+                                main.socket.emit('getObject', 'system.config', function (
+                                    err, data) {
                                     main.systemConfig = data;
-                                    if (!err && main.systemConfig && main.systemConfig.common) {
+                                    if (!err && main.systemConfig && main.systemConfig
+                                        .common) {
                                         systemLang = main.systemConfig.common.language;
                                     } else {
                                         systemLang = window.navigator.userLanguage ||
                                             window.navigator.language;
 
-                                        if (systemLang !== 'en' && systemLang !== 'de' &&
+                                        if (systemLang !== 'en' && systemLang !==
+                                            'de' &&
                                             systemLang !==
                                             'ru') {
-                                            main.systemConfig.common.language = 'en';
+                                            main.systemConfig.common.language =
+                                                'en';
                                             systemLang = 'en';
                                         }
                                     }
@@ -572,7 +655,7 @@
                         location.reload();
                     });
                     main.socket.on('log', function (message) {
-                        setTimeout(main.onLog, 0, message);
+                        setTimeout(main.onLog, 1, message);
                     });
 
                 }
@@ -605,7 +688,8 @@
                 '<span><b>' + string + '</b></span>')
             //                .add($('<button class="btn-flat toast-action">OK</button>'))
             ;
-            Materialize.toast($toastContent, time || icon == "error" ? 5000 : 3000, (icon == 'error' ? 'red darken-4' :
+            Materialize.toast($toastContent, time || icon == "error" ? 5000 : 3000, (icon == 'error' ?
+                'red darken-4' :
                 'blue darken-4') + ' rounded');
         }
 
@@ -855,6 +939,7 @@
                 timer: icons.Timer
             },
             fields = {
+                id: ' id',
                 default: ' default',
                 expanded: ' expanded',
                 type: ' type',
@@ -877,11 +962,12 @@
         }
 
         function pageInit(cb) {
+            debug('pageInit');
             main.init(function () {
                 //                options.locale = main.systemLang;
                 //            alert('Selection length:' + $("#node-popUp").length + ', ' + $("#nodepopUp").length+ ', ' + $("#nodePopUp").length)
                 workTree = cloneObject(main.adapterConfig);
-
+                debug('main.init finished');
                 if (cb && typeof cb === 'function')
                     cb();
             });
@@ -1463,6 +1549,7 @@
                         delete p[oname];
                         idList[nid] = idList[curId];
                         delete idList[curId];
+                        idList[nid][fields.id] = nid;
                         if (p[fields.type] === 'machine') {
                             if (p[fields.default] == oname)
                                 p[fields.default] = nname;
@@ -1475,7 +1562,8 @@
                                         }
                                     } else {
                                         var os = p[s];
-                                        if (os[fields.type] == 'timer' && os[fields.timeout] == oname)
+                                        if (os[fields.type] == 'timer' && os[fields.timeout] ==
+                                            oname)
                                             os[fields.timeout] = nname;
                                         for (var nk of ownKeys(os))
                                             if (!nk.startsWith(' '))
@@ -1583,8 +1671,10 @@
                     icon = icons.LinkAuto;
                 if (name)
                     html += makeTr(id, parent, name, icon, obj, dis);
-                if (id)
+                if (id) {
                     idList[id] = obj;
+                    obj[fields.id] = id;
+                }
                 for (var k of items)
                     if (!k.startsWith(' ')) {
                         nobj = obj[k];
@@ -1606,7 +1696,10 @@
             $table.treetable({
                 expandable: true,
                 onNodeExpand: function () {
-                    if (idList[this.id] && ['machine','state','timer','folder'].indexOf(idList[this.id][fields.type])>=0)
+                    if (idList[this.id] && ['machine', 'state', 'timer', 'folder'].indexOf(idList[
+                            this.id][
+                            fields.type
+                        ]) >= 0)
                         idList[this.id][fields.expanded] = true;
                     checkConfig();
                 },
@@ -1842,6 +1935,7 @@
                         if (p && p[n] && n != ns) {
                             p[ns] = p[n];
                             delete p[n];
+                            p[ns][fields.id] = nn;
                             setTimeout(createFolderTree, 10);
                             setTimeout(selectId, 100, nn);
                             checkConfig();
@@ -1855,7 +1949,8 @@
                         'Events for new state, current id:');
                     break;
                 case 'state':
-                    offOn($('#input-name-state').val(getThisName(curId)).data('old', getThisName(curId)), 'input',
+                    offOn($('#input-name-state').val(getThisName(curId)).data('old', getThisName(curId)),
+                        'input',
                         function () {
                             validateInput($(this));
                             isAnyChanged('#input-name-state');
@@ -1892,7 +1987,8 @@
                     });
                     rebindActionData('#input-event-data', curId, fields.fire, parseEventChip, icons.Event,
                         'Events which fire, current id:');
-                    rebindActionData('#input-action-data', curId, fields.onFire, parseActionChip, 'directions_run',
+                    rebindActionData('#input-action-data', curId, fields.onFire, parseActionChip,
+                        'directions_run',
                         'Action when fired, current id:');
                     break;
                 case 'machine':
@@ -1927,7 +2023,8 @@
                 $('#table-data').find("td.ft").each(function (i, e) {
                     var cid = $(this).closest('tr').data('ttId');
                     if (cid && cid.startsWith(id + '.'))
-                        $(this).toggleClass('disabled', !(en && (idList[cid] && !idList[cid][fields
+                        $(this).toggleClass('disabled', !(en && (idList[cid] && !idList[cid][
+                            fields
                             .disabled
                         ])));
                 });
@@ -1990,8 +2087,10 @@
                 idr = parent ? idList[parent] : workTree.folders[''];
             if (!idr || idList[ids])
                 return showError(`cannot add id type '${icon}' '${id}' to parent '${parent}'!`);
-            else
+            else {
                 idList[ids] = opt;
+                opt[fields.id] = ids;
+            }
             var html = makeTr(ids, parent, id, icon, opt);
             $table.treetable('loadBranch', (parent ? getTreeNode(parent) : null), html);
             if (parent)
@@ -2122,6 +2221,7 @@
         }
 
         $(function () {
+            debug('first in $()');
             pageInit(function () { // this is called when initialization happened and all objects are loaded!
                 createFolderTree(true);
                 //                createIdTree();
@@ -2147,6 +2247,7 @@
                         checkConfig();
                     }
                 }).val('' + (workTree.queueTime || 10));
+                debug('last in $()');
             });
         });
     </script>
@@ -2541,11 +2642,23 @@
                         </ul>
                     </div>
                 </div>
-                <div class="section row">
-                    <div class="col s8">
-                        <pre id="eventSpan" style="font-size: 0.8em"></pre>
-                    </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col s6 no-padding">
+                <div id='log-data' style="overflow-x: auto; overflow-y: auto" comment="; width: calc(100% - 30px)">
+                    <table style="width: 100%">
+                        <thead>
+                            <tr width="80px"></tr>
+                            <tr width="50px"></tr>
+                            <tr width="*"></tr>
+                        </thead>
+                        <tbody id="script-output"></tbody>
+                    </table>
                 </div>
+            </div>
+            <div class="col s6 event-span">
+                <pre id="eventSpan" style="font-size: 0.8em"></pre>
             </div>
         </div>
     </div>
