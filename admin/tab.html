@@ -398,6 +398,15 @@
                     main.changed = false;
                     showMessage('Saved Adapter config which restarted the machines!');
                 },
+                setState: function(id,val) {
+                    if (!id.startsWith(main.currentId+'.'))
+                    id = main.currentId+'.'+id;
+                    main.socket.emit('setState', id, val, function (err) {
+                        if (err) {
+                            showError(err);
+                        }
+                    });
+                },
                 addSState: function addSState(obj, id) {
                     if (obj.type === 'state' && !id.startsWith('system.adapter.')) {
                         var n = obj.common.name;
@@ -494,8 +503,10 @@
                                 if (obj.type === 'host') main.hosts.push(id);
                             }
                             main.objectsLoaded = true;
-                            if (main.adapterConfigIds.length > 0)
+                            if (main.adapterConfigIds.length > 0) {
                                 main.adapterConfigId = 'system.adapter.' + main.adapterConfigIds[0];
+                                main.currentId = main.adapterConfigIds[0];
+                            }
                             if (typeof callback === 'function') callback();
                         }, 0);
                     });
@@ -2028,6 +2039,7 @@
                             .disabled
                         ])));
                 });
+                main.setState(id+'._disabled', !en);
                 addEvent(idList[id], 'enabled/disabled id ' + id);
                 checkConfig();
                 //                showMessage(id + (this.checked ? ' enabled' : ' disabled'));
