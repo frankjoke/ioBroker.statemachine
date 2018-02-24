@@ -1,4 +1,4 @@
-/* jshint -W097 */// jshint strict:false
+// yjshint -W097  jshint strict:false
 /*jslint node: true */
 "use strict";
 
@@ -9,24 +9,48 @@ const utils = require(__dirname + '/lib/utils'); // Get common adapter utils
 // name has to be set and has to be equal to adapters folder name and main file name excluding extension
 // adapter will be restarted automatically every time as the configuration changed, e.g system.adapter.template.0
 const adapter = utils.adapter('statemachine'),
-//    assert = require('assert'),
-	A = require('./myAdapter'),
-//	schedule = require('node-schedule'),
-//    moment = require('moment'),
-//    SunCalc = require('suncalc'),
-    M = require('./myMachines');
+    //    assert = require('assert'),
+    MA = require('./myAdapter'),
+    A = MA.MyAdapter,
+    //	schedule = require('node-schedule'),
+    //    moment = require('moment'),
+    M = require('./myMachines'),
+    SM = M.StateMachine;
 
+A.init(adapter, main);
+A.allStates = SM.allStates;
 
-A.init(adapter,main);
+/*jshint -W098 */
 
 function main() {
-    var mf = new M.Folders(adapter.config.folders);
-    A.D(A.O(mf));
-    var v = 0;
     function tick() {
-        A.makeState({id:'Event3', write: true},(v = 3-v),false);
-        A.makeState({id:'timer', write: true},A.dateTime(),false);
+        A.makeState('Event3', (++v > 3 ? (v = 0) : v), false).then(() =>
+            A.makeState('timer', A.dateTime(), false));
     }
-    tick();
-    setInterval(tick,60000);
+    var mf = SM.init(adapter.config);
+    var mstates = A.sstate;
+    var ids = SM.ids;
+    var v = 0;
+    var s = new A.Sequence();
+    s.p = A.makeState({
+            id: '_debugLevel',
+            //        state: 'state',
+            role: 'level',
+            write: true
+        }, 1, false);
+    s.p = A.makeState({
+            id: 'Event3',
+            state: 'state',
+            role: 'value',
+            write: true
+        }, 0, false);
+    s.p = A.makeState({
+            id: 'timer',
+            state: 'state',
+            role: 'value',
+            write: true
+        }, "", false);
+    s.p = A.wait(5000).then(() => tick());
+    setInterval(tick, 60000);
+
 }

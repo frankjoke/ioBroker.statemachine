@@ -7,9 +7,9 @@
     <link rel="stylesheet" type="text/css" href="lib/css/vis.min.css">
     <link rel="stylesheet" type="text/css" href="lib/css/materialize.css">
 
+    <!--script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script-->
     <script type="text/javascript" src="lib/js/vis.min.js"></script>
-    <script type="text/javascript" src="lib/js/jquery-3.3.1.min.js"></script>
-    <!--script type="text/javascript" src="../../lib/js/jquery-1.11.2.min.js"></script-->
+    <script type="text/javascript" src="../../lib/js/jquery-1.11.2.min.js"></script>
     <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
     <script type="text/javascript" src="../../lib/js/translate.js"></script>
     <script type="text/javascript" src="../../lib/js/loStorage.js"></script>
@@ -22,8 +22,7 @@
             font-family: "Material Icons";
             font-style: normal;
             font-weight: 400;
-            src: url("lib/fonts/MaterialIcons-Regular.woff2") format("woff2"),
-            url("lib/fonts/MaterialIcons-Regular.woff") format("woff")
+            src: url("../../lib/fonts/material.woff2") format("woff2")
         }
 
         .material-icons {
@@ -138,11 +137,6 @@
             /* width: 100%; */
             /* height: 50vh; */
             border: 2px solid lightgray;
-        }
-
-        #script-output {
-            font-size: 0.9rem;
-            padding: 0;
         }
 
         .event-span {
@@ -308,6 +302,14 @@
          * @returns {String}
          */
 
+        const testdebug = true;
+
+        function debug(str) {
+            if (testdebug)
+                console.log(str);
+        }
+        debug('start load!');
+
         function _(word) {
             var text = translateWord(word, systemLang, systemDictionary);
 
@@ -319,11 +321,6 @@
             }
 
             return text;
-        }
-
-        function oToString(s) {
-            return JSON.stringify(s, null, 0).replace(/([\{\,\[])\"([A-Z_$]\w*)":/gi, (match, p1, p2) => ' ' + p1 + p2 +
-                ': ')
         }
 
         function ownKeys(obj) {
@@ -357,109 +354,18 @@
         }
 
         function addEvent(obj, type) {
-            if (workTree && workTree.debugLevel > 1)
-                setTimeout(main.onLog, 10, {
-                    severity: 'intern',
-                    ts: Date.now(),
-                    message: type + ': ' + JSON.stringify(obj, null, ' ')
-                });
+            setTimeout(function (obj, type) {
+                if (displayEvents.length > 4)
+                    displayEvents.pop();
+                var ne = $('#eventSpan').text(JSON.stringify(obj, null, 4)).html();
+                displayEvents.unshift('<h6>' + type + ' event:' + new Date().toISOString() + '</h6><code>' + ne +
+                    '</code>');
+                $('#eventSpan').html(displayEvents.join('\n'));
+            }, 2, obj, type);
         }
 
-        const REGEXP = 'regexp',
-            IDNAME = 'id',
-            SCHEDULE = 'schedule',
-            EVERY = 'every',
-            DELAY = 'delay',
-            EXEC = 'exec',
-            EVAL = 'eval',
-            STATE = 'state',
-            UNKNOWN = 'unknown',
-            MACHINE = 'machine',
-            SCENE = 'scene',
-            EVENT = 'event',
-            ASTRO = 'astro',
-            LINK = 'link',
-            TIMER = 'timer',
-            FOLDER = 'folder',
-
-            F_id = ' id',
-            F_default = ' default',
-            F_expanded = ' expanded',
-            F_type = ' type',
-            F_disabled = ' disabled',
-            F_timeout = ' timeout',
-            F_fire = ' fire',
-            F_onFire = ' onfire',
-            F_onEnter = ' onenter',
-            F_onExit = ' onexit',
-            F_function = ' function',
-
-            I_Folder = 'folder',
-            I_FolderAd = 'create_new_folder',
-            I_Machine = 'settings',
-            I_MachineAdd = 'settings_applications',
-            I_Link = 'insert_link',
-            I_State = 'location_searching',
-            I_StateAdd = 'my_location',
-            I_Timer = 'timer',
-            I_Timeout = 'timer_off',
-            I_Event = 'flash_on',
-            I_EventAdd = 'flash_auto',
-            I_LinkAuto = 'star_border',
-            I_Rename = 'edit',
-            I_Delete = 'delete',
-            I_Scene = 'list',
-            ticons = {
-                [MACHINE]: I_Machine,
-                [STATE]: I_State,
-                [LINK]: I_Link,
-                [SCENE]: I_Scene,
-                [EVENT]: I_Event,
-                [FOLDER]: I_Folder,
-                [TIMER]: I_Timer,
-                Folder: I_Folder,
-                FolderAd: I_FolderAd,
-                Machine: I_Machine,
-                MachineAdd: I_MachineAdd,
-                Link: I_Link,
-                State: I_State,
-                StateAdd: I_StateAdd,
-                Timer: I_Timer,
-                Timeout: I_Timeout,
-                Event: I_Event,
-                EventAdd: I_EventAdd,
-                LinkAuto: I_LinkAuto,
-                Rename: I_Rename,
-                Delete: I_Delete,
-                Scene: I_Scene
-            },
-
-            regStateName = /^[$_A-Za-z][\-$\w]{1,19}$/,
-            regTimerName = /^(\d+h)?\s*(\d+m(?!s))?\s*(\d+s?)?\s*(\d+ms)?\s*$/i,
-            regMachineName = /^[$_A-Za-z][\-$\w]{2,19}$/,
-            autoLink = "*",
-            debugLevel = '._debugLevel',
-            stateDisabled = '._disabled',
-            adapterName = 'statemachine',
-            adapterNameDot = adapterName + '.',
-
-
-            regIdAction = /^\s*([^\!\&\=\~]+)(&\s*)?(!\s*)?(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=\?\s*|\=.+|\s*)$/,
-            regEval = /^\s*(\(.+\))\s*$/,
-            regExec = /^\s*\$\s*(.+)$/,
-            regAstro = /^\s*@\s*([A-Z]+)\s*([\+\-]\d+)?\s*$/i,
-            regDelay = /^\s*(\d+m)?\s*(\d+s)?\s*(\d+(?:ms)?)?\s*$/,
-            regTimer = /^\s*(\d+h)?\s*(\d+m(?!s))?\s*(\d+s?)?\s*(\d+ms)?\s*$/i,
-            regEvery = /^\s*(\d+w)?\s*(\d+d)?\s*(\d+h)?\s*(\d+m)?\s*(\d+s?)?$/i,
-            regTime = /^\s*([\d\-\*\,\/]+)\s*:\s*([\d\-\*\,\/]+)\s*(?::\s*([\d\-\*\,\/]+))?$/i,
-            regSchedule =
-            /^\s*((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?\s*){5}((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?)?$/,
-            regId =
-            /^\s*([^@][^\?\&\!\~\><\=\^\$#]+)([\?\&\!]?)\s*(~?)\s*(\+(?=\s*$)|\-(?=\s*$)|\=|\!=|>\=|>|<\=|<|\?|\^|\$|\#|$)\s*(.*)$/,
-            regRegexp =
-            /^\s*(\/.+\/i?)\s*([\?\&\!]?)\s*(~?)\s*(\+(?=\s*$)|\-(?=\s*$)|\=|\!=|>\=|>|<\=|<|\?|\^|\$|\#|$)\s*(.*)$/;
-
         var that = this,
+            displayEvents = [],
             main = {
                 firstConnect: true,
                 objects: {},
@@ -482,20 +388,9 @@
                 systemLang: 'en',
                 adapterConfig: {},
                 //            adapterConfigId: 'system.adapter.statemachine.0',
-                adapterConfigId: adapterNameDot + 'config',
+                adapterConfigId: 'statemachine.config',
                 adapterConfigIds: [],
-                instance: 0,
-                instanceName: function (dot) {
-                    var n = adapterNameDot + main.instance;
-                    if (dot) {
-                        if (typeof dot === 'string') {
-                            if (dot.startsWith(adapterNameDot + main.instance + '.'))
-                                return dot;
-                            n += '.' + dot;
-                        } else n += '.';
-                    }
-                    return n;
-                },
+
                 //            socket: io.connect(location.protocol + '//' + location.host, {
                 //                query: 'ws=true'
                 //            }),
@@ -526,7 +421,7 @@
                     });
                 },
                 addSState: function addSState(obj, id) {
-                    if (obj.type === STATE && !id.startsWith('system.adapter.')) {
+                    if (obj.type === 'state' && !id.startsWith('system.adapter.')) {
                         var n = obj.common.name;
                         //                    var i = {id: id, icon: main.icons['system.adapter.'+split]};
                         if (!main.mstate[n]) {
@@ -561,8 +456,7 @@
                             //                    $('#tabs').tabs('option', 'disabled', (engines && engines.length) ? [] : [4]);
                         }
                     }
-                    if (id.startsWith(adapterNameDot))
-                        addEvent(obj, `Object Change:${id}`);
+                    addEvent(obj, `Object Change:${id}`);
                 },
                 stateChange: function (id, state) {
                     var os = cloneObject(main.states[id] || {});
@@ -571,7 +465,7 @@
                         nstate: cloneObject(state),
                     };
                     main.states[id] = state;
-                    if (id.startsWith(main.instanceName(true))) {
+                    if (id.match(/^statemachine\.\d+\./)) {
                         for (var k of ownKeys(state))
                             if (k == 'ts' || s.ostate[k] == s.nstate[k]) {
                                 delete s.nstate[k];
@@ -580,9 +474,10 @@
                         // state.lc = 
                         s.nstate.lc = s.ostate.ts;
                         if (JSON.stringify(s.ostate) != JSON.stringify(s.nstate)) {
-                            // console.log(id + ': ' + oToString(s));
                             if (id == main.currentId + debugLevel)
-                                setDebug(state.val, false);
+                                setDebug(state.val);
+                            else
+                                addEvent(s, `State change of ${id}`);
                             if (main.svalues[id])
                                 $(`span[s-v="${id}"`).html(getValue(id, true));
                             /// TODO: check machine states to display them!
@@ -617,7 +512,7 @@
                                 }
                                 if (obj.type === 'instance') {
                                     main.instances.push(id);
-                                    if (id.startsWith('system.adapter.' + adapterNameDot))
+                                    if (id.startsWith('system.adapter.statemachine.'))
                                         main.adapterConfigIds.push(id.slice(15));
                                 }
                                 //                        if (obj.type === 'channel' && id.match(/^script\.js\./)) main.groups.push(id);
@@ -638,13 +533,12 @@
                     if (!main.$parentOutput) main.$parentOutput = $('#script-output').parent().parent();
 
                     //{"message":"javascript.0 Stop script script.js.Script4","severity":"info","from":"javascript.0","ts":1455490697111,"_id":364}
-                    if (message.message.indexOf(adapterNameDot) !== -1 || message.severity === 'intern') {
+                    if (message.message.indexOf('statemachine.') !== -1) {
                         const color = {
                             debug: "blue lighten-4",
                             error: "red lighten-4",
                             warn: "orange lighten-4",
-                            info: "white",
-                            intern: "green lighten-4"
+                            info: "white"
                         }
                         var text = '<tr class="' + color[message.severity] + '"><td>' + getTimeString(new Date(
                                 message.ts)) +
@@ -679,8 +573,9 @@
                  * @param {type} callback
                  */
                 readInstanceConfig: function (callback) {
+                    debug('main.readInstanceConfig');
                     main.systemConfig = main.objects['system.config'];
-                    //                    addEvent(main.systemConfig, "System Config");
+                    addEvent(main.systemConfig, "System Config");
                     if (main.systemConfig && main.systemConfig.common) {
                         main.systemLang = main.systemConfig.common.language;
                     } else {
@@ -697,20 +592,21 @@
                     else
                         main.adapterConfig = null;
 
-                    // addEvent({
-                    // adapterConfig: main.adapterConfig,
-                    // language: systemLang,
-                    // states: ownKeys(main.states).length,
-                    // objects: ownKeys(main.objects).length,
-                    // hosts: ownKeys(main.hosts).length,
-                    // mstates: ownKeys(main.mstate).length,
-                    // sstates: ownKeys(main.sstate).length,
-                    // }, "Adapter Config")
+                    addEvent({
+                        adapterConfig: main.adapterConfig,
+                        language: systemLang,
+                        states: ownKeys(main.states).length,
+                        objects: ownKeys(main.objects).length,
+                        hosts: ownKeys(main.hosts).length,
+                        mstates: ownKeys(main.mstate).length,
+                        sstates: ownKeys(main.sstate).length,
+                    }, "Adapter Config")
                     if (typeof callback === 'function') {
                         callback();
                     }
                 },
                 init: function (callb) {
+                    debug('main.init');
                     if (callb)
                         main.connectCb = callb;
                     main.socket.on('permissionError', function (err) {
@@ -886,26 +782,26 @@
                 o.title = a[0];
                 o.text = a[1];
                 o.button = a[2];
-                o.flds = a.slice(3);
+                o.fields = a.slice(3);
             }
             $('#input-modal-title').text(o.title || "Please enter");
             $('#input-modal-text').text(o.text || "");
             $('#input-modal-button').text(o.button || "OK");
-            if (typeof o.flds === 'string')
-                o.flds = [o.flds.split('|')]
-            else if (!Array.isArray(o.flds) && typeof o.flds == 'object')
-                o.flds = [
-                    [o.flds.name, o.flds.icon, o.flds.value]
+            if (typeof o.fields === 'string')
+                o.fields = [o.fields.split('|')]
+            else if (!Array.isArray(o.fields) && typeof o.fields == 'object')
+                o.fields = [
+                    [o.fields.name, o.fields.icon, o.fields.value]
                 ]
-            else if (Array.isArray(o.flds) && !Array.isArray(o.flds[0]))
-                o.flds = [o.flds];
-            else if (!Array.isArray(o.flds))
-                o.flds = [
+            else if (Array.isArray(o.fields) && !Array.isArray(o.fields[0]))
+                o.fields = [o.fields];
+            else if (!Array.isArray(o.fields))
+                o.fields = [
                     ["Name", 'create', '']
                 ];
             var html = '';
-            for (var i = 0; i < 3 && i < o.flds.length; i++) {
-                var ii = o.flds[i];
+            for (var i = 0; i < 3 && i < o.fields.length; i++) {
+                var ii = o.fields[i];
                 var ip = '' + (i + 1);
                 if (typeof ii[2] === 'string')
                     html +=
@@ -1043,18 +939,65 @@
             curEvent, fromNode, idList = {},
             workTree, nameData, wi = [];
 
-        function setDebug(level, store) {
+        const icons = {
+                Folder: 'folder',
+                FolderAd: 'create_new_folder',
+                Machine: 'settings',
+                MachineAdd: 'settings_applications',
+                Link: 'insert_link',
+                State: 'location_searching',
+                StateAdd: 'my_location',
+                Timer: 'timer',
+                Timeout: 'timer_off',
+                Event: 'flash_on',
+                EventAdd: 'flash_auto',
+                LinkAuto: 'star_border',
+                Rename: 'edit',
+                Delete: 'delete',
+                Scene: 'list'
+            },
+            ticons = {
+                machine: icons.Machine,
+                state: icons.State,
+                link: icons.Link,
+                scene: icons.Scene,
+                event: icons.Event,
+                folder: icons.Folder,
+                timer: icons.Timer
+            },
+            fields = {
+                id: ' id',
+                default: ' default',
+                expanded: ' expanded',
+                type: ' type',
+                disabled: ' disabled',
+                timeout: ' timeout',
+                fire: ' fire',
+                onFire: ' onfire',
+                onEnter: ' onenter',
+                onExit: ' onexit',
+                function: ' function'
+            },
+            regStateName = /^[$_A-Za-z][\-$\w]{1,19}$/,
+            regTimerName = /^(\d+h)?\s*(\d+m(?!s))?\s*(\d+s?)?\s*(\d+ms)?\s*$/i,
+            regMachineName = /^[$_A-Za-z][\-$\w]{2,19}$/,
+            autoLink = "*",
+            debugLevel = '._debugLevel';
+
+        function setDebug(level) {
             level = parseInt(level);
             $('#debugLevel').val(workTree.debugLevel = level);
-            if (store) main.setState(main.currentId + debugLevel, level)
-            checkConfig();
+            main.setState(main.currentId + debugLevel, level)
+            //            checkConfig();
         }
 
         function pageInit(cb) {
+            debug('pageInit');
             main.init(function () {
                 //                options.locale = main.systemLang;
                 //            alert('Selection length:' + $("#node-popUp").length + ', ' + $("#nodepopUp").length+ ', ' + $("#nodePopUp").length)
                 workTree = cloneObject(main.adapterConfig);
+                debug('main.init finished');
                 if (cb && typeof cb === 'function')
                     cb();
             });
@@ -1073,7 +1016,7 @@
             $table = $("#tree");
 
             $('i[my-icon]').each(function (e) {
-                $(this).text(ticons[$(this).attr('my-icon')]);
+                $(this).text(icons[$(this).attr('my-icon')]);
             });
 
             $('#dialog-modal').modal(modalOpts);
@@ -1083,7 +1026,7 @@
             });
             enableDisable('button.ok-cancel', false);
             $debugLevel = $('#debugLevel').unbind('change').change(function () {
-                setDebug($(this).val(), true);
+                setDebug($(this).val());
             });
             $('#tab-events-content').show();
             offOn('#importButton', 'mousedown', function (evt) {
@@ -1118,7 +1061,7 @@
                             confirmMessage('Do you really want to import and loose any changes?',
                                 'Import config', 'alert', ok => {
                                     if (ok) {
-                                        // addEvent(nc, 'Import File');
+                                        addEvent(nc, 'Import File');
                                         workTree = nc;
                                         setTimeout(createFolderTree, 1);
                                         checkConfig();
@@ -1140,7 +1083,7 @@
                     return;
                 s.saved = (new Date()).toString();
                 s = JSON.stringify(s, undefined, 2);
-                var fileName = adapterNameDot + 'json';
+                var fileName = 'statemachine.json';
                 if (window.navigator.msSaveOrOpenBlob) {
                     var blobObject = new Blob([s]);
                     window.navigator.msSaveOrOpenBlob(blobObject, fileName);
@@ -1176,11 +1119,11 @@
                     $t.toggleClass('invalid', !(v = false));
                 enableDisable($t.closest('div').find('a'), v);
                 //                e.target.checkValidity();
-                // addEvent({
-                // val: v,
-                // v: $t.val(),
-                // vid: vid
-                // }, 'input ' + $t[0].toString());
+                addEvent({
+                    val: v,
+                    v: $t.val(),
+                    vid: vid
+                }, 'input ' + $t[0].toString());
             });
             offOn('#input-name-folder', 'input', function () {
                 validateInput($(this));
@@ -1207,7 +1150,7 @@
                     else if (idList[ok])
                         showMessage('Name already used, please change!');
                     else {
-                        addId(ok, null, I_Folder, workTree.folders[ok] = {});
+                        addId(ok, null, icons.Folder, workTree.folders[ok] = {});
                         regenSelect(ok);
                     }
                 }
@@ -1215,7 +1158,7 @@
             newClick('#scene-add', function (e) {
                 var ok = $('#input-scene').val();
                 curFolder = $('#input-folder').val();
-                if (curFolder && (!idList[curFolder] || idList[curFolder][F_type] != 'folder'))
+                if (curFolder && (!idList[curFolder] || idList[curFolder][fields.type] != 'folder'))
                     return showMessage(`Folder '${curFolder}' not existing!`);
                 var vid = curFolder ? curFolder + '.' + ok : ok;
                 var f = curFolder ? idList[curFolder] : workTree.folders[''];
@@ -1224,14 +1167,14 @@
                 else if (idList[vid])
                     showMessage('Name already used, please change!');
                 else {
-                    addId(ok, curFolder, I_Scene, f[ok] = {});
+                    addId(ok, curFolder, icons.Scene, f[ok] = {});
                     regenSelect(vid);
                 }
             });
             newClick('#event-add', function (e) {
                 var ok = $('#input-event').val();
                 curFolder = $('#input-folder').val();
-                if (curFolder && (!idList[curFolder] || idList[curFolder][F_type] != 'folder'))
+                if (curFolder && (!idList[curFolder] || idList[curFolder][fields.type] != 'folder'))
                     return showMessage(`Folder '${curFolder}' not existing!`);
                 var vid = curFolder ? curFolder + '.' + ok : ok;
                 var f = curFolder ? idList[curFolder] : workTree.folders[''];
@@ -1240,14 +1183,14 @@
                 else if (idList[vid])
                     showMessage('Name already used, please change!');
                 else {
-                    addId(ok, curFolder, I_Event, f[ok] = {});
+                    addId(ok, curFolder, icons.Event, f[ok] = {});
                     regenSelect(vid);
                 }
             });
             newClick('#machine-add', function (e) {
                 var m = $('#input-machine').val();
                 curFolder = $('#input-folder').val();
-                if (curFolder && (!idList[curFolder] || idList[curFolder][F_type] != 'folder'))
+                if (curFolder && (!idList[curFolder] || idList[curFolder][fields.type] != 'folder'))
                     return showMessage(`Folder '${curFolder}' not existing!`);
                 var vid = curFolder ? curFolder + '.' + m : m;
                 var f = curFolder ? idList[curFolder] : workTree.folders[''];
@@ -1257,9 +1200,9 @@
                     showMessage('Name already used, please change!');
                 else {
                     var nm = f[m] = {};
-                    addId(m, curFolder, I_Machine, nm);
+                    addId(m, curFolder, icons.Machine, nm);
                     nm.Off = {};
-                    addId('Off', vid, I_State, nm.Off);
+                    addId('Off', vid, icons.State, nm.Off);
                     regenSelect(vid);
                 }
             });
@@ -1268,7 +1211,7 @@
                     var id = curId;
                     var par = curPar;
                     s = idList[par];
-                    if (s && s[F_type] == MACHINE) {
+                    if (s && s[fields.type] == 'machine') {
                         if (getStates(s).length < 2)
                             return showError(`cannot delete last state/timer of machine!`)
                     }
@@ -1302,18 +1245,18 @@
                 var id = idList[curId];
                 var mid;
                 var vid = curId.split('.').slice(-1)[0];
-                switch (id[F_type]) {
-                    case TIMER:
-                    case STATE:
+                switch (id[fields.type]) {
+                    case 'timer':
+                    case 'state':
                         mid = curId.split('.').slice(0, -1).join('.');
                         break;
-                    case LINK:
+                    case 'link':
                         mid = curId.split('.').slice(0, vid.startsWith(autoLink) ? -1 : -2).join('.');
                         if (vid.startsWith(autoLink))
                             vid = vid.slice(1);
                         break;
-                    case SCENE:
-                    case EVENT:
+                    case 'scene':
+                    case 'event':
                         mid = curId;
                         vid = main.states[curId] && main.states[curId].val;
                         break;
@@ -1337,21 +1280,6 @@
 
                 }
             });
-            var idt = {} // check if multiple items with same id exist, can be removed in production
-            $('#script-down').click(function () {
-                if (main.$parentOutput)
-                    main.$parentOutput.scrollTop($('#script-output').height() + 50);                
-            }).css('cursor', 'pointer');
-            $('#script-delete').click(function () {
-                $('#script-output').html('');
-            }).css('cursor', 'pointer');
-            $('[id]').each(function () {
-                id = $(this).prop('id');
-                idt[id] = (idt[id] || 0) + 1;
-                if (idt[id] > 1)
-                    console.log('double HTML-id: ' + id);
-            });
-
         }
 
         function getNameData(write) {
@@ -1364,15 +1292,11 @@
                     ac[as] = getIcon(as);
             }
             for (var am of ownKeys(idList)) {
-                var ty = [MACHINE, EVENT, SCENE].indexOf(idList[am][F_type]);
+                var ty = ['machine', 'event', 'scene'].indexOf(idList[am][fields.type]);
                 if (ty >= 0)
                     if (!ac[am])
                         ac[am] = getIcon(am);
             }
-            for (var ast of ['sunrise', 'sunset', 'sunriseEnd', 'sunsetStart', 'dawn', 'dusk', 'nauticalDawn',
-                    'nauticalDusk', 'nightEnd', 'night', 'goldenHourEnd', 'goldenHour'
-                ])
-                ac['@' + ast] = getIcon('astro.png');
             if (!write) {
                 nameData = ac;
                 setTimeout(() => (namedata = null), 600000);
@@ -1391,8 +1315,8 @@
                 name = c.tag;
             }
             c.tag = name = name ? name.trim() : '';
-            var m; // evry xxx delay
-            if (m = name.match(regDelay)) {
+            var m; // evry xxx timer
+            if (m = name.match(/^\s*(\d+m)?\s*(\d+s)?\s*(\d+(?:ms)?)?\s*$/)) {
                 var a = [];
                 var ts = 0;
                 for (var i = 1; i < 4; ++i) {
@@ -1415,19 +1339,22 @@
                     return c;
                 }
             } // exec command on system
-            if (m = name.match(regExec)) {
+            if (m = name.match(/^\s*\$\s*(.+)$/)) {
                 c.cmd = m[1] ? m[1].trim() : undefined;
                 c.text = 'Exec: ' + c.cmd;
                 c.image = 'lib/img/exe.png';
                 return c;
             } // eval javascript
-            if (m = name.match(regEval)) {
+            if (m = name.match(/^\s*(\(.+\))\s*$/)) {
                 c.eval = m[1] ? m[1].trim() : undefined;
                 c.text = 'Eval: ' + c.eval;
                 c.image = 'lib/img/js.png';
                 return c;
             }
-            if (!(m = name.match(regIdAction)))
+            if (!(m = name.match( // id + verifier
+                    // /^\s*([&!]{0,2})\s*([^\=\~]+)(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=.+|\=\?\s*|\s*)$/
+                    /^\s*([^\!\&\=\~]+)(&\s*)?(!\s*)?(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=\?\s*|\=.+|\s*)$/
+                )))
                 return null;
             c.exec = m[4] ? m[4].trim() : '';
             c.ack = !!m[3];
@@ -1436,7 +1363,7 @@
             c.idn = m[1] ? m[1].trim() : undefined;
             var id = main.sstate[c.idn];
             var ce = {
-                '': 'debugfrom Input ',
+                '': 'Set from Input ',
                 '~': "Toggle ",
                 '=+': "Set On ",
                 '=-': "Set Off ",
@@ -1464,7 +1391,7 @@
             }
             c.tag = name = name ? name.trim() : '';
             var m; // evry xxx timer
-            if (m = name.match(regEvery)) {
+            if (m = name.match(/^(\d+w)?\s*(\d+d)?\s*(\d+h)?\s*(\d+m)?\s*(\d+s?)?$/)) {
                 var a = [];
                 var ts = 0;
                 for (var i = 1; i < 6; ++i) {
@@ -1488,7 +1415,7 @@
                     return c;
                 }
             } // time
-            if (m = name.match(regTime)) {
+            if (m = name.match(/^([\d\-\*\,\/]+)\s*:\s*([\d\-\*\,\/]+)\s*(?::\s*([\d\-\*\,\/]+))?$/)) {
                 if (m[3] == undefined)
                     m[3] = 0;
                 c.schedule = m[3] + ' ' + m[2] + ' ' + m[1] + ' * * *';
@@ -1497,38 +1424,34 @@
                 c.name = name;
                 return c;
             } // schedule
-            if (m = name.match(regSchedule)) {
+            if (m = name.match(
+                    /^((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?\s*){5}((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?)?$/
+                )) {
                 c.schedule = (!m[2] ? '* ' : '') + name;
                 c.text = 'Schedule ' + c.schedule;
                 c.timer = name;
                 c.image = 'lib/img/timer-icon-schedule.png';
                 return c;
-            }; // astro 
-            if (m = name.match(regAstro)) {
-                c.astro = m[1];
-                c.timer = parseInt(m[2]);
-                c.text = 'Astro(' + c.astro + ') ' + (c.timer ? (c.timer > 0 ? '+' : '') + c.timer + ' min' : '');
-                c.image = 'lib/img/astro.png';
-                return c;
             };
-            if (!(m = name.match(regRegexp)) && !(m = name.match(regId)))
+            if (!(m = name.match( // id + verifier
+                    /^([\/\!]?)(~?)([^\?]+)(\?\+(?=\s*$)|\?\-(?=\s*$)|\?\=|\?\!=|\?\>\=|\?\>|\?\<|\?\<\=|\?\?|\?\^|\?\$|\?\#|$)\s*(.*)$/
+                )))
                 return null;
-            c.onchange = !!m[3];
-            c.ack = m[2];
-            c.idn = m[1].trim();
+            c.onchange = !!m[2];
+            c.ack = m[1];
+            c.idn = m[3].trim();
             c.image = getIcon(c.idn);
             if (!c.image)
                 c.image = 'lib/img/flash.png';
-            c.test = m[5] ? c.test = m[5].trim() : '';
+            if (m[5])
+                c.test = m[5].trim();
             c.check = m[4];
             c.text = c.onchange ? 'On change ' : '';
-            c.text += c.ack == '!' ? 'No Ack ' : (c.ack == '&' ? 'Witch Ack ' : 'Any Ack ');
+            c.text += c.ack == '/' ? 'No Ack ' : (c.ack == '!' ? 'Witch Ack ' : 'Any Ack ');
             c.text += c.idn;
             if (c.idn != main.sstate[c.idn])
-                c.text += (c.idn.startsWith('/') || c.idn.indexOf('*') >= 0) ? ' (RegExp) ' :
-                ' (' + main.sstate[c.idn] + ') ';
-            if (c.check)
-                c.text += c.check + ' ' + (c.test ? c.test : '(last value)');
+                c.text += ' (' + main.sstate[c.idn] + ') ';
+            c.text += c.check ? c.check.slice(1) + ' ' + c.test : '';
             return c;
         }
 
@@ -1558,14 +1481,13 @@
                     var c = parseChip(v);
                     var o = $ia.data('parsed-chip');
                     var s = $ic.find('.chip.selected').text();
-                    if (o && o.oid) {
+                    if (o && o.otag) {
                         o.tag = v;
                         c = parseChip(o);
                     }
                     $ia.data('parsed-chip', c);
                     if (c) {
-                        $('a.chips-move').hide();
-                        // addEvent(c, 'Focus...');
+                        addEvent(c, 'Focus...');
                         $(document).data('$ia', $ia);
                         $it.text(c.text);
                     }
@@ -1575,16 +1497,14 @@
                     var c = parseChip(v);
                     var o = $ia.data('parsed-chip');
                     var s = $ic.find('.chip.selected').text();
-                    if (o && o.oid) {
+                    if (o && o.otag) {
                         o.tag = v;
                         c = parseChip(o);
                     }
-                    if (c && o && o.oid !== undefined)
-                        c.oid = o.oid;
                     $ia.data('parsed-chip', c);
                     $(document).data('$ia', $ia);
                     if (c) {
-                        // addEvent(c, 'Chip...');
+                        addEvent(c, 'Chip...');
                         $it.text(c.text);
                     }
                 });
@@ -1594,59 +1514,39 @@
                     if (o && o.tag === v) {
                         $ia.data('parsed-chip', '');
                         setTimeout(function (t, o) {
-                            deselectChip();
+                            $ia.data('parsed-chip', null);
+                            $(document).data('$ia', '');
+                            addEvent(o, "deselect");
+                            $ic.find('input').val('');
+                            $ia.find('span.input-text').text('');
                         }, 10, this, o);
                     }
                 });
             }
 
-            function chipMove($ia, dir) {
-                var chips = $ic.material_chip('data');
-                var chip = $ia.data('parsed-chip');
-                if (chip && chips && chip.tag) {
-                    var tc = chips.findIndex((x) => x.tag === chip.tag);
-                    if (tc >= 0) {
-                        var c = chips[tc];
-                        chips.splice(tc + dir, 0, chips.splice(tc, 1)[0]);
-                        if (idList[oid] && field)
-                            idList[oid][field] = chips.map(c => c.tag);
-                        deselectChip();
-                        makeChips(chips, getNameData());
-                        checkConfig();
-                    }
-                }
-            }
-
             function updateChips(object, gotoId) {
-                var chips = $ic.material_chip('data');
+                var chips = $ic.material_chip('data')
+                    .sort((a, b) => a.id - b.id);
                 if (chips && chips.length && chips[chips.length - 1].oid !== undefined) {
                     var lc = chips[chips.length - 1];
                     var oid = lc.oid;
+                    var id = lc.id;
                     delete lc.oid;
                     for (var c in chips)
-                        if (chips[c].tag == oid) {
+                        if (chips[c].id == oid) {
                             chips[c] = lc;
                             break;
                         }
+                    lc.id = oid;
                     chips = chips.slice(0, -1);
                 }
-                $('a.chips-move').hide();
+
                 if (idList[object] && gotoId)
                     idList[object][gotoId] = chips.map(c => c.tag);
                 makeChips(chips, getNameData());
                 checkConfig();
             }
 
-
-            function deselectChip() {
-                $ia.data('parsed-chip', null);
-                $(document).data('$ia', '');
-                $('a.chips-move').hide();
-                //                            addEvent(o, "deselect");
-                $ic.find('input').val('');
-                $ia.find('span.input-text').text('');
-
-            }
 
             var $ia = $(inputArea);
             $ia.data('d-id', oid).data('parsed-fun', parser);
@@ -1656,15 +1556,19 @@
             var obj = oid && idList[oid];
             var chips = obj && obj[field];
             chips = chips || [];
+            var id = 0;
             var data = chips.map(function (c) {
                 var p = parseChip(c);
-                return p ? p : {};
+                if (p)
+                    p.id = id++;
+                else
+                    p = {};
+                return p;
             });
             var $ic = $ia.find('.chips');
-            $('a.chips-move').hide();
-            $('span.input-text').text('');
-            makeChips(data, getNameData(field != F_fire));
+            makeChips(data, getNameData(field != fields.fire));
             offOn($ic, 'chip.add', function (e, chip) {
+                chip.id = id++;
                 var o = $ia.data('parsed-chip');
                 var c = parseChip(chip);
                 for (var i of ownKeys(c))
@@ -1672,32 +1576,28 @@
                 if (o && o.oid !== undefined)
                     chip.oid = c.oid = o.oid;
                 $ia.data('parsed-chip', c);
-                $it.text('');
                 setTimeout(function () {
                     updateChips(oid, field);
+                    $it.val('');
                     //                    $ia.find('div.chip.selected').removeClass('selected');
                     //                   $ic.find('div.chip').last().addClass('selected');
                     //                   selectChip($ia, chip);
                 }, 10);
-                // addEvent(c, 'Chip.add');
+                addEvent(c, 'Chip.add');
                 return true;
             });
             offOn($ic, 'chip.delete', function (e, chip) {
-                // addEvent(chip, 'Chip.Delete');
-                // addEvent($ic.material_chip('data'), 'All chips');
+                addEvent(chip, 'Chip.Delete');
+                addEvent($ic.material_chip('data'), 'All chips');
                 $ia.data('parsed-chip', null);
                 updateChips(oid, field);
             });
             offOn($ic, 'chip.select', function (e, chip) {
                 if (chip.oid === undefined)
-                    chip.oid = chip.tag;
+                    chip.oid = chip.id;
+                if (chip.otag === undefined)
+                    chip.otag = chip.tag
                 selectChip($ia, chip);
-            });
-            offOn($ia.find('a.chips-left'), 'click', function () {
-                setTimeout(chipMove, 1, $ia, -1);
-            });
-            offOn($ia.find('a.chips-right'), 'click', function () {
-                setTimeout(chipMove, 1, $ia, 1);
             });
             offOn($ia.find('a.show-help'), 'click', function () {
                 var $h = $(this).closest('.input-table');
@@ -1735,10 +1635,10 @@
                         delete p[oname];
                         idList[vid] = idList[curId];
                         delete idList[curId];
-                        idList[vid][F_id] = vid;
-                        if (p[F_type] === MACHINE) {
-                            if (p[F_default] == oname)
-                                p[F_default] = nname;
+                        idList[vid][fields.id] = vid;
+                        if (p[fields.type] === 'machine') {
+                            if (p[fields.default] == oname)
+                                p[fields.default] = nname;
                             for (var s of ownKeys(p))
                                 if (!s.startsWith(' ')) {
                                     if (s.startsWith(autoLink)) {
@@ -1748,9 +1648,9 @@
                                         }
                                     } else {
                                         var os = p[s];
-                                        if (os[F_type] == TIMER && os[F_timeout] ==
+                                        if (os[fields.type] == 'timer' && os[fields.timeout] ==
                                             oname)
-                                            os[F_timeout] = nname;
+                                            os[fields.timeout] = nname;
                                         for (var nk of ownKeys(os))
                                             if (!nk.startsWith(' '))
                                                 if (nk == oname) {
@@ -1771,18 +1671,10 @@
             if (fun)
                 chip = fun(chip);
             $ia.data('parsed-chip', chip);
-            // addEvent(chip, 'Chip.select');
-            $('span.input-text').text('');
+            addEvent(chip, 'Chip.select');
             $ia.find('span.input-text').text(chip ? chip.text : '');
             if (chip)
                 $ia.find('.chips input').val(chip.tag);
-            var chips = $ia.find('.chips').material_chip('data');
-            var tc = chips.findIndex((x) => x.tag === chip.tag);
-            $('a.chips-move').hide();
-            if (tc < chips.length - 1)
-                $ia.find('a.chips-right').show();
-            if (tc > 0)
-                $ia.find('a.chips-left').show();
         }
 
 
@@ -1791,7 +1683,7 @@
                 return main.icons[id];
             if (idList[id])
                 return getIcon(['statemachine', 'flash.png', 'list.png'][
-                    [MACHINE, EVENT, SCENE].indexOf(idList[id][F_type])
+                    ['machine', 'event', 'scene'].indexOf(idList[id][fields.type])
                 ]);
             if (main.sstate[id])
                 id = main.sstate[id];
@@ -1833,20 +1725,20 @@
         function makeTr(id, parent, name, icon, obj, dis) {
             //            idList[id] = obj;
             var wic = 0;
-            var disabled = (obj && obj[F_disabled]) || dis;
+            var disabled = (obj && obj[fields.disabled]) || dis;
             var type;
             var html =
                 `<tr data-tt-id="${id}"${parent ? ' data-tt-parent-id="' + parent +'"' : ''}><td  class="ft ${disabled ? ' disabled' : ''}" width="${wi[wic++]}"><span><i class="material-icons tiny right">${icon}</i>&nbsp;${name}</span>&nbsp;&nbsp;</td>`;
             html +=
                 `<td class="fd" width="${wi[wic++]}">${id}</td><td class="fd" width="${wi[wic++]}">`
-            if ([I_Machine, I_Folder, I_Event, I_Scene].indexOf(icon) >= 0 && id !== '_init')
+            if ([icons.Machine, icons.Folder, icons.Event, icons.Scene].indexOf(icon) >= 0 && id !== '_init')
                 //                        html += `<span><input type="checkbox" id="d-${id}" ${disabled ? '' : 'checked="checked"'}/><label for="d-${id}">Enabled</label></span>`;
                 html +=
                 `<div class="switch left"><label>Off<input class="is-disabled" type="checkbox" ${disabled ? '' : 'checked="checked"'}><span class="lever"></span>On</label></div>`;
             html += '&nbsp;';
-            if ([I_Machine, I_Event, I_Scene].indexOf(icon) >= 0)
+            if ([icons.Machine, icons.Event, icons.Scene].indexOf(icon) >= 0)
                 html +=
-                `<span s-v="${main.instanceName(id)}" class="right">${getValue(main.instanceName(id),true)}</span>`;
+                `<span s-v="${'statemachine.0.'+id}" class="right">${getValue('statemachine.0.'+id,true)}</span>`;
 
             html += '</td></tr>\n';
             return html;
@@ -1857,17 +1749,17 @@
                 var items = ownKeysSorted(obj);
                 var hasitems = items.length > 0 && !items[items.length - 1].startsWith(' ');
                 var id = id || name;
-                var timer = (items.indexOf(F_timeout) >= 0) ? obj[F_timeout] : '';
-                var type = obj[F_type];
+                var timer = (items.indexOf(fields.timeout) >= 0) ? obj[fields.timeout] : '';
+                var type = obj[fields.type];
                 var icon = ticons[type];
-                dis = dis || obj[F_disabled];
-                if (type === LINK && name.startsWith(autoLink))
-                    icon = I_LinkAuto;
+                dis = dis || obj[fields.disabled];
+                if (type === 'link' && name.startsWith(autoLink))
+                    icon = icons.LinkAuto;
                 if (name)
                     html += makeTr(id, parent, name, icon, obj, dis);
                 if (id) {
                     idList[id] = obj;
-                    obj[F_id] = id;
+                    obj[fields.id] = id;
                 }
                 for (var k of items)
                     if (!k.startsWith(' ')) {
@@ -1891,16 +1783,16 @@
             $table.treetable({
                 expandable: true,
                 onNodeExpand: function () {
-                    if (idList[this.id] && [MACHINE, STATE, TIMER, 'folder'].indexOf(idList[
+                    if (idList[this.id] && ['machine', 'state', 'timer', 'folder'].indexOf(idList[
                             this.id][
-                            F_type
+                            fields.type
                         ]) >= 0)
-                        idList[this.id][F_expanded] = true;
+                        idList[this.id][fields.expanded] = true;
                     checkConfig();
                 },
                 onNodeCollapse: function () {
                     if (idList[this.id])
-                        delete idList[this.id][F_expanded];
+                        delete idList[this.id][fields.expanded];
                     checkConfig();
                 },
                 indent: 24,
@@ -1909,7 +1801,7 @@
             }, true);
 
             function autoexpand(obj, id) {
-                if (obj && obj[F_expanded])
+                if (obj && obj[fields.expanded])
                     $table.treetable("expandNode", id);
                 ownKeys(obj).forEach(function (k) {
                     autoexpand(obj[k], id ? id + '.' + k : k);
@@ -1920,6 +1812,13 @@
             // Highlight selected row
             nameData = null;
             rebindTableCommands();
+            var idt = {}
+            $('[id]').each(function () {
+                id = $(this).prop('id');
+                idt[id] = (idt[id] || 0) + 1;
+                if (idt[id] > 1)
+                    debug(id);
+            });
         }
 
         function checkMachines() {
@@ -1940,7 +1839,7 @@
             }
 
             function checkItem(parent, name, obj, pobj) {
-                var typ = obj[F_type];
+                var typ = obj[fields.type];
                 var par = parent ? parent : '';
                 var nam2 = name.startsWith(autoLink) ? name.slice(1) : name;
                 var oid = parent ? parent + '.' + name : name;
@@ -1949,25 +1848,25 @@
                 for (var i of ownKeys(obj))
                     if (!i.startsWith(' ')) {
                         var nobj = obj[i];
-                        var ntyp = nobj[F_type];
+                        var ntyp = nobj[fields.type];
                         switch (ntyp) {
-                            case STATE:
+                            case 'state':
                                 ids[id + '.' + i] = nobj;
                                 machines[id] = machines[id] ? machines[id] + 1 : 1;
                                 break;
-                            case TIMER:
+                            case 'timer':
                                 ids[id + '.' + i] = nobj;
                                 machines[id] = machines[id] ? machines[id] + 1 : 1;
                                 break;
-                            case LINK:
+                            case 'link':
                                 if (i.startsWith(autoLink))
                                     setst(id, i.slice(1));
                                 else
                                     setst(parent, i);
                         }
                     } else switch (i) {
-                        case F_timeout:
-                            setst(parent, obj[F_timeout]);
+                        case fields.timeout:
+                            setst(parent, obj[fields.timeout]);
                             break;
                     }
                 for (var i of ownKeys(obj))
@@ -1976,26 +1875,26 @@
 
                 var t = ownKeys(obj).filter(x => !x.startsWith(' ') && !x.startsWith(autoLink));
                 switch (typ) {
-                    case MACHINE:
-                        if (obj[F_default])
-                            if (!obj[obj[F_default]])
-                                se(`Machine '${id}' has invalid default state '${obj[F_default]}'`);
+                    case 'machine':
+                        if (obj[fields.default])
+                            if (!obj[obj[fields.default]])
+                                se(`Machine '${id}' has invalid default state '${obj[fields.default]}'`);
                         if (t.length < 2)
                             se(`Machine '${id}' has less than two states (${t})!`)
                         for (var s of t)
                             if (!states[id + '.' + s])
                                 se(`State '${id+'.'+s}' has no links pointing to it!`)
                         break;
-                    case STATE:
+                    case 'state':
                         if (t.length < 1)
                             se(`State '${id}' needs at least one Link!`)
                         break;
-                    case TIMER:
-                        if (obj[F_timeout])
-                            if (!pobj[obj[F_timeout]])
-                                se(`Timer '${id}' has invalid timeout state '${obj[F_default]}'`);
+                    case 'timer':
+                        if (obj[fields.timeout])
+                            if (!pobj[obj[fields.timeout]])
+                                se(`Timer '${id}' has invalid timeout state '${obj[fields.default]}'`);
                         break;
-                    case LINK:
+                    case 'link':
                         if (name != nam2) {
                             if (!pobj[nam2])
                                 se(`AutoLink '${id}' has invalid state '${nam2}'`);
@@ -2070,52 +1969,50 @@
             }
             curPar = $this.data('ttParentId');
             var ido = idList[curId];
-            var ty = ido && ido[F_type];
+            var ty = ido && ido[fields.type];
             var ids = curId.split('.');
             var x = ids[0];
             $('#input-folder').val("");
-            if (idList[x] && idList[x][F_type] === 'folder') {
+            if (idList[x] && idList[x][fields.type] === 'folder') {
                 $('#input-folder').val(curFolder = x);
                 if (ids.length > 1)
                     x += '.' + ids[1];
-            } else curFolder = null;
-            var x2 = idList[x][F_type];
-            if (x2 === MACHINE) {
+            }
+            var x2 = idList[x][fields.type];
+            if (x2 === 'machine') {
                 $('#input-machine').val(curMachine = getThisName(x));
                 $('#input-event,#input-scene').val(curEvent = '');
                 $('#input-name-machine').val(curMachine);
-            } else if (x2 === EVENT) {
+            } else if (x2 === 'event') {
                 $('#input-machine,#input-scene').val(curMachine = '');
                 $('#input-event').val(curEvent = getThisName(x));
                 $('#input-name-event').val(curEvent);
-            } else if (x2 === SCENE) {
+            } else if (x2 === 'scene') {
                 $('#input-machine,#input-event').val(curMachine = '');
                 $('#input-scene').val(curScene = getThisName(x));
                 $('#input-name-scene').val(curScene);
             }
             $('input.mach-val').removeClass('invalid');
             $('div.input-table').hide();
-            $('#input-table-' + ty).show().find('span.input-value').prop('s-v', main.instanceName(curId)).html(getValue(
-                main.instanceName(curId), true));
+            $('#input-table-' + ty).show();
             var show = [];
             enableDisable('#input-rename-' + ty);
             offOn('input.input-function', 'input', function () {
-                ido[F_function] = $(this).val();
+                ido[fields.function] = $(this).val();
                 checkConfig();
             });
-
             switch (ty) {
                 case 'folder':
                     $('#input-name-folder').val(curFolder);
                     break;
-                case LINK:
+                case 'link':
                     x = curPar;
                     $('#input-link-from').text('From ' + getThisName(curPar) + ' to:');
-                    if (idList[curPar][F_type] === MACHINE)
+                    if (idList[curPar][fields.type] === 'machine')
                         x = curId;
-                    $('#input-link-icon').text(x === curId ? I_LinkAuto : I_Link);
+                    $('#input-link-icon').text(x === curId ? icons.LinkAuto : icons.Link);
                     offOn(setOld(popStates('#input-tostate-link', getParId(x), getThisName(curId)), ido[
-                        F_timeout]), 'change', function () {
+                        fields.timeout]), 'change', function () {
                         var n = curId.split('.').slice(-1)[0];
                         var p = idList[curPar];
                         var ns = $(this).val();
@@ -2125,71 +2022,71 @@
                         if (p && p[n] && n != ns) {
                             p[ns] = p[n];
                             delete p[n];
-                            p[ns][F_id] = nn;
+                            p[ns][fields.id] = nn;
                             setTimeout(createFolderTree, 10);
                             setTimeout(selectId, 100, nn);
                             checkConfig();
                         }
                     });
-                    offOn($('#input-function-link').val(ido[F_function]), 'input', function () {
-                        ido[F_function] = $(this).val();
+                    offOn($('#input-function-link').val(ido[fields.function]), 'input', function () {
+                        ido[fields.function] = $(this).val();
                         checkConfig();
                     });
-                    rebindActionData('#input-event-data', curId, F_fire, parseEventChip, I_Event,
+                    rebindActionData('#input-event-data', curId, fields.fire, parseEventChip, icons.Event,
                         'Events for new state, current id:');
                     break;
-                case STATE:
+                case 'state':
                     offOn($('#input-name-state').val(getThisName(curId)).data('old', getThisName(curId)),
                         'input',
                         function () {
                             validateInput($(this));
                             isAnyChanged('#input-name-state');
                         });
-                    rebindActionData('#input-action-data', curId, F_onEnter, parseActionChip, 'gps_fixed',
+                    rebindActionData('#input-action-data', curId, fields.onEnter, parseActionChip, 'gps_fixed',
                         'Actions on Enter, current id:');
-                    rebindActionData('#input-action-data1', curId, F_onExit, parseActionChip, 'gps_off',
+                    rebindActionData('#input-action-data1', curId, fields.onExit, parseActionChip, 'gps_off',
                         'Actions on Exit, current id:');
                     break;
-                case TIMER:
+                case 'timer':
                     offOn(setOld('#input-name-timer', getThisName(curId)), 'input', function () {
                         validateInput($(this));
                         isAnyChanged('#input-name-timer');
                     });
-                    offOn(popStates('#input-timeout-state', curPar, ido[F_timeout])
-                        .data('old', ido[F_timeout]), 'change',
+                    offOn(popStates('#input-timeout-state', curPar, ido[fields.timeout])
+                        .data('old', ido[fields.timeout]), 'change',
                         function () {
-                            ido[F_timeout] = $(this).val();
+                            ido[fields.timeout] = $(this).val();
                             checkConfig();
                         });
-                    rebindActionData('#input-action-data', curId, F_onEnter, parseActionChip, 'gps_fixed',
+                    rebindActionData('#input-action-data', curId, fields.onEnter, parseActionChip, 'gps_fixed',
                         'Actions on Enter, current id:');
-                    rebindActionData('#input-action-data1', curId, F_onExit, parseActionChip, 'gps_off',
+                    rebindActionData('#input-action-data1', curId, fields.onExit, parseActionChip, 'gps_off',
                         'Actions on Exit, current id:');
                     break;
-                case SCENE:
-                    rebindActionData('#input-action-data', curId, F_onFire, parseActionChip, I_Scene,
+                case 'scene':
+                    rebindActionData('#input-action-data', curId, fields.onFire, parseActionChip, icons.Scene,
                         'Scene list, current id:');
                     break;
-                case EVENT:
-                    offOn($('#input-function-event').val(ido[F_function]), 'input', function () {
-                        ido[F_function] = $(this).val();
+                case 'event':
+                    offOn($('#input-function-event').val(ido[fields.function]), 'input', function () {
+                        ido[fields.function] = $(this).val();
                         checkConfig();
                     });
-                    rebindActionData('#input-event-data', curId, F_fire, parseEventChip, I_Event,
+                    rebindActionData('#input-event-data', curId, fields.fire, parseEventChip, icons.Event,
                         'Events which fire, current id:');
-                    rebindActionData('#input-action-data', curId, F_onFire, parseActionChip,
+                    rebindActionData('#input-action-data', curId, fields.onFire, parseActionChip,
                         'directions_run',
                         'Action when fired, current id:');
                     break;
-                case MACHINE:
-                    offOn(popStates('#input-machine-states', curId, ido[F_default]), 'change', function () {
-                        ido[F_default] = $(this).val();
+                case 'machine':
+                    offOn(popStates('#input-machine-states', curId, ido[fields.default]), 'change', function () {
+                        ido[fields.default] = $(this).val();
                         checkConfig();
                     });
                     break;
             }
             Materialize.updateTextFields();
-            // addEvent(ido, "Select Row");
+            addEvent(ido, "Select Row");
             $this.addClass("selected blue lighten-4");
             doMachine(curId);
         }
@@ -2208,18 +2105,18 @@
                 var en = this.checked;
                 tr.find('td.ft').toggleClass('disabled', !en);
                 if (en && idl)
-                    delete idl[F_disabled];
+                    delete idl[fields.disabled];
                 else if (!en && idl)
-                    idl[F_disabled] = true;
+                    idl[fields.disabled] = true;
                 $('#table-data').find("td.ft").each(function (i, e) {
                     var cid = $(this).closest('tr').data('ttId');
                     if (cid && cid.startsWith(id + '.'))
                         $(this).toggleClass('disabled', !(en && (idList[cid] && !idList[cid][
-                            flds
+                            fields
                             .disabled
                         ])));
                 });
-                main.setState(id + stateDisabled, !en);
+                main.setState(id + '._disabled', !en);
                 checkConfig();
                 //                showMessage(id + (this.checked ? ' enabled' : ' disabled'));
             });
@@ -2231,7 +2128,7 @@
         function doMachine(curId) {
             var id = (curFolder ? curFolder + '.' : '') + curMachine;
             var ido = idList[id];
-            if (!ido || ido[F_type] !== MACHINE)
+            if (!ido || ido[fields.type] !== 'machine')
                 return $('#mynetwork').hide();
             $('#mynetwork').show();
             if (omachine !== id) {
@@ -2250,9 +2147,6 @@
                                 scaleFactor: 1.9
                             }
                         },
-                        font: {
-                          size: 18
-                        },
                         arrowStrikethrough: false,
                         selfReferenceSize: 40,
                         smooth: {
@@ -2266,17 +2160,13 @@
                             avoidOverlap: 0.42
                         },
                         minVelocity: 0.75
-                    },
-                    interaction: {
-                        selectConnectedEdges: false
                     }
                 };
-                var idn = curId;
+
                 var nodes = [{
                         id: curMachine,
                         label: curMachine,
                         shape: 'star',
-                        title: id,
                         font: {
                             size: 30
                         },
@@ -2307,17 +2197,14 @@
                                 }
                             },
                             label: nf,
-                            id: nf,
-                            title: id + '.' + nf,
+                            id: nf
                         });
                     } else {
                         var st = ido[nf];
-                        var it = st[F_type] === TIMER;
-                        var aid = id + '.' + nf;
+                        var it = st[fields.type] === 'timer';
                         nodes.push({
                             label: nf,
                             id: nf,
-                            title: aid,
                             shape: it ? 'box' : 'ellipse',
                             font: {
                                 size: 30
@@ -2335,7 +2222,7 @@
                             }
                         });
                         if (it) {
-                            var to = st[F_timeout];
+                            var to = st[fields.timeout];
                             edges.push({
                                 from: nf,
                                 to: to,
@@ -2346,7 +2233,6 @@
                                 },
                                 dashes: true,
                                 label: nf,
-                                title: 'timeout of ' + aid,
                                 id: nf
                             });
                         }
@@ -2355,7 +2241,6 @@
                                 continue;
                             else edges.push({
                                 from: nf,
-                                title: aid + '.' + ns,
                                 to: ns,
                                 label: nf + '>' + ns,
                                 id: nf + '>' + ns
@@ -2368,44 +2253,18 @@
                     edges: new vis.DataSet(edges)
                 };
                 network = new vis.Network(container, ndata, options);
-                network.on("selectNode", function (params) {
-                    // console.log('selectNode Event:', params);
-                    if (params && params.nodes && params.nodes.length === 1 && params.nodes[0]) {
-                        var n = ndata.nodes.get(params.nodes[0]);
-                        if (n) {
-                            // console.log('selectNode:', n.title);
-                            setTimeout(selectId, 0, n.title);
-                        }
-                    }
-                    return true;
-                });
-                network.on("selectEdge", function (params) {
-                    // console.log('selectEdge Event:', params);
-                    if (params && params.edges && params.nodes.length === 0 && params.edges.length === 1 &&
-                        params.edges[0]) {
-                        var e = ndata.edges.get(params.edges[0]);
-                        if (e) {
-                            e = e.title;
-                            // console.log('selectEdge:', e);
-                            if (e.startsWith('timeout of '))
-                                e = e.slice(11);
-                            setTimeout(selectId, 0, e);
-                        }
-                    }
-                    return true;
-                });
             }
 
             if (curId.startsWith(omachine)) {
-                var sta = curId.slice(omachine.length + 1).split('.');
+                var sta = curId.slice(omachine.length+1).split('.');
                 if (sta.length == 2)
                     network.selectEdges([sta.join('>')]);
-                else if (length.sta < 1 || !sta[0])
-                    network.selectNodes([curMachine], false);
-                else if (!sta[0].startsWith('*'))
-                    network.selectNodes([sta[0]], false);
+                else if (length.sta<1 || !sta[0])
+                    network.selectNodes([curMachine], true);
+                else if(!sta[0].startsWith('*'))
+                    network.selectNodes([sta[0]], true);
                 else
-                    network.selectEdges([sta[0]], false);
+                    network.selectEdges([sta[0]]);
             }
         }
 
@@ -2427,35 +2286,35 @@
             opt = opt || {};
             var idr, type, ids = parent ? parent + '.' + id : id;
             switch (icon) {
-                case I_Link:
-                    type = LINK;
+                case icons.Link:
+                    type = 'link';
                     break;
-                case I_LinkAuto:
-                    type = LINK
+                case icons.LinkAuto:
+                    type = 'link'
                     break;
-                case I_Folder:
+                case icons.Folder:
                     type = 'folder';
                     break;
-                case I_Machine:
-                    type = MACHINE;
+                case icons.Machine:
+                    type = 'machine';
                     break;
-                case I_Event:
-                    type = EVENT;
+                case icons.Event:
+                    type = 'event';
                     break;
-                case I_Scene:
-                    type = SCENE;
+                case icons.Scene:
+                    type = 'scene';
                     break;
-                case I_State:
-                    type = STATE;
+                case icons.State:
+                    type = 'state';
                     break;
-                case I_Timer:
-                    type = TIMER;
+                case icons.Timer:
+                    type = 'timer';
                     break;
             }
             if (type && !opt[type])
-                opt[F_type] = type;
+                opt[fields.type] = type;
 
-            if (icon == I_Folder)
+            if (icon == icons.Folder)
                 idr = workTree.folders;
             else
                 idr = parent ? idList[parent] : workTree.folders[''];
@@ -2463,7 +2322,7 @@
                 return showError(`cannot add id type '${icon}' '${id}' to parent '${parent}'!`);
             else {
                 idList[ids] = opt;
-                opt[F_id] = ids;
+                opt[fields.id] = ids;
             }
             var html = makeTr(ids, parent, id, icon, opt);
             $table.treetable('loadBranch', (parent ? getTreeNode(parent) : null), html);
@@ -2496,8 +2355,8 @@
                 title: 'Create State',
                 text: '',
                 button: 'Create',
-                flds: [
-                    ['State Name', I_State, txt]
+                fields: [
+                    ['State Name', icons.State, txt]
                 ],
                 callback: function (ok) {
                     if (ok && (ok = ok[0].trim())) {
@@ -2506,7 +2365,7 @@
                         else if (idList[fs + ok])
                             showMessage('Name already used, please change!');
                         else {
-                            addId(ok, folder, I_State, idList[curId][ok] = {});
+                            addId(ok, folder, icons.State, idList[curId][ok] = {});
                             return regenSelect(folder + '.' + ok);
                         }
                         setTimeout(doCreateState, 30, txt, folder);
@@ -2522,25 +2381,25 @@
         }
 
         function doCreateLink() {
-            var s = idList[curId][F_type];
-            var icon = I_LinkAuto;
+            var s = idList[curId][fields.type];
+            var icon = icons.LinkAuto;
             var m = curId;
             var t = 'Autolink';
-            if (s !== MACHINE) {
+            if (s !== 'machine') {
                 m = getParId(curId);
-                icon = I_Link;
+                icon = icons.Link;
                 t = 'Link';
             }
             var xs = getStates(m);
             if (!xs)
                 return showError(`Cold not create ${t} for '${curId}'`);
-            if (icon == I_LinkAuto)
+            if (icon == icons.LinkAuto)
                 xs = xs.map(x => autoLink + x);
             showInputModal({
                 title: 'Create ' + t,
                 text: '',
                 button: 'Create',
-                flds: [
+                fields: [
                     [t + ' from ' + curId, icon, xs]
                 ],
                 callback: function (ok) {
@@ -2570,9 +2429,9 @@
                 title: 'Create Timer',
                 text: '',
                 button: 'Create',
-                flds: [
-                    ['Timeout time', I_Timer, txt],
-                    ['Timeout state', I_Timeout, xs]
+                fields: [
+                    ['Timeout time', icons.Timer, txt],
+                    ['Timeout state', icons.Timeout, xs]
                 ],
                 callback: function (ok) {
                     if (ok) {
@@ -2584,9 +2443,9 @@
                         else if (!idList[fs + ok[1]])
                             showMessage('You need to select an existing tieout state!');
                         else {
-                            addId(t, folder, I_Timer, m[t] = {});
-                            //                            addId(ok[1], folder + '.' + t, I_Timeout);
-                            idList[folder + '.' + t][F_timeout] = ok[1];
+                            addId(t, folder, icons.Timer, m[t] = {});
+                            //                            addId(ok[1], folder + '.' + t, icons.Timeout);
+                            idList[folder + '.' + t][fields.timeout] = ok[1];
                             return regen(folder + '.' + t);
                         }
                         setTimeout(doCreateTimer, 30, t, folder);
@@ -2596,6 +2455,7 @@
         }
 
         $(function () {
+            debug('first in $()');
             pageInit(function () { // this is called when initialization happened and all objects are loaded!
                 createFolderTree(true);
                 //                createIdTree();
@@ -2621,6 +2481,7 @@
                         checkConfig();
                     }
                 }).val('' + (workTree.queueTime || 10));
+                debug('last in $()');
                 setDebug(main.states[main.currentId + debugLevel] ? parseInt(main.states[main.currentId +
                     debugLevel].val) : workTree.debugLevel);
             });
@@ -2801,8 +2662,8 @@
                     <div class="col s3">
                     </div>
                     <div class="col s3">
-                        <label for="input-value-scene" class="active">Current Value: </label>
-                        <span s-v="" class="input-value" id="input-value-scene"></span>
+                        <label for="input-value-scene" class="active">Current Value</label>
+                        <p s-v="" id="input-value-scene"></p>
                     </div>
                 </div>
                 <div id="input-table-event" class="input-table row">
@@ -2831,8 +2692,8 @@
                         <input type="text" id="input-function-event" class="input-function">
                     </div>
                     <div class="col s3">
-                        <label for="input-value-event" class="active">Current Value: </label>
-                        <span s-v="" class="input-value" id="input-value-event"></span>
+                        <label for="input-value-event" class="active">Current Value</label>
+                        <p s-v="" id="input-value-event"></p>
                     </div>
                 </div>
                 <div id="input-table-machine" class="input-table row">
@@ -2868,8 +2729,8 @@
                         <label>Default State</label>
                     </div>
                     <div class="col s3">
-                        <label for="input-value-machine" class="active">Current State: </label>
-                        <span s-v="" class="input-value" id="input-value-machine"></span>
+                        <label for="input-value-machine" class="active">Current State</label>
+                        <p s-v="" id="input-value-machine"></p>
                     </div>
                 </div>
                 <div id="input-table-state" class="input-table row">
@@ -2964,12 +2825,6 @@
                         <a class="btn-floating btn btn-small right waves-effect waves-light teal show-help">
                             <i class="material-icons show-help" my-icon="help">help</i>
                         </a>
-                        <a class="btn-floating btn btn-small right waves-effect waves-light blue chips-move chips-right">
-                            <i class="material-icons">chevron_right</i>
-                        </a>
-                        <a class="btn-floating btn btn-small right waves-effect waves-light blue chips-move chips-left">
-                            <i class="material-icons">chevron_left</i>
-                        </a>
                         <label class='data-title'>Event list, current id: </label>
                         <span class="input-text"></span>
                         <div class="chips"></div>
@@ -2994,12 +2849,6 @@
                         <a class="btn-floating btn btn-small right waves-effect waves-light teal show-help">
                             <i class="material-icons" my-icon="help">help</i>
                         </a>
-                        <a class="btn-floating btn btn-small right waves-effect waves-light blue chips-move chips-right">
-                            <i class="material-icons">chevron_right</i>
-                        </a>
-                        <a class="btn-floating btn btn-small right waves-effect waves-light blue chips-move chips-left">
-                            <i class="material-icons">chevron_left</i>
-                        </a>
                         <label class='data-title'>Action list, current id: </label>
                         <span class="input-text"></span>
                         <div class="chips"></div>
@@ -3010,12 +2859,6 @@
                         <i class="material-icons data-icon prefix" my-icon="directions_run">directions_run</i>
                         <a class="btn-floating btn btn-small right waves-effect waves-light teal show-help">
                             <i class="material-icons" my-icon="help">help</i>
-                        </a>
-                        <a class="btn-floating btn btn-small right waves-effect waves-light blue chips-move chips-right">
-                            <i class="material-icons">chevron_right</i>
-                        </a>
-                        <a class="btn-floating btn btn-small right waves-effect waves-light blue chips-move chips-left">
-                            <i class="material-icons">chevron_left</i>
                         </a>
                         <label class='data-title'>Action list, current id: </label>
                         <span class="input-text"></span>
@@ -3045,7 +2888,7 @@
                 </div>
             </div>
             <div class="col s6 no-padding">
-                <h6></h6>Debug log <a id="script-down" title="Scroll to end" >&nbsp;<i class="tiny material-icons">file_download</i>&nbsp;</a><a id="script-delete" title="Empty Log">&nbsp;<i class="tiny material-icons">delete</i>&nbsp;</a></h6>
+                <h6>Debug log</h6>
                 <div id='log-data' style="overflow-x: auto; overflow-y: auto" comment="; width: calc(100% - 30px)">
                     <table style="width: 100%">
                         <thead>
@@ -3059,6 +2902,7 @@
             </div>
         </div>
     </div>
+    <pre id="eventSpan" style="font-size: 0.8em"></pre>
     <div id="dialog-modal" class="modal">
         <div class="modal-content">
             <div class="row">

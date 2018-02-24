@@ -1,105 +1,149 @@
 // StateMachines Classes v2.0.1 21.10.2017
-
+/* jshint -W061 */
 /*jslint node: true */
 "use strict";
 
-const A = require('./myAdapter'),
-    fields = {
-        id: ' id',
-        default: ' default',
-        expanded: ' expanded',
-        type: ' type',
-        disabled: ' disabled',
-        timeout: ' timeout',
-        fire: ' fire',
-        onFire: ' onfire',
-        onEnter: ' onenter',
-        onExit: ' onexit',
-        function: ' function'
-    };
+const schedule = require('node-schedule'),
+    SunCalc = require('suncalc'),
+    MA = require('./myAdapter'),
+    A = MA.MyAdapter,
+    Setter = MA.Setter;
 
-
-
-class Setter { // fun = function returng a promise, min = minimal time in ms between next function call
-    constructor(fun, min) {
-        if (typeof fun !== 'function') throw Error('Invalid Argument - no function for Setter');
-        this._efun = fun;
-        this._list = [];
-        this._current = null;
-        this._min = min || 20;
+class List {
+    constructor() {
         return this;
     }
+
+    add(name, item) {
+        var ni = this[name];
+        if (!ni)
+            ni = this[name] = [];
+        ni.push(item);
+    }
+
+    fireAll(name, val) {
+        return A.seriesOf(this[name], (x) => x.fire(val), 1);
+    }
+}
+
+const REGEXP = 'regexp',
+    IDNAME = 'id',
+    SCHEDULE = 'schedule',
+    EVERY = 'every',
+    DELAY = 'delay',
+    EXEC = 'exec',
+    EVAL = 'eval',
+    STATE = 'state',
+    UNKNOWN = 'unknown',
+    MACHINE = 'machine',
+    SCENE = 'scene',
+    EVENT = 'event',
+    ASTRO = 'astro',
+    LINK = 'link',
+    TIMER = 'timer',
+    FOLDER = 'folder',
+
+    F_id = ' id',
+    F_default = ' default',
+    // F_expanded = ' expanded',
+    F_type = ' type',
+    F_disabled = ' disabled',
+    F_timeout = ' timeout',
+    F_fire = ' fire',
+    F_onFire = ' onfire',
+    F_onEnter = ' onenter',
+    F_onExit = ' onexit',
+    F_function = ' function',
+    regIdAction = /^\s*([^\!\&\=\~]+)(&\s*)?(!\s*)?(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=\?\s*|\=.+|\s*)$/,
+    regEval = /^\s*(\(.+\))\s*$/,
+    regExec = /^\s*\$\s*(.+)$/,
+    regAstro = /^\s*@\s*([A-Z]+)\s*([\+\-]\d+)?\s*$/i,
+    regDelay = /^\s*(\d+m)?\s*(\d+s)?\s*(\d+(?:ms)?)?\s*$/,
+    regTimer = /^\s*(\d+h)?\s*(\d+m(?!s))?\s*(\d+s?)?\s*(\d+ms)?\s*$/i,
+    regEvery = /^\s*(\d+w)?\s*(\d+d)?\s*(\d+h)?\s*(\d+m)?\s*(\d+s?)?$/i,
+    regTime = /^\s*([\d\-\*\,\/]+)\s*:\s*([\d\-\*\,\/]+)\s*(?::\s*([\d\-\*\,\/]+))?$/i,
+    regSchedule = /^\s*((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?\s*){5}((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?)?$/,
+    regId =
+    /^\s*([^@][^\?\&\!\~\><\=\^\$#]+)([\?\&\!]?)\s*(~?)\s*(\+(?=\s*$)|\-(?=\s*$)|\=|\!=|>\=|>|<\=|<|\?|\^|\$|\#|$)\s*(.*)$/,
+    regRegexp = /^\s*(\/.+\/i?)\s*([\?\&\!]?)\s*(~?)\s*(\+(?=\s*$)|\-(?=\s*$)|\=|\!=|>\=|>|<\=|<|\?|\^|\$|\#|$)\s*(.*)$/;
+
+
+const stateDisabled = '._disabled',
+    stateDebug = '_debugLevel',
+    ids = {},
+    everys = new List(),
+    schedules = new List(),
+    eids = new List(),
+    rids = new List(),
+    astros = new List();
+
+var setter,
+    queueAll,
+    stq;
+
+class MState {
+    constructor(options, idfrom, last) {
+        if (A.T(options) !== 'object')
+            options = {
+                val: options,
+                ts: Date.now()
+            };
+        this.val = options.val;
+        this.ack = options.ack;
+        this.ts = options.ts !== undefined ? options.ts : Date.now();
+        this.lc = options.lc;
+        this.num = options.num;
+        this.old = options;
+        this.last = last;
+        if (typeof idfrom === 'string')
+            this.id = idfrom;
+        else if (A.T(idfrom) === 'object' && idfrom.id)
+            this.id = idfrom.id;
+        return this;
+    }
+
     toString() {
-        return `Setter(${this._min},${this.length})=${this.length>0 ? this._list[0] : 'empty'}`;
+        return `MS(${A.T(this.val)=== 'symbol' ? this.val.toString() : this.val},  '${this.sfrom}', ${this.num !== undefined ? this.num : ''})`;
     }
-    clearall() {
-        this._list = [];
-        return this;
-    }
-    add() {
-        function execute(that) {
-            if (that.length > 0 && !that._current) {
-                that._current = that._list.shift();
-                that._efun.apply(null, that._current)
-                    .then(() => A.wait(that._min), e => e)
-                    .then(() => execute(that, that._current = null), () => execute(that, that._current = null));
-            }
+    get from() {
+        var from = this.id ? this.id : '';
+        if (this.old && this.old.from) {
+            if (from)
+                from += ' | ' + this.old.from;
+            else
+                from = this.old.from;
         }
+        return from;
+    }
+    get sfrom() {
+        var from = this.from;
+        return from.length > 52 ? from.slice(0, 25) + ' ... ' + from.slice(-25) : from;
+    }
 
-        const args = Array.prototype.slice.call(arguments);
-        this._list.push(args);
-        if (this._list.length === 1)
-            execute(this);
-        return this;
+    hasLast(last) {
+        if (last === undefined)
+            last = this.last;
+        if (this.old && this.old.last)
+            return this.old.last === last ? true : this.old.hasLast(last);
+        else if (this.old && this.old.hasLast)
+            return this.old.hasLast(last);
+        return false;
     }
 }
-
-class CacheP {
-    constructor(fun) { // neue Einträge werden mit dieser Funktion kreiert
-        // assert(!fun || A.T(fun) === 'function', 'Cache arg need to be a function returning a promise!');
-        this._cache = {};
-        this._fun = fun;
-    }
-
-    // get cache() {
-    // return this._cache;
-    // }
-    // get fun() {
-    // return this._fun;
-    // }
-    // set fun(newfun) {
-    // assert(!newfun || A.T(newfun) === 'function', 'Cache arg need to be a function returning a promise!');
-    // return (this._fun = newfun);
-    // }
-
-    cacheItem(item, fun) {
-        let that = this;
-        // assert(!fun || A.T(fun) === 'function', 'Cache arg need to be a function returning a promise!');
-        //        A.D(`looking for ${item} in ${A.O(this._cache)}`);
-        if (this._cache[item] !== undefined)
-            return A.resolve(this._cache[item]);
-        if (!fun)
-            fun = this._fun;
-        // assert(A.T(fun) === 'function', `checkItem needs a function to fill cache!`);
-        return fun(item).then(res => (that._cache[item] = res), err => A.D(`checkitem error ${err} finding result for ${item}`, null));
-    }
-    // clear() {
-    // this._cache = {};
-    // }
-    isCached(x) {
-        return this._cache[x];
-    }
-}
-
-const ids = {};
-
 
 class BaseSM {
-    constructor(id, type) {
+    constructor(id, type, icon) {
         this._id = id;
-        ids[id] = this;
+        if (typeof id === 'string')
+            ids[id] = this;
         this._type = type;
         this._parent = null;
+        if (icon)
+            this._icon = icon;
+    }
+
+    toString() {
+        return `${this.constructor.name}(${this.id}${this.disabled ? ', disabled' : ''})`;
     }
 
     get id() {
@@ -120,6 +164,10 @@ class BaseSM {
 
     }
 
+    get val() {
+        return undefined;
+    }
+
     get parent() {
         return this._parent;
     }
@@ -134,6 +182,13 @@ class BaseSM {
             delete this._expanded;
 
     }
+
+    get active() {
+        return !this.disabled;
+    }
+
+    fire() {}
+    init() {}
 }
 
 class BaseActions {
@@ -147,19 +202,44 @@ class BaseActions {
     get disabled() {
         return this._parent.disabled;
     }
+    get parent() {
+        return this._parent;
+    }
+    toString() {
+        return `${this.constructor.name}(${this._parent}, ${this.length}, ${this.disabled})`;
+    }
+
+    get length() {
+        return this._list.length;
+    }
+
+    init() {
+        for (let i in this._list)
+            this._list[i].init(parseInt(i) + 1);
+    }
+
 }
 
 class SEvent {
-    constructor(text) {
+    constructor(parent, text) {
+        this._parent = parent;
         this._text = text;
-        this._type = 'unknown';
+        this._type = UNKNOWN;
         this._parse(text);
+    }
+
+    get parent() {
+        return this._parent;
+    }
+
+    toString() {
+        return `${this.constructor.name}(${this._type}, '${this._text}')`;
     }
 
     _parse(name) {
         name = name.trim();
-        var m; // evry xxx timer
-        if ((m = name.match(/^(\d+w)?\s*(\d+d)?\s*(\d+h)?\s*(\d+m)?\s*(\d+s?)?$/))) {
+        var m;
+        if ((m = name.match(regEvery))) { // evry xxx timer
             var ts = 0;
             for (var i = 1; i < 6; ++i) {
                 var s = m[i];
@@ -171,44 +251,72 @@ class SEvent {
                 }
             }
             ts = ts > 0 ? ts : 1;
-            this._type = 'every';
+            this._type = EVERY;
             this._timer = ts;
             return this;
-        } // time
-        if ((m = name.match(/^([\d\-\*\,\/]+)\s*:\s*([\d\-\*\,\/]+)\s*(?::\s*([\d\-\*\,\/]+))?$/))) {
+        }
+        if ((m = name.match(regTime))) { // time
             if (m[3] === undefined)
                 m[3] = 0;
             this._schedule = m[3] + ' ' + m[2] + ' ' + m[1] + ' * * *';
-            this._type = 'schedule';
+            this._type = SCHEDULE;
             return this;
-        } // schedule
-        if ((m = name.match(/^((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?\s*){5}((?:[0-9]?\d|\*)(?:(?:[\/-][0-9]?\d)|(?:,[0-9]?\d)+)?)?$/))) {
+        }
+        if ((m = name.match(regAstro))) { // astro
+            this._astro = m[1] + m[2];
+            this._type = ASTRO;
+            return this;
+        }
+        if ((m = name.match(regSchedule))) { // schedule
             this._schedule = (!m[2] ? '* ' : '') + name;
-            this._type = 'schedule';
+            this._type = SCHEDULE;
             return this;
         } // id + verifier
-        if (!(m = name.match(/^([\/\!]?)(~?)([^\?]+)(\?\+(?=\s*$)|\?\-(?=\s*$)|\?\=|\?\!=|\?>\=|\?>|\?<|\?<\=|\?\?|\?\^|\?\$|\?\#|$)\s*(.*)$/)))
+        if ((m = name.match(regRegexp)))
+            this._type = REGEXP;
+        else if (!(m = name.match(regId)))
             return A.W(`Invalid Event '${name}'`);
-        this._type = 'id';
-        this._onchange = !!m[2];
-        this._ack = m[1];
-        this._id = m[3].trim();
-        this._test = m[5].trim();
+        else
+            this._type = IDNAME;
+        this._onchange = !!m[3];
+        this._ack = m[2];
+        this._id = m[1].trim();
+        if (this._type === IDNAME && this._id.indexOf('*') >= 0) {
+            this._id = '/' + this._id.replace('.', '\.').replace(/\*/g, '.*') + '/';
+            this._type = REGEXP;
+        }
+        if (this._type === REGEXP) {
+            var r = this._id.match(/^\s*\/(.+)\/(i)?\s*$/);
+            this._regexp = new RegExp(r[1], r[2]);
+        }
+        this._test = m[5] ? m[5].trim() : undefined;
         this._check = m[4];
         return this;
     }
 
-    execute(from) {
+    execute() {
+        return A.resolve( /* Events will not be executed */ );
+    }
+
+    init(num) {
+        var e = new TheEvent(this, num);
         switch (this._type) {
-            case 'state':
-            case 'exec':
-            case 'eval':
-                A.D('To be implemented: ' + this._type);
+            case EVERY:
+                everys.add(this._timer, e);
                 break;
-            case 'delay':
-                return A.wait(this._time);
+            case SCHEDULE:
+                schedules.add(this._schedule, e);
+                break;
+            case IDNAME:
+                eids.add(this._id, e);
+                break;
+            case REGEXP:
+                rids.add('' + this._regexp, e);
+                break;
+            case ASTRO:
+                astros.add(this._astro, e);
+                break;
         }
-        return A.resolve( /* A.W(`unknown action type '${this._type}'`) */ );
     }
 }
 
@@ -218,21 +326,30 @@ class Events extends BaseActions {
         super(parent);
         if (alist)
             for (let i of alist)
-                this._list.push(new SEvent(i));
+                this._list.push(new SEvent(this, i));
         return this;
     }
 }
 
 class SAction {
-    constructor(text) {
+    constructor(parent, text) {
         this._text = text;
-        this._type = 'unknown';
+        this._parent = parent;
+        this._type = UNKNOWN;
         this._parse(text);
     }
 
+    get parent() {
+        return this._parent;
+    }
+
+    toString() {
+        return `${this.constructor.name}('${this._text}')`;
+    }
+
     _parse(name) {
-        let m; // evry xxx timer
-        if ((m = name.match(/^\s*(\d+m)?\s*(\d+s)?\s*(\d+(?:ms)?)?\s*$/))) {
+        let m; // delay xxx ms
+        if ((m = name.match(regDelay))) {
             var ts = 0;
             for (let i = 1; i < 4; ++i) {
                 let s = m[i];
@@ -243,43 +360,70 @@ class SAction {
                     ts += s * [0, 60 * 1000, 1000, 1][i];
                 }
             }
-            ts = ts > 0 ? ts : 0;
-            this._type = 'delay';
-            this._time = ts;
+            this._time = ts > 0 ? ts : 0;
+            this._fun = (that) => A.wait(that._time);
+            // this._type = DELAY;
             return this;
         } // exec command on system
-        if ((m = name.match(/^\s*\$\s*(.+)$/))) {
+        if ((m = name.match(regExec))) {
             this._cmd = m[1].trim();
-            this._type = 'exec';
+            this._fun = (that) => myExec(that._cmd, that.parent.parent._vars);
+            // this._type = EXEC;
             return this;
         } // eval javascript
-        if ((m = name.match(/^\s*(\(.+\))\s*$/))) {
+        if ((m = name.match(regEval))) {
             this._cmd = m[1].trim();
-            this._type = 'eval';
+            this._fun = (that) =>
+                myEval(that._cmd, that.parent.parent._vars);
+            // this._type = EVAL;
             return this;
         } // id + verifier
-        if (!(m = name.match(/^\s*([^\!\&\=\~]+)(&\s*)?(!\s*)?(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=\?\s*|\=.+|\s*)$/)))
+        if (!(m = name.match(regIdAction)))
             return A.W(`Invalid Action '${name}'`);
-        this._type = 'state';
+        // this._type = STATE;
         this._exec = m[4] ? m[4].trim() : '';
         this._ack = !!m[3];
         this._queue = !!m[2];
         this._id = m[1].trim();
+        switch (this._exec) {
+            case '~':
+                this._fun = (that) => A.myGetState(that._id).then((st) => mySetState(that._queue, that._id, !st.val, that._ack));
+                break;
+            case '=+':
+                this._fun = (that) => mySetState(that._queue, that._id, true, that._ack);
+                break;
+            case '=-':
+                this._fun = (that) => mySetState(that._queue, that._id, false, that._ack);
+                break;
+            case '=!':
+                this._fun = (that, from) => mySetState(that._queue, that._id, !from.val, that._ack);
+                break;
+            case '=?':
+            case '':
+            case undefined:
+                this._fun = (that, from) => mySetState(that._queue, that._id, from.val, that._ack);
+                break;
+            default:
+                if (this._exec && this._exec.startsWith('='))
+                    this._exec = this._exec.slice(1).trim();
+                if ((m = this._exec.match(/^\(.+\)$/)))
+                    this._fun = (that, from) => A.myGetState(that._id)
+                    .then((oval) => myEval(that._exec, [oval.val, from.val]))
+                    .then((val) => mySetState(that._queue, that._id, val, that._ack));
+                else
+                    this._fun = (that) => mySetState(that._queue, that._id, that._exec, that._ack);
+                break;
+        }
         return this;
     }
 
     execute(from) {
-        switch (this._type) {
-            case 'state':
-            case 'exec':
-            case 'eval':
-                A.D('To be implemented: ' + this._type);
-                break;
-            case 'delay':
-                return A.wait(this._time);
-        }
-        return A.resolve( /* A.W(`unknown action type '${this._type}'`) */ );
+        //        from = new MState(from, this._id, this);
+        _D(3, `Execute "${this}" from: ${from.sfrom}`);
+        return this._fun(this, from);
     }
+
+    init() {}
 }
 
 class Actions extends BaseActions {
@@ -287,50 +431,109 @@ class Actions extends BaseActions {
         super(parent);
         if (alist)
             for (let i of alist)
-                this._list.push(new SAction(i));
+                this._list.push(new SAction(this, i));
     }
 
     execute(from) {
-        if (this.disabled)
-            return A.resolve();
-        return A.seriesOf(this._list, (x) => x.execute(from), 1);
+        return (this.disabled) ? A.resolve() :
+            A.seriesOf(this._list, (x) =>
+                x.execute(from), 1).catch(e => A.W(`Actions: ${this} err: ${e}`));
     }
 }
 
 class Link extends BaseSM {
     constructor(parent, obj, to) {
-        super(obj[fields.id], obj[fields.type]);
+        super(obj[F_id], obj[F_type]);
         this._parent = parent;
-        this._events = new Events(this, obj[fields.fire]);
+        this._events = new Events(this, obj[F_fire]);
         this._to = to;
     }
     execute(from) {
-        //?
+        from = new MState(from, this.id, this);
+        if (this.disabled || from.hasLast())
+            return A.resolve();
+        _D(3, `Execute ${this} from: ${from.sfrom}`);
+        from.val = this._to;
+        return this.parent.parent.execute(from).catch(e => A.W(`Execute: ${this} err: ${e}`));
+    }
+
+    get active() {
+        return this._parent.active;
     }
 }
 
 class Scene extends BaseSM {
-    constructor(parent, obj) {
-        super(obj[fields.id], obj[fields.type]);
+    constructor(parent, obj, role, icon) {
+        super(obj[F_id], obj[F_type], icon ? icon : 'lib/img/list.png');
         this._parent = parent;
-        this._actions = new Actions(this, obj[fields.onFire]);
-        this._disabled = obj[fields.disabled];
+        this._actions = new Actions(this, obj[F_onFire]);
+        this._disabled = obj[F_disabled];
+        if (this.type !== 'folder') A.addq = A.makeState({
+            id: this.id,
+            icon: this._icon ? this._icon : undefined,
+            type: role === undefined ? 'boolean' : 'mixed',
+            role: role === undefined ? 'button' : role,
+            def: false,
+            write: true,
+        }, undefined, true);
+        if (this.id !== '_init')
+            A.addq = A.makeState({
+                id: this.id + stateDisabled,
+                type: 'boolean',
+                role: 'switch',
+                icon: 'lib/img/power-off.png',
+                def: false,
+                write: true,
+            }, undefined, true);
     }
     execute(from) {
-        this._actions.execute(from);
+        from = new MState(from, this.id, this);
+        if (this.disabled || from.hasLast())
+            return A.resolve();
+        _D(2, `Execute ${this} from: ${from.sfrom}`);
+        return this._actions.execute(from).catch(e => A.W(`Execute: ${this} err: ${e}`));
     }
+    init() {
+        this._actions.init();
+    }
+
 }
 
 class Event extends Scene {
-    constructor(parent, obj) {
-        super(parent, obj);
-        this._list = new Events(parent, obj[fields.fire]);
-        this._function = obj[fields.function];
-        this._disabled = obj[fields.disabled];
+    constructor(parent, obj, role) {
+        super(parent, obj, role ? role : 'value', 'lib/img/run.png');
+        this._list = new Events(this, obj[F_fire]);
+        this._vars = new Array(this._list.length + 1);
+        this._function = obj[F_function];
+        this._disabled = obj[F_disabled];
     }
     execute(from) {
-        // execute this,_function;
-        this.onFire.execute(from);
+        from = new MState(from, this.id, this);
+        if (this.disabled || from.hasLast())
+            return A.resolve();
+        var vold = this._vars[0];
+        if (from.num && this._vars.length > from.num)
+            this._vars[from.num] = from.val;
+        var that = this;
+        return (this._function ? myEval(this._function, this._vars) : Promise.resolve(from.val))
+            .then(v => {
+                _D(2, `Execute ${that} from: ${from.sfrom}`);
+                if (v !== undefined) {
+                    from.val = that._vars[0] = v;
+                    if (v !== vold)
+                        return _setState(that.id, v, true, true);
+                }
+            }).then(() => that._actions.execute(from).catch(e => A.W(`Execute: ${this} err: ${e}`)));
+    }
+
+    get val() {
+        return this._vars[0];
+    }
+    init() {
+        this._actions.init();
+        if (A.states[this.id])
+            this._vars[0] = A.states[this.id].val;
+        this._list.init();
     }
 }
 
@@ -341,68 +544,407 @@ class State extends Link {
         for (let k of A.ownKeysSorted(obj).filter(x => !x.startsWith(' '))) {
             this._list.push(new Link(this, obj[k], k));
         }
-        this._onEnter = new Events(this, obj[fields.onEnter]);
-        this._onExit = new Events(this, obj[fields.onExit]);
+        this._onEnter = new Actions(this, obj[F_onEnter]);
+        this._onExit = new Actions(this, obj[F_onExit]);
+    }
+    enter(from) {
+        _D(3, `Enter ${this} from: ${from.sfrom}`);
+        return this._onEnter.execute(from).catch(e => A.W(`Enter: ${this} err: ${e}`));
+    }
+    exit(from) {
+        _D(3, `Exit ${this} from: ${from.sfrom}`);
+        return this._onExit.execute(from).catch(e => A.W(`Exit: ${this} err: ${e}`));
     }
     execute(from) {
+        from = new MState(from, this.id);
+        if (this.disabled || from.hasLast())
+            return A.resolve();
+        _D(3, `Execute ${this} from: ${from.sfrom}`);
         // execute this,_function;
-        this.onFire.execute(from);
+        return this.parent.execute(from.val).catch(e => A.W(`Execute: ${this} err: ${e}`));
+    }
+    init() {
+        this._onEnter.init();
+        this._onExit.init();
+    }
+
+    get active() {
+        return this.parent.list[this.parent.val] === this;
     }
 }
 
+class Timer extends State {
+    constructor(parent, obj) {
+        super(parent, obj);
+        this._timeout = obj[F_timeout];
+        let t = this.id.split('.').slice(-1)[0];
+        t = t.match(regTimer);
+        let ms = 0;
+        for (var i = 1; i < 5; i++)
+            if (t[i]) {
+                let m = t[i].match(/^(\d+)/);
+                ms = ms + [0, 60 * 60 * 1000, 60 * 1000, 1000, 1][i] * parseInt(m[1]);
+            }
+        this._time = ms;
+        this._timer = null;
+    }
+    enter(from) {
+        function timer(that) {
+            that._timer = null;
+            that._parent.execute({
+                val: that._timeout,
+                from: that.id
+            });
+        }
+        if (this._timer)
+            clearTimeout(this._timer);
+        this._timer = setTimeout(timer, this._time, this);
+        return super.enter(from);
+    }
+    exit(from) {
+        if (this._timer)
+            clearTimeout(this._timer);
+        return super.exit(from);
+    }
+}
 class Machine extends BaseSM {
     constructor(parent, obj) {
-        super(obj[fields.id], obj[fields.type]);
-        this._disabled = obj[fields.disabled];
+        super(obj[F_id], obj[F_type], 'lib/img/gear.png');
+        this._disabled = obj[F_disabled];
         this._list = [];
-        //        this._expanded = obj[fields.expanded];
+        //        this._expanded = obj[F_expanded];
         this._auto = [];
+        this._names = [];
+        this._state = obj[F_default];
+        this._val = undefined; // TODO
         for (let k of A.ownKeysSorted(obj).filter(x => !x.startsWith(' '))) {
             if (k.startsWith('*')) {
                 this._auto.push(new Link(this, obj[k], k.slice(1)));
             } else {
-                this._list.push(new State(this, obj[k]));
+                if (k.match(regTimer))
+                    this._list.push(new Timer(this, obj[(this._names.push(k), k)]));
+                else
+                    this._list.push(new State(this, obj[(this._names.push(k), k)]));
             }
         }
+        A.addq = A.makeState({
+            id: this.id,
+            type: 'number',
+            role: 'value',
+            icon: this._icon ? this._icon : undefined,
+            state: STATE,
+            min: 0,
+            max: this._list.length - 1,
+            def: false,
+            write: true,
+            states: this._list.map((x, n) => ('' + n + ':' + this._names[n])).join(';')
+        }, undefined, true);
+        A.addq = A.makeState({
+            id: this.id + stateDisabled,
+            type: 'boolean',
+            role: 'switch',
+            icon: 'lib/img/power-off.png',
+            def: false,
+            write: true,
+        }, undefined, true);
+
     }
     execute(from) {
-        // execute potential state changes;
+        from = new MState(from, this.id);
+        if (this.disabled || from.hasLast())
+            return A.resolve();
+        _D(1, 'should switch to state ' + from.val);
+        var ost = this._val;
+        var nst = from.val;
+        if (typeof nst === 'string') {
+            nst = nst.split('.').slice(-1)[0];
+            nst = this._names.indexOf(nst);
+            if (nst < 0)
+                return A.resolve(A.W(`Invalid state name "${from.val}" for machine '${this.id}'`));
+        }
+        if (nst > this._list.length)
+            return A.resolve(A.W(`Invalid state name "${from.val}" for machine '${this.id}'`));
+        this._val = nst;
+        _D(1, `Execute ${this} statechange ${this._names[ost]}>${this._names[nst]} from: ${from.sfrom}`);
+        return (this._list[ost] && ost !== nst ? this._list[ost].exit(from) : A.resolve())
+            .then(() => this._list[nst].enter(from))
+            .then(() => A.makeState(this.id, nst, true, true))
+            .catch(e => A.W(`Machine e-err: ${this} err: ${e}`));
+    }
+    get val() {
+        return this._val;
+    }
+    init() {
+        for (let f in this._list)
+            this._list[f].init();
+        if (A.states[this.id])
+            this._val = A.states[this.id].val;
+        else if (this._state) {
+            this._state = this._names.indexOf(this._state);
+            if (this._state >= 0)
+                A._setState(this.id, (this._val = this._state), true, true);
+        }
+    }
+}
+
+class TheEvent {
+    constructor(sevent, num) {
+        this.num = num;
+        this.event = sevent;
+        this.id = sevent._text;
+    }
+
+    fire(val) {
+        var p = this.event.parent.parent;
+        return p.active ? p.execute({
+            val: val,
+            from: '' + this.event,
+            num: this.num
+        }) : Promise.resolve();
     }
 }
 
 class Folder extends BaseSM {
     constructor(obj) {
-        super(obj[fields.id], obj[fields.type]);
+        super(obj[F_id], obj[F_type], 'lib/img/folder.png');
         this._list = [];
-        //        let id = obj[fields.id];
-        //        this._expanded = obj[fields.expanded];
+        //        let id = obj[F_id];
+        //        this._expanded = obj[F_expanded];
+        A.addq = A.makeState({
+            id: this.id + stateDisabled,
+            type: 'boolean',
+            role: 'switch',
+            icon: 'lib/img/power-off.png',
+            def: false,
+            write: true,
+        }, undefined, true);
         for (let k of A.ownKeysSorted(obj).filter(x => !x.startsWith(' '))) {
-            switch (obj[k][fields.type]) {
-                case 'machine':
+            switch (obj[k][F_type]) {
+                case MACHINE:
                     this._list.push(new Machine(this, obj[k]));
                     break;
-                case 'scene':
+                case SCENE:
                     this._list.push(new Scene(this, obj[k]));
                     break;
-                case 'event':
+                case EVENT:
                     this._list.push(new Event(this, obj[k]));
                     break;
             }
         }
     }
+    init() {
+        for (let f in this._list)
+            this._list[f].init();
+    }
 }
 
-class Folders {
-    constructor(folders) {
-        this._list = [];
-        if (folders)
-            for (let f in folders)
-                this._list.push(new Folder(folders[f]));
+/*jshint -W098 */
+
+function myEval(fun, args) {
+    var nf = Array.isArray(args) ? fun.replace(/@(\d+)/g, (match, p1) => 'a[' + p1 + ']') : fun;
+    var mp = Promise.resolve();
+    var mn = 0,
+        m = [];
+    nf = nf.replace(/@([\w\-\$\.]+)/g, (match, p1) => {
+        var ret = 'ma[' + mn++ + ']';
+        mp = mp.then(() => A.myGetState(p1)).then(x => x.val, () => undefined).then(v => m.push(v));
+        return ret;
+    });
+    nf = nf.replace('@@', '@');
+    return mp.then(() => {
+        var res, ma = m,
+            a = args;
+        // A.D(`call eval(${nf}) ma=${ma}, a=${a}`);
+        try {
+            res = eval(nf);
+        } catch (e) {
+            A.W(`Error in eval of "${fun}": ${e}`);
+        }
+        return Promise.resolve(res);
+    });
+}
+
+function myExec(fun, args) {
+    var nf = Array.isArray(args) ? fun.replace(/@(\d+)/g, (match, p1) => args[p1]) : fun;
+    var mp = Promise.resolve();
+    var mn = 0,
+        m = [];
+    nf = nf.replace(/@(?!\()([\w\-\$\.]+)/g, (match, p1) => {
+        var ret = '@' + mn++;
+        mp = mp.then(() => A.myGetState(p1)).then(x => x.val, () => undefined).then(v => m.push(v));
+        return ret;
+    });
+    nf = nf.replace('@@', '@');
+    nf = nf.replace(/@(\([^\(\)]+\))/g, (match, p1) => eval(p1));
+    return mp.then(() => nf.replace(/@(\d+)/g, (match, p1) => m[p1]))
+        .then(f => A.exec(f)).then(x => x, x => x);
+}
+/*jshint +W098 */
+function _setState(id, val, ack, allways) {
+    if (allways === undefined)
+        allways = true;
+    var nid = ids[id];
+    if (nid)
+        return A.makeState(id, val, ack, allways);
+    else {
+        nid = A.sstate[id];
+        if (nid) {
+            if (nid.startsWith(A.ain))
+                return A.makeState(id.slice(A.ain.length), val, ack, allways);
+
+            A.states[nid] = {
+                val: val,
+                ack: ack
+            };
+            return A.setForeignState(nid, val, ack);
+        }
+        return A.reject(`could not find id: '${id}'`);
+    }
+}
+
+function mySetState(q, id, val, ack, allways) {
+    _D(3, `SetState ${q || queueAll ? 'queued ': ''} ${id} to '${val}' with ack=${ack}`);
+    return (q || queueAll ? setter.add(id, val, ack, allways) : _setState(id, val, ack, allways))
+        .catch((e) => A.W(`mySetState got error: ${e} on ${id} with value='${val}'`));
+}
+
+
+var eevents = new List();
+class StateMachine extends BaseSM {
+    constructor() {
+        super(null, 'stateMachine');
+        return StateMachine;
+    }
+    static init(config) {
+        let k;
+        this._folders = [];
+        this._debug = config.debugLevel;
+        if (A.states[A.ain + stateDebug] !== undefined)
+            this.debug = A.states[A.ain + stateDebug];
+        stq = A.wait(10);
+
+        //        for (let i of A.ownKeys(A.objects))
+        //            addSState(A.objects[i], i);
+        if (config && config.folders)
+            for (let f in config.folders)
+                this._folders.push(new Folder(config.folders[f]));
+        else
+            this._folders.push(new Folder(''));
+
+        setter = new Setter(_setState, parseInt(config.queueTime));
+        queueAll = config.queueAll;
+
+        for (k in this._folders)
+            this._folders[k].init();
+
+
+
+        for (k in eids) {
+            var l = eids[k];
+            for (var i of l) {
+                var id = A.sstate[i.id];
+                if (!id) 
+                    id = A.sstate[A.ain + i.id];
+                if (! id)
+                    continue;
+                console.log(k + '('+ id+ '): ',i);
+//                A.adapter.subscribeForeignStates(id);
+                eevents.add(id,i);
+            }
+        }
+
+        return (ids._init && ids._init.type === SCENE ? ids._init.execute('init') : A.resolve())
+            .then(() => A.seriesIn(everys, (k) => {
+                setInterval((n) => everys.fireAll(n), parseInt(k) * 1000, k);
+                return everys.fireAll(k);
+            }, 1))
+            .then(() => A.seriesIn(astros, (k) => {
+                function nextSunCalc(name, delay) {
+                    let n = Date.now();
+                    let t = n + delay * 60 * 1000;
+                    let sc = SunCalc.getTimes(new Date(t), A.C.latitude, A.C.longitude);
+                    let end = 0;
+                    if (sc[name]) {
+                        while (sc[name] < new Date(n)) {
+                            t += 60 * 60 * 1000;
+                            sc = SunCalc.getTimes(new Date(t), A.C.latitude, A.C.longitude);
+                        }
+                        end = sc[name].valueOf();
+                    }
+                    return end - n;
+                }
+
+                function nextSun(name, add) {
+                    setTimeout(nextSun, nextSunCalc(name, add), name, add);
+                    astros.fireAll(k);
+                }
+                let m = k.match(/^([A-Z]+)([+-]?\d+)?/i);
+                if (!m)
+                    return Promise.resolve(A.W(`Invalid Astro definition "${k}"`));
+                let s = SunCalc.getTimes(Date.now(), A.C.latitude, A.C.longitude);
+                var n = A.ownKeys(s).filter((x) => x.toLowerCase() === m[1].toLowerCase());
+                n = n.length > 0 ? n[0] : null;
+                if (!n)
+                    return Promise.resolve(A.W(`Invalid Astro Name "${m[1]}"`));
+                var addTime = m[2] ? parseInt(m[2]) : 0;
+                setTimeout(nextSun, nextSunCalc(n, addTime), n, addTime);
+                return Promise.resolve();
+            }, 1))
+            .then(() => A.seriesIn(schedules, (s) => {
+                schedule.scheduleJob(s, () => {
+                    schedules.fireAll(s);
+                });
+                return Promise.resolve();
+            }, 1))
+            .then(() => ids);
     }
 
+    static allStates(id, state) {
+        if (state && id.startsWith(A.ain)) {
+            _D(3, `set "${id}" to: ${A.O(state)}`);
+            var sid = id.slice(A.ain.length);
+            if (sid === stateDebug)
+                A.debug = (StateMachine.debug = state.val) > 2 ? true : state.val > 0 ? false : undefined;
+            if (!state.ack && ids[sid] && ids[sid].execute)
+                ids[sid].execute(state).catch(e => A.W(`AllStates: ${id} err: ${e}`));
+            A.states[id] = state;
+            // A.D(`${id}: ${A.O(state)}`);
+        } else if (A.states[id]) {
+            // TOTO process changes
+            // A.D(`set "${id}" to: ${A.O(state)}`);
+            A.states[id] = state;
+        }
+        if (state && !id.startsWith('system.')) {
+            console.log(id + ': ', state);
+            if (eevents[id])
+                eevents.fireAll(id,state);
+        }
+    }
+
+    static get ids() {
+        return ids;
+    }
+    static get folders() {
+        return this._folders;
+    }
+    static get debug() {
+        return this._debug;
+    }
+    static set debug(level) {
+        level = parseInt(level);
+        this._debug = A.debugLevel = level < 0 ? 0 : level > 3 ? 3 : level;
+        return this._debug;
+    }
 }
 
-exports.Setter = Setter;
-exports.CacheP = CacheP;
-exports.ids = ids;
-exports.Folders = Folders;
+function _D(level, text, ret) {
+    if (StateMachine.debug < level)
+        return;
+    return level<2 ? A.I(text, ret) : A.D(text, ret);
+}
+
+// exports.Setter = Setter;
+// exports.CacheP = CacheP;
+// exports.ids = ids;
+exports.StateMachine = StateMachine;
+exports._D = _D;

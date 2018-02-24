@@ -318,7 +318,6 @@ class SmBase {
     
 }
 
-
 class StateMachine extends SmBase {
     constructor (options) {
         super(options && typeof options.name === 'string' ? options.name.trim() : 'StateMachine',null,'StateMachine');
