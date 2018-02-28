@@ -15,7 +15,7 @@ Windows: [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/p
 ## Changelog
 
 #### 0.0.2
-* after first successful run
+* first public beta version
 
 #### 0.0.1
 * initial commit

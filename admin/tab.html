@@ -122,7 +122,8 @@
             height: 4em
         }
 
-        #log-data {
+        #log-data,
+        #event-span {
             height: 43vh;
         }
 
@@ -132,7 +133,8 @@
         }
 
         #tab-events-content,
-        #log-data {
+        #log-data,
+        #mynetwork {
             /* box-sizing: border-box; */
             /* position: relative; */
             /* width: 100%; */
@@ -143,16 +145,6 @@
         #script-output {
             font-size: 0.9rem;
             padding: 0;
-        }
-
-        .event-span {
-            border: 2px solid lightgray;
-            height: 43vh;
-        }
-
-        #eventSpan {
-            height: 42vh;
-
         }
 
         .card-header {
@@ -195,6 +187,34 @@
 
         #script-output td {
             padding: 2px 2px;
+        }
+
+        /* .vis-item.green {
+            background-color: Aquamarine;
+            border-color: teal;
+        }
+ */
+
+        h6 a {
+            color: DarkSlateGray;
+        }
+
+        /*
+        h6 a:active {
+            color: DarkSlateGray;
+        }
+
+        h6 a:link {
+            color: DarkSlateGray;
+        }
+
+        h6 a:visited {
+            color: DarkSlateGray;
+        }
+*/
+
+        h6 a:hover {
+            color: teal;
         }
 
         td.ft {
@@ -393,6 +413,7 @@
             F_onEnter = ' onenter',
             F_onExit = ' onexit',
             F_function = ' function',
+            F_active = ' active',
 
             I_Folder = 'folder',
             I_FolderAd = 'create_new_folder',
@@ -444,7 +465,7 @@
             adapterNameDot = adapterName + '.',
 
 
-            regIdAction = /^\s*([^\!\&\=\~]+)(&\s*)?(!\s*)?(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=\?\s*|\=.+|\s*)$/,
+            regIdAction = /^\s*([^\/\!\&\=\~]+)(&\s*)?(!\s*)?(\/\s*)?(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=\?\s*|\=.+|\s*)$/,
             regEval = /^\s*(\(.+\))\s*$/,
             regExec = /^\s*\$\s*(.+)$/,
             regAstro = /^\s*@\s*([A-Z]+)\s*([\+\-]\d+)?\s*$/i,
@@ -468,6 +489,7 @@
                 sstate: {},
                 icons: {},
                 svalues: {},
+                history: {},
                 currentId: null,
                 currentHost: '',
                 hosts: [],
@@ -564,6 +586,49 @@
                     if (id.startsWith(adapterNameDot))
                         addEvent(obj, `Object Change:${id}`);
                 },
+                addHistory: function (id, state) {
+                    var h = main.history[id] ? main.history[id] : (main.history[id] = {});
+                    h[state.ts] = {
+                        ts: new Date(parseInt(state.ts)),
+                        val: state.val,
+                        ack: state.ack,
+                        from: state.from
+                    };
+                    var lname = id.slice(main.instanceName(true).length);
+                    if (idList[lname] && idList[lname][F_type] === MACHINE) {
+                        var mach = idList[lname];
+                        var oldst = mach[F_active];
+                        var nst = mach[F_active] = getValue(lname);
+                        var oid = lname +'.' + oldst;
+                        var nid = lname + '.' + nst;
+                        if (ndata && ndata.nodes) {
+                            var on = ndata.nodes.get(oldst);
+                            if (on) {
+                                on.shapeProperties =  { borderDashes: true };
+                                ndata.nodes.update(on);
+                            }
+                            var on = ndata.nodes.get(nst);
+                            if (on) {
+                                on.shapeProperties =  { borderDashes: false };
+                                ndata.nodes.update(on);
+                            }
+                        }
+                        $('#table-data').find('[data-tt-id="'+oid+'"]').find('td.id-field').removeClass('lighten-4').removeClass('teal');
+                        $('#table-data').find('[data-tt-id="'+nid+'"]').find('td.id-field').addClass('teal').addClass('lighten-4');
+                    } 
+                    addVal(h[state.ts], lname,false);
+                },
+                getHistory: function (id) {
+                    var h = main.history[id];
+                    if (!h)
+                        h = main.history[main.instanceName(id)];
+                    if (!h)
+                        return [];
+                    var r = [];
+                    for (var i of ownKeys(h))
+                        r.push(h[i]);
+                    return r;
+                },
                 stateChange: function (id, state) {
                     var os = cloneObject(main.states[id] || {});
                     var s = {
@@ -583,9 +648,11 @@
                             // console.log(id + ': ' + oToString(s));
                             if (id == main.currentId + debugLevel)
                                 setDebug(state.val, false);
-                            if (main.svalues[id])
+                            if (main.svalues[id]) {
                                 $(`span[s-v="${id}"`).html(getValue(id, true));
-                            /// TODO: check machine states to display them!
+                                /// TODO: check machine states to display them!
+                                main.addHistory(id, state);
+                            }
                         }
                     }
                     //id = id ? id.replace(/[\s'"]/g, '_') : ''; /// TODO - do not know what it does!
@@ -713,6 +780,16 @@
                 init: function (callb) {
                     if (callb)
                         main.connectCb = callb;
+                    main.socket.removeAllListeners('permissionError');
+                    main.socket.removeAllListeners('objectChange');
+                    main.socket.removeAllListeners('onUpdate');
+                    main.socket.removeAllListeners('stateChange');
+                    main.socket.removeAllListeners('connect');
+                    main.socket.removeAllListeners('disconnect');
+                    main.socket.removeAllListeners('reconnect');
+                    main.socket.removeAllListeners('reauthenticate');
+                    main.socket.removeAllListeners('log');
+
                     main.socket.on('permissionError', function (err) {
                         showMessage(_('Has no permission to %s %s %s', err.operation, err.type, (
                             err.id ||
@@ -840,10 +917,15 @@
             return makeSel(sel).toggleClass('disabled', !value);
         }
 
-        function getValue(id, html) {
+        function getValue(id, html, s1) {
             var s = main.states[id];
+            if (!s) {
+                id = main.instanceName(id);
+                s = main.states[id];
+            }
             if (!s)
                 return null;
+            if (s1) s = s1;
             main.svalues[id] = true;
             var t = '' + s.val;
             var c = main.objects[id].common;
@@ -854,7 +936,7 @@
                         if (ss[0] == s.val)
                             t = ss[1];
                     });
-                if (c.unit)
+                if (c.unit && c.type == 'number')
                     t += ' ' + c.unit;
             }
             if (html) {
@@ -1297,29 +1379,6 @@
                 '#input-add-state', () => setTimeout(doCreateState, 20, 'new', curId));
             newClick(
                 '.input-add-link', () => setTimeout(doCreateLink, 20));
-            newClick($('div.table-interface').find(
-                'a.input-execute'), () => setTimeout(() => {
-                var id = idList[curId];
-                var mid;
-                var vid = curId.split('.').slice(-1)[0];
-                switch (id[F_type]) {
-                    case TIMER:
-                    case STATE:
-                        mid = curId.split('.').slice(0, -1).join('.');
-                        break;
-                    case LINK:
-                        mid = curId.split('.').slice(0, vid.startsWith(autoLink) ? -1 : -2).join('.');
-                        if (vid.startsWith(autoLink))
-                            vid = vid.slice(1);
-                        break;
-                    case SCENE:
-                    case EVENT:
-                        mid = curId;
-                        vid = main.states[curId] && main.states[curId].val;
-                        break;
-                }
-                main.setState(mid, vid);
-            }, 0));
             newClick(
                 '#tab-events-content thead tr',
                 function () {
@@ -1340,7 +1399,7 @@
             var idt = {} // check if multiple items with same id exist, can be removed in production
             $('#script-down').click(function () {
                 if (main.$parentOutput)
-                    main.$parentOutput.scrollTop($('#script-output').height() + 50);                
+                    main.$parentOutput.scrollTop($('#script-output').height() + 50);
             }).css('cursor', 'pointer');
             $('#script-delete').click(function () {
                 $('#script-output').html('');
@@ -1351,6 +1410,38 @@
                 if (idt[id] > 1)
                     console.log('double HTML-id: ' + id);
             });
+            $('#vis-fit').click(function () {
+                if (network)
+                    network.fit();
+            }).css('cursor', 'pointer');
+            $('#vis-delete').click(function () {
+                var d = Number.POSITIVE_INFINITY;
+                for (var k in main.history) {
+                    var h = main.history[k];
+                    var lk = parseInt(ownKeysSorted(h).slice(-1)[0]);
+                    var nk = {
+                        [lk]: h[lk]
+                    };
+                    main.history[k] = nk;
+                    if (d > lk)
+                        d = lk;
+                }
+                startDate = new Date(d);
+                if (network && network.timeAxis) {
+                    ndata = {};
+                    setTimeout(doMachine, 5, curId);
+                }
+            }).css('cursor', 'pointer');
+            $('#vis-delete-all').click(function () {
+                for (var k in main.history) {
+                    main.history[k] = {};
+                }
+                startDate = new Date();
+                if (network && network.timeAxis) {
+                    ndata = {};
+                    setTimeout(doMachine, 5, curId);
+                }
+            }).css('cursor', 'pointer');
 
         }
 
@@ -1429,14 +1520,15 @@
             }
             if (!(m = name.match(regIdAction)))
                 return null;
-            c.exec = m[4] ? m[4].trim() : '';
+            c.exec = m[5] ? m[5].trim() : '';
+            c.always = !!m[4];
             c.ack = !!m[3];
             c.queue = !!m[2];
             //                c.ack = m[1] ? m[1] : undefined;
             c.idn = m[1] ? m[1].trim() : undefined;
             var id = main.sstate[c.idn];
             var ce = {
-                '': 'debugfrom Input ',
+                '': 'Set Input ',
                 '~': "Toggle ",
                 '=+': "Set On ",
                 '=-': "Set Off ",
@@ -1450,6 +1542,8 @@
                 c.text += ' queued';
             if (c.ack)
                 c.text += ' with ack';
+            if (c.always)
+                c.text += ' always';
             c.image = getIcon(c.idn);
             if (!c.image)
                 c.image = 'lib/img/run.png';
@@ -1835,13 +1929,26 @@
             var wic = 0;
             var disabled = (obj && obj[F_disabled]) || dis;
             var type;
+            var mach; 
+            if (icon === I_State || icon === I_Timer) {
+                mach = parent;
+                mach = getValue(parent,false);
+                obj[F_active] = mach;
+            } else if (icon === I_Machine) {
+                obj[F_active] = getValue(id,false);
+            }  
             var html =
                 `<tr data-tt-id="${id}"${parent ? ' data-tt-parent-id="' + parent +'"' : ''}><td  class="ft ${disabled ? ' disabled' : ''}" width="${wi[wic++]}"><span><i class="material-icons tiny right">${icon}</i>&nbsp;${name}</span>&nbsp;&nbsp;</td>`;
             html +=
-                `<td class="fd" width="${wi[wic++]}">${id}</td><td class="fd" width="${wi[wic++]}">`
-            if ([I_Machine, I_Folder, I_Event, I_Scene].indexOf(icon) >= 0 && id !== '_init')
-                //                        html += `<span><input type="checkbox" id="d-${id}" ${disabled ? '' : 'checked="checked"'}/><label for="d-${id}">Enabled</label></span>`;
+                `<td class="fd id-field${mach === name ? ' teal lighten-4' : ''}" width="${wi[wic++]}">${id}`;
+            if ([I_Machine, I_Folder].indexOf(icon) < 0 && id !== '_debugLevel')
                 html +=
+                `<a title="Run Item" class="input-execute btn-floating btn btn-small waves-effect waves-light orange right">
+                    <i class="material-icons" my-icon="Event">${I_Event}</i></a>`;
+            html += `</td><td class="fd" width="${wi[wic++]}">`;
+            if ([I_Machine, I_Folder, I_Event, I_Scene].indexOf(icon) >= 0 && id !== '_init' && id !== '_debugLevel')
+                //                        html += `<span><input type="checkbox" id="d-${id}" ${disabled ? '' : 'checked="checked"'}/><label for="d-${id}">Enabled</label></span>`;
+            html +=
                 `<div class="switch left"><label>Off<input class="is-disabled" type="checkbox" ${disabled ? '' : 'checked="checked"'}><span class="lever"></span>On</label></div>`;
             html += '&nbsp;';
             if ([I_Machine, I_Event, I_Scene].indexOf(icon) >= 0)
@@ -1909,12 +2016,14 @@
             }, true);
 
             function autoexpand(obj, id) {
-                if (obj && obj[F_expanded])
+                if (!obj || typeof obj !== 'object')
+                    return;
+                if (obj[F_expanded])
                     $table.treetable("expandNode", id);
-                ownKeys(obj).forEach(function (k) {
+                for(var k of ownKeys(obj))
+                    if (k.match(/^[ \*]/))
+                        continue;
                     autoexpand(obj[k], id ? id + '.' + k : k);
-                });
-
             }
             autoexpand(workTree.folders, '');
             // Highlight selected row
@@ -2092,10 +2201,14 @@
                 $('#input-machine,#input-event').val(curMachine = '');
                 $('#input-scene').val(curScene = getThisName(x));
                 $('#input-name-scene').val(curScene);
+            } else if (x2 === FOLDER) {
+                $('#input-machine,#input-event,#input-scene').val(curScene = curEvent = curMachine = '');
+                $('#input-folder').val(curFolder = getThisName(x));
+                $('#input-name-folder').val(curFolder);
             }
             $('input.mach-val').removeClass('invalid');
             $('div.input-table').hide();
-            $('#input-table-' + ty).show().find('span.input-value').prop('s-v', main.instanceName(curId)).html(getValue(
+            $('#input-table-' + ty).show().find('span.input-value').attr('s-v', main.instanceName(curId)).html(getValue(
                 main.instanceName(curId), true));
             var show = [];
             enableDisable('#input-rename-' + ty);
@@ -2191,7 +2304,7 @@
             Materialize.updateTextFields();
             // addEvent(ido, "Select Row");
             $this.addClass("selected blue lighten-4");
-            doMachine(curId);
+            setTimeout(doMachine, 10, curId);
         }
 
         function rebindTableCommands() {
@@ -2214,32 +2327,157 @@
                 $('#table-data').find("td.ft").each(function (i, e) {
                     var cid = $(this).closest('tr').data('ttId');
                     if (cid && cid.startsWith(id + '.'))
-                        $(this).toggleClass('disabled', !(en && (idList[cid] && !idList[cid][
-                            flds
-                            .disabled
-                        ])));
+                        $(this).toggleClass('disabled', !(en && (idList[cid] && !idList[cid].disabled)));
                 });
                 main.setState(id + stateDisabled, !en);
                 checkConfig();
                 //                showMessage(id + (this.checked ? ' enabled' : ' disabled'));
             });
+            offOn($('#table-data').find('a.input-execute'), 'mousedown', function (e) {
+                e.stopImmediatePropagation();
+                setTimeout((e, that) => {
+                    var tr = $(that).closest('tr');
+                    var cid = tr.data('ttId');
+                    var mid;
+                    var vid = cid.split('.').slice(-1)[0];
+                    var id = idList[cid];
+                    switch (id[F_type]) {
+                        case TIMER:
+                        case STATE:
+                            mid = cid.split('.').slice(0, -1).join('.');
+                            break;
+                        case LINK:
+                            mid = cid.split('.').slice(0, vid.startsWith(autoLink) ? -1 : -2).join(
+                                '.');
+                            if (vid.startsWith(autoLink))
+                                vid = vid.slice(1);
+                            break;
+                        case SCENE:
+                        case EVENT:
+                            mid = main.instanceName(cid);
+                            vid = main.states[mid] && main.states[mid].val;
+                            break;
+                    }
+                    main.setState(mid, vid);;
+                }, 0, e, this);
+                return false;
+            });
+
             checkConfig();
         }
 
-        var omachine, network, ndata;
+
+        var omachine, network, ndata, startDate = new Date();
+
+        function setNWindow() {
+            if (!ndata || !ndata.istimeline || !network)
+                return;
+            var start = null;
+            var end = new Date(Date.now() + 5000);
+            if (!ndata.data.length)
+                start = new Date();
+            else if (ndata.data.length < 10)
+                start = startDate;
+            if (network && network.timeAxis) {
+                var r = network.getItemRange();
+                if (!r) return;
+                var min = (r.min &&
+                    r.min.valueOf()) || startDate;
+                var max = (r.max && r.max.valueOf()) || new Date();
+                end = Math.floor((max - min) / 0.93) + min;
+                network.setWindow(start, new Date(end));
+            }
+        }
+
+        function addVal(i, id, nowin) {
+            // console.log(id, i);
+            if (!ndata || !ndata.istimeline || !id || !i)
+                return;
+            if (!ndata.groups || !ndata.groups.get(id))
+                return;
+            var item = {
+                id: '' + i.ts.valueOf() + id,
+                group: id,
+                start: i.ts,
+                title: new Date(i.ts.valueOf() - (new Date().getTimezoneOffset() * 60000)).toISOString().replace(
+                    'T', '<br>').replace('Z', '')
+            };
+            item.content = typeof i.val === 'boolean' ?
+                `<i class="tiny material-icons">${i.val ? 'add_circle' : 'remove_circle_outline'}</i>` : getValue(id,
+                    true, i);
+            if (i.from)
+                item.title += '<br>' + (i.from.startsWith('system.adapter.') ? i.from.slice(15) : i.from);
+            if (!i.ack)
+                item.className = 'teal lighten-3';
+            //            if (i.ack)
+            //            item.type = 'point';
+            ndata.data.add(item);
+            if (!nowin)
+                setNWindow();
+        }
 
         function doMachine(curId) {
+            var container = document.getElementById('mynetwork');
             var id = (curFolder ? curFolder + '.' : '') + curMachine;
             var ido = idList[id];
-            if (!ido || ido[F_type] !== MACHINE)
-                return $('#mynetwork').hide();
+            if (!ido || ido[F_type] !== MACHINE) {
+                omachine = '***';
+                if (ndata && ndata.istimeline && curFolder === ndata.folder)
+                    return network ? network.setWindow(null, new Date()) : null;
+                if (network)
+                    network.destroy();
+                $('#mynetwork').html('');
+                var groups = new vis.DataSet();
+                var data = new vis.DataSet();
+                ndata = {
+                    data: data,
+                    folder: curFolder,
+                    groups: groups,
+                    istimeline: true
+                };
+                for (var k of ownKeysSorted(workTree.folders[curFolder ? curFolder : '']))
+                    if (k.startsWith(' '))
+                        continue;
+                    else {
+                        var id = (curFolder ? curFolder + '.' : '') + k;
+                        if (id === '_init')
+                            continue;
+                        groups.add({
+                            id: id,
+                            order: groups.length,
+                            content: id
+                        });
+                        for (var i of main.getHistory(id))
+                            addVal(i, id, true);
+                    }
+                var options = {
+                    showCurrentTime: false,
+                    start: startDate
+                };
+                network = new vis.Timeline(container, data, groups, options);
+                $('#mynetwork').show();
+                setNWindow();
+                return;
+            }
+            if (ndata && ndata.istimeline) {
+                if (network) {
+                    try {
+                        network.destroy();
+                    } catch (e) {};
+                    network = null;
+                }
+                $('#mynetwork').html('');
+            }
+            $('#event-span').show();
             $('#mynetwork').show();
             if (omachine !== id) {
-                var container = document.getElementById('mynetwork');
                 var options = {
                     nodes: {
                         borderWidth: 3,
                         borderWidthSelected: 6,
+                        shapeProperties: {
+                            borderDashes: true,
+                        },
                         size: 30,
                     },
                     edges: {
@@ -2251,7 +2489,7 @@
                             }
                         },
                         font: {
-                          size: 18
+                            size: 18
                         },
                         arrowStrikethrough: false,
                         selfReferenceSize: 40,
@@ -2276,6 +2514,9 @@
                         id: curMachine,
                         label: curMachine,
                         shape: 'star',
+                        shapeProperties: {
+                            borderDashes: !!ido[F_disabled],
+                        },
                         title: id,
                         font: {
                             size: 30
@@ -2314,7 +2555,7 @@
                         var st = ido[nf];
                         var it = st[F_type] === TIMER;
                         var aid = id + '.' + nf;
-                        nodes.push({
+                        var nn = {
                             label: nf,
                             id: nf,
                             title: aid,
@@ -2333,7 +2574,11 @@
                                 background: 'lightblue',
                                 border: 'darkblue'
                             }
-                        });
+                        };
+                        nn.shapeProperties =  {
+                            borderDashes: ido[F_active] !== nf 
+                        };
+                        nodes.push(nn);
                         if (it) {
                             var to = st[F_timeout];
                             edges.push({
@@ -2365,7 +2610,8 @@
 
                 ndata = {
                     nodes: new vis.DataSet(nodes),
-                    edges: new vis.DataSet(edges)
+                    edges: new vis.DataSet(edges),
+                    folder: '***'
                 };
                 network = new vis.Network(container, ndata, options);
                 network.on("selectNode", function (params) {
@@ -2396,7 +2642,7 @@
                 });
             }
 
-            if (curId.startsWith(omachine)) {
+            if (curId.startsWith(omachine) && network) {
                 var sta = curId.slice(omachine.length + 1).split('.');
                 if (sta.length == 2)
                     network.selectEdges([sta.join('>')]);
@@ -2784,11 +3030,6 @@
                         <label for="input-name-scene" class="active">Scene Name</label>
                     </div>
                     <div class="col s3">
-                        <div class='left'>
-                            <a title="Run Scene" class="input-execute btn-floating btn btn-small waves-effect waves-light orange">
-                                <i class="material-icons" my-icon="Event"></i>
-                            </a>
-                        </div>
                         <div class='right'>
                             <a id="input-rename-scene" title="Rename Scene" class="input-rename btn-floating btn btn-small waves-effect waves-light blue disabled">
                                 <i class="material-icons" my-icon="Rename"></i>
@@ -2812,11 +3053,6 @@
                         <label for="input-name-event" class="active">Event Name</label>
                     </div>
                     <div class="col s3">
-                        <div class='left'>
-                            <a title="Execute Event" class="input-execute btn-floating btn btn-small waves-effect waves-light orange">
-                                <i class="material-icons" my-icon="Event"></i>
-                            </a>
-                        </div>
                         <div class='right'>
                             <a id="input-rename-event" title="Rename Event" class="input-rename btn-floating btn btn-small waves-effect waves-light blue disabled">
                                 <i class="material-icons" my-icon="Rename"></i>
@@ -2879,11 +3115,6 @@
                         <label for="input-name-state" class="active">State</label>
                     </div>
                     <div class="col s3">
-                        <div class='left'>
-                            <a title="Goto State" class="input-execute btn-floating btn btn-small waves-effect waves-light orange">
-                                <i class="material-icons" my-icon="Event"></i>
-                            </a>
-                        </div>
                         <div class='right'>
                             <a title="Add Link" class="btn-floating btn btn-small waves-effect waves-light teal input-add-link">
                                 <i class="material-icons" my-icon="Link"></i>
@@ -2905,11 +3136,6 @@
                         <label for="input-name-timer" class="active">State</label>
                     </div>
                     <div class="col s3">
-                        <div class='left'>
-                            <a title="Goto State" class="input-execute btn-floating btn btn-small waves-effect waves-light orange">
-                                <i class="material-icons" my-icon="Event"></i>
-                            </a>
-                        </div>
                         <div class='right'>
                             <a title="Add Link" class="btn-floating btn btn-small waves-effect waves-light teal input-add-link">
                                 <i class="material-icons" my-icon="Link"></i>
@@ -2939,11 +3165,6 @@
                         <label id="input-link-from">from</label>
                     </div>
                     <div class="col s3">
-                        <div class='left'>
-                            <a title="Goto State" class="input-execute btn-floating btn btn-small waves-effect waves-light orange">
-                                <i class="material-icons" my-icon="Event"></i>
-                            </a>
-                        </div>
                         <div class='right'>
                             <!--a id="input-rename-link" title="Save Change" class="btn-floating btn btn-small waves-effect waves-light blue disabled">
                                 <i class="material-icons" my-icon="Rename"></i>
@@ -3024,12 +3245,59 @@
                 </div>
                 <div id="input-action-help" class="input-table input-table-help row">
                     <div class "col s12">
+                        <h6>Help on Actions: [] = optional, + = one or more, 1-9 = numbers, a-Z letters, a-9 = numbers or letters,
+                            * = all or '-' or '_'</h6>
                         <ul class="collapsible popout" data-collapsible="accordion">
                             <li>
                                 <div class="collapsible-header">
-                                    <i class="material-icons">help</i>Help on Actions!</div>
+                                    <i class="material-icons">hourglass_empty</i>delay: [0-9+m][0-9+s][0-9+][ms], at least one group of numbers must
+                                    be present!</div>
                                 <div class="collapsible-body">
-                                    <span>Lorem ipsum dolor sit amet.</span>
+                                    Examples: 100 or 100ms = 100ms, 10s = 10 seconds, 1m30s = 1 monute 30 seconds
+                                </div>
+                            </li>
+                            <li>
+                                <div class="collapsible-header">
+                                    <i class="material-icons">attach_money</i>command: $ * with @0-9 for args, @a-9+ for states or @(*) for eval</div>
+                                <div class="collapsible-body">
+                                    Examples:
+                                    <br> $ iobroker backup $ echo @(@0 ? 1 : 0) > /sys/class/leds/green_led/brightness
+                                    <br> $ echo @folder.state > wherever => would echo the value of folder.state
+                                    <br>$ echo @0,@1,@2 => would echo the new value of the event, and the inpit values #1 and
+                                    #2
+                                </div>
+                            </li>
+                            <li>
+                                <div class="collapsible-header">
+                                    <i class="material-icons">slideshow</i>eval: (*) with @0-9 for args or @a-9+ for states</div>
+                                <div class="collapsible-body">
+                                    Examples:
+                                    <br> (@0 ? 1 : 0) => return 1 if value is true and 0 if not
+                                    <br> (Math.round( (@1 + @2 + @3)/3)) => would calculate the average of 3 input values
+                                    <br> (!@folder.state) => would return the boolean inverse of folder.state
+                                </div>
+                            </li>
+                            <li>
+                                <div class="collapsible-header">
+                                    <i class="material-icons">flash_on</i>id/name: a-9+[&amp;][!][~|=+|=-|=!|=?|= value or (*)]</div>
+                                <div class="collapsible-body">
+                                    <code>&amp;</code>: queues the output with queue time (must be first) and
+                                    <code>!</code>: sets ack (default no Ack) can be after the id as a modifier.
+                                    <br>
+                                    <code>~</code>: toggle state (true/false),
+                                    <code>=+, =-</code>: set output to true(+) or false(-),
+                                    <br>
+                                    <code>=? , =!</code>: set the output to the new event value (=?) or to the negated event value
+                                    (=!)
+                                    <br>
+                                    <code>=value , =(eval text)</code>: set the output to the value or to en evaluated value
+                                    <br> Examples:
+                                    <br> BewegungsmelderEingang.BRIGHTNESS => would set this state to the new value of the event
+                                    <br>
+                                    <code>GPIO.7=(@0>20)</code> => would set the state GPIO.7 to true if the event has a value
+                                    greater than 20
+                                    <br>
+                                    <code>GPIO.7~</code> => would toggle GPIO.7
                                 </div>
                             </li>
                         </ul>
@@ -3038,20 +3306,32 @@
             </div>
         </div>
         <div class="row">
-            <div class="col s6">
-                <h6>Machine Selections</h6>
-                <div class="event-span">
+            <div class="col s6 no-padding">
+                <h6>Machine/event/scene views
+                    <a id="vis-fit" title="Fit data">&nbsp;
+                        <i class="tiny material-icons">settings_overscan</i>&nbsp;</a>
+                    <a id="vis-delete" title="Empty Log to last entry">&nbsp;
+                        <i class="tiny material-icons">delete_forever</i>&nbsp;</a>
+                    <a id="vis-delete-all" title="Delete all log entries">&nbsp;
+                        <i class="tiny material-icons">delete</i>&nbsp;</a>
+                </h6>
+                <div id="event-span">
                     <div id="mynetwork"></div>
                 </div>
             </div>
-            <div class="col s6 no-padding">
-                <h6></h6>Debug log <a id="script-down" title="Scroll to end" >&nbsp;<i class="tiny material-icons">file_download</i>&nbsp;</a><a id="script-delete" title="Empty Log">&nbsp;<i class="tiny material-icons">delete</i>&nbsp;</a></h6>
+            <div class="col s6">
+                <h6>Debug log (newest on bottom)
+                    <a id="script-down" title="Scroll to end">&nbsp;
+                        <i class="tiny material-icons">file_download</i>&nbsp;</a>
+                    <a id="script-delete" title="Empty Log">&nbsp;
+                        <i class="tiny material-icons">delete</i>&nbsp;</a>
+                </h6>
                 <div id='log-data' style="overflow-x: auto; overflow-y: auto" comment="; width: calc(100% - 30px)">
                     <table style="width: 100%">
                         <thead>
-                            <tr width="80px"></tr>
-                            <tr width="50px"></tr>
-                            <tr width="*"></tr>
+                            <th width="85px">Time</th>
+                            <th width="50px">Severity</th>
+                            <th width="*">Message</th>
                         </thead>
                         <tbody id="script-output"></tbody>
                     </table>

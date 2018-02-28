@@ -23,21 +23,17 @@ A.allStates = SM.allStates;
 /*jshint -W098 */
 
 function main() {
-    function tick() {
-        A.makeState('Event3', (++v > 3 ? (v = 0) : v), false).then(() =>
-            A.makeState('timer', A.dateTime(), false));
-    }
     var mf = SM.init(adapter.config);
     var mstates = A.sstate;
     var ids = SM.ids;
     var v = 0;
-    var s = new A.Sequence();
+    var s = new A.Sequence(mf);
     s.p = A.makeState({
             id: '_debugLevel',
             //        state: 'state',
             role: 'level',
             write: true
-        }, 1, false);
+        }, SM.debug, false);
     s.p = A.makeState({
             id: 'Event3',
             state: 'state',
@@ -49,8 +45,8 @@ function main() {
             state: 'state',
             role: 'value',
             write: true
-        }, "", false);
-    s.p = A.wait(5000).then(() => tick());
-    setInterval(tick, 60000);
-
+        }, 0, false);
+    s.p.then(() => A.I('started'));
+    setInterval(() => A.makeState('Event3', (++v > 3 ? (v = 0) : v), false), 29000);
+    setInterval(() => A.makeState('timer', new Date().getSeconds(), false), 10000);
 }

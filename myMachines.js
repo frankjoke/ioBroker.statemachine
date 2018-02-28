@@ -54,7 +54,7 @@ const REGEXP = 'regexp',
     F_onEnter = ' onenter',
     F_onExit = ' onexit',
     F_function = ' function',
-    regIdAction = /^\s*([^\!\&\=\~]+)(&\s*)?(!\s*)?(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=\?\s*|\=.+|\s*)$/,
+    regIdAction = /^\s*([^\/\!\&\=\~]+)(&\s*)?(!\s*)?(\/\s*)?(\~\s*|\=\+\s*|\=\-\s*|\=\!\s*|\=\?\s*|\=.+|\s*)$/,
     regEval = /^\s*(\(.+\))\s*$/,
     regExec = /^\s*\$\s*(.+)$/,
     regAstro = /^\s*@\s*([A-Z]+)\s*([\+\-]\d+)?\s*$/i,
@@ -69,17 +69,20 @@ const REGEXP = 'regexp',
 
 
 const stateDisabled = '._disabled',
-    stateDebug = '_debugLevel',
+    stateDebug = '_debugLevel';
+
+var setter, queueAll, stq,
     ids = {},
     everys = new List(),
     schedules = new List(),
     eids = new List(),
     rids = new List(),
-    astros = new List();
+    astros = new List(),
+    eevents = new List();
 
-var setter,
-    queueAll,
-    stq;
+function stripFrom(from) {
+    return from.startsWith('system.adapter.') ? from.slice(15) : from;
+}
 
 class MState {
     constructor(options, idfrom, last) {
@@ -96,9 +99,9 @@ class MState {
         this.old = options;
         this.last = last;
         if (typeof idfrom === 'string')
-            this.id = idfrom;
+            this.id = stripFrom(idfrom);
         else if (A.T(idfrom) === 'object' && idfrom.id)
-            this.id = idfrom.id;
+            this.id = stripFrom(idfrom.id);
         return this;
     }
 
@@ -109,15 +112,15 @@ class MState {
         var from = this.id ? this.id : '';
         if (this.old && this.old.from) {
             if (from)
-                from += ' | ' + this.old.from;
+                from += ' | ' + stripFrom(this.old.from);
             else
-                from = this.old.from;
+                from = stripFrom(this.old.from);
         }
         return from;
     }
     get sfrom() {
         var from = this.from;
-        return from.length > 52 ? from.slice(0, 25) + ' ... ' + from.slice(-25) : from;
+        return from.length > 75 ? from.slice(0, 37) + ' ... ' + from.slice(-37) : from;
     }
 
     hasLast(last) {
@@ -282,7 +285,7 @@ class SEvent {
         this._ack = m[2];
         this._id = m[1].trim();
         if (this._type === IDNAME && this._id.indexOf('*') >= 0) {
-            this._id = '/' + this._id.replace('.', '\.').replace(/\*/g, '.*') + '/';
+            this._id = '/^' + this._id.replace('.', '\.').replace(/\*/g, '.*') + '$/';
             this._type = REGEXP;
         }
         if (this._type === REGEXP) {
@@ -311,12 +314,56 @@ class SEvent {
                 eids.add(this._id, e);
                 break;
             case REGEXP:
-                rids.add('' + this._regexp, e);
+                rids.add(this._regexp, e);
                 break;
             case ASTRO:
                 astros.add(this._astro, e);
                 break;
         }
+    }
+
+    doFire(state) {
+        if (this._type !== IDNAME && this._type !== REGEXP)
+            return true;
+        if (this._onchange && state && state.old)
+            if (state.ack === state.old.ack && state.val === state.old.val)
+                return false;
+        if (this._ack === '&' && !state.ack)
+            return false;
+        if (this.ack === '!' && state.ack)
+            return false;
+        var last = this._test ? this._test : (state && state.old && state.old.val);
+        switch (this._check) {
+            case '+':
+                return !!state.val;
+            case '-':
+                return !state.val;
+            case '=':
+                /* jshint -W116 */
+                return state.val == last;
+            case '!=':
+                return state.val != last;
+            case '>':
+                /* jshint +W116 */
+                return state.val > last;
+            case '>=':
+                return state.val >= last;
+            case '<':
+                return state.val < last;
+            case '<=':
+                return state.val <= last;
+            case '?':
+                return state.val.indexOf(last) >= 0;
+            case '#':
+                return state.val.indexOf(last) < 0;
+            case '^':
+                return state.val.startsWith(last);
+            case '$':
+                return state.val.endsWith(last);
+            default:
+                return true;
+        }
+        return true;
     }
 }
 
@@ -367,7 +414,23 @@ class SAction {
         } // exec command on system
         if ((m = name.match(regExec))) {
             this._cmd = m[1].trim();
-            this._fun = (that) => myExec(that._cmd, that.parent.parent._vars);
+            this._fun = (that) => {
+                var fun = that._cmd;
+                var args = that.parent.parent._vars;
+                var nf = Array.isArray(args) ? fun.replace(/@(\d+)/g, (match, p1) => args[p1]) : fun;
+                var mp = new A.Sequence();
+                var mn = 0,
+                    m = [];
+                nf = nf.replace(/@(?!\()([\w\-\$\.]+)/g, (match, p1) => {
+                    var ret = '@' + mn++;
+                    mp.p = A.myGetState(p1).then(x => x.val, () => undefined).then(v => m.push(v));
+                    return ret;
+                });
+                nf = nf.replace('@@', '@');
+                nf = nf.replace(/@(\([^\(\)]+\))/g, (match, p1) => eval(p1));
+                return mp.p.then(() => nf.replace(/@(\d+)/g, (match, p1) => m[p1]))
+                    .then(f => A.exec(f)).then(x => x, x => x);
+            };
             // this._type = EXEC;
             return this;
         } // eval javascript
@@ -381,27 +444,28 @@ class SAction {
         if (!(m = name.match(regIdAction)))
             return A.W(`Invalid Action '${name}'`);
         // this._type = STATE;
-        this._exec = m[4] ? m[4].trim() : '';
+        this._exec = m[5] ? m[5].trim() : '';
+        this._always = !!m[4];
         this._ack = !!m[3];
         this._queue = !!m[2];
         this._id = m[1].trim();
         switch (this._exec) {
             case '~':
-                this._fun = (that) => A.myGetState(that._id).then((st) => mySetState(that._queue, that._id, !st.val, that._ack));
+                this._fun = (that) => A.myGetState(that._id).then((st) => mySetState(that._queue, that._id, !st.val, that._ack, that._always));
                 break;
             case '=+':
-                this._fun = (that) => mySetState(that._queue, that._id, true, that._ack);
+                this._fun = (that) => mySetState(that._queue, that._id, true, that._ack, that._always);
                 break;
             case '=-':
-                this._fun = (that) => mySetState(that._queue, that._id, false, that._ack);
+                this._fun = (that) => mySetState(that._queue, that._id, false, that._ack, that._always);
                 break;
             case '=!':
-                this._fun = (that, from) => mySetState(that._queue, that._id, !from.val, that._ack);
+                this._fun = (that, from) => mySetState(that._queue, that._id, !from.val, that._ack, that._always);
                 break;
             case '=?':
             case '':
             case undefined:
-                this._fun = (that, from) => mySetState(that._queue, that._id, from.val, that._ack);
+                this._fun = (that, from) => mySetState(that._queue, that._id, from.val, that._ack, that._always);
                 break;
             default:
                 if (this._exec && this._exec.startsWith('='))
@@ -409,15 +473,17 @@ class SAction {
                 if ((m = this._exec.match(/^\(.+\)$/)))
                     this._fun = (that, from) => A.myGetState(that._id)
                     .then((oval) => myEval(that._exec, [oval.val, from.val]))
-                    .then((val) => mySetState(that._queue, that._id, val, that._ack));
+                    .then((val) => mySetState(that._queue, that._id, val, that._ack, that._always));
                 else
-                    this._fun = (that) => mySetState(that._queue, that._id, that._exec, that._ack);
+                    this._fun = (that) => mySetState(that._queue, that._id, that._exec, that._ack, that._always);
                 break;
         }
         return this;
     }
 
     execute(from) {
+        if (this.parent.disabled)
+            return A.resolve();
         //        from = new MState(from, this._id, this);
         _D(3, `Execute "${this}" from: ${from.sfrom}`);
         return this._fun(this, from);
@@ -476,15 +542,16 @@ class Scene extends BaseSM {
             def: false,
             write: true,
         }, undefined, true);
-        if (this.id !== '_init')
-            A.addq = A.makeState({
+        if (this.id !== '_init' && this.id !== '_debugLevel')
+            A.addq = A.myGetState(this.id + stateDisabled).then((s) => s.val, () => this._disabled)
+            .then(e => A.makeState({
                 id: this.id + stateDisabled,
                 type: 'boolean',
                 role: 'switch',
                 icon: 'lib/img/power-off.png',
                 def: false,
                 write: true,
-            }, undefined, true);
+            }, e, true));
     }
     execute(from) {
         from = new MState(from, this.id, this);
@@ -501,7 +568,7 @@ class Scene extends BaseSM {
 
 class Event extends Scene {
     constructor(parent, obj, role) {
-        super(parent, obj, role ? role : 'value', 'lib/img/run.png');
+        super(parent, obj, role ? role : 'value', 'lib/img/flash.png');
         this._list = new Events(this, obj[F_fire]);
         this._vars = new Array(this._list.length + 1);
         this._function = obj[F_function];
@@ -515,9 +582,9 @@ class Event extends Scene {
         if (from.num && this._vars.length > from.num)
             this._vars[from.num] = from.val;
         var that = this;
-        return (this._function ? myEval(this._function, this._vars) : Promise.resolve(from.val))
+        return (this._function ? myEval(this._function, this._vars.concat(from.num)) : Promise.resolve(from.val))
             .then(v => {
-                _D(2, `Execute ${that} from: ${from.sfrom}`);
+                _D(2, `Set ${that}=${v} from: ${from.sfrom}`);
                 if (v !== undefined) {
                     from.val = that._vars[0] = v;
                     if (v !== vold)
@@ -638,7 +705,7 @@ class Machine extends BaseSM {
             def: false,
             write: true,
             states: this._list.map((x, n) => ('' + n + ':' + this._names[n])).join(';')
-        }, undefined, true);
+        }, undefined, true, false,true);
         A.addq = A.makeState({
             id: this.id + stateDisabled,
             type: 'boolean',
@@ -696,11 +763,14 @@ class TheEvent {
 
     fire(val) {
         var p = this.event.parent.parent;
-        return p.active ? p.execute({
-            val: val,
-            from: '' + this.event,
-            num: this.num
-        }) : Promise.resolve();
+        if (typeof val !== 'object' || !val.from)
+            val = {
+                val: val,
+                from: '' + this.event,
+            };
+        val.num = this.num;
+        var val1 = val.fid ? new MState(val, A.idName(val.fid)) : val;
+        return p.active && this.event.doFire(val) ? p.execute(val1) : Promise.resolve();
     }
 }
 
@@ -763,23 +833,8 @@ function myEval(fun, args) {
         return Promise.resolve(res);
     });
 }
-
-function myExec(fun, args) {
-    var nf = Array.isArray(args) ? fun.replace(/@(\d+)/g, (match, p1) => args[p1]) : fun;
-    var mp = Promise.resolve();
-    var mn = 0,
-        m = [];
-    nf = nf.replace(/@(?!\()([\w\-\$\.]+)/g, (match, p1) => {
-        var ret = '@' + mn++;
-        mp = mp.then(() => A.myGetState(p1)).then(x => x.val, () => undefined).then(v => m.push(v));
-        return ret;
-    });
-    nf = nf.replace('@@', '@');
-    nf = nf.replace(/@(\([^\(\)]+\))/g, (match, p1) => eval(p1));
-    return mp.then(() => nf.replace(/@(\d+)/g, (match, p1) => m[p1]))
-        .then(f => A.exec(f)).then(x => x, x => x);
-}
 /*jshint +W098 */
+
 function _setState(id, val, ack, allways) {
     if (allways === undefined)
         allways = true;
@@ -809,18 +864,31 @@ function mySetState(q, id, val, ack, allways) {
 }
 
 
-var eevents = new List();
 class StateMachine extends BaseSM {
     constructor() {
         super(null, 'stateMachine');
         return StateMachine;
     }
     static init(config) {
+        function eevp(id, i) {
+            return A.myGetState(id).
+            then(x => x && i.event.parent.parent._vars ?
+                    i.event.parent.parent._vars[i.num] = x.val : null)
+                .catch(() => null);
+        }
+
+        ids = {};
+        everys = new List();
+        schedules = new List();
+        eids = new List();
+        rids = new List();
+        astros = new List();
+        eevents = new List();
         let k;
         this._folders = [];
         this._debug = config.debugLevel;
         if (A.states[A.ain + stateDebug] !== undefined)
-            this.debug = A.states[A.ain + stateDebug];
+            this.debug = A.states[A.ain + stateDebug].val;
         stq = A.wait(10);
 
         //        for (let i of A.ownKeys(A.objects))
@@ -837,19 +905,21 @@ class StateMachine extends BaseSM {
         for (k in this._folders)
             this._folders[k].init();
 
-
+        var p = new A.Sequence();
 
         for (k in eids) {
             var l = eids[k];
             for (var i of l) {
                 var id = A.sstate[i.id];
-                if (!id) 
+                if (!id)
                     id = A.sstate[A.ain + i.id];
-                if (! id)
+                if (!id)
                     continue;
-                console.log(k + '('+ id+ '): ',i);
-//                A.adapter.subscribeForeignStates(id);
-                eevents.add(id,i);
+                //                console.log(k + '(' + id + '): ', i);
+                // A.adapter.subscribeForeignStates(id);
+                eevents.add(id, i);
+                if (i.num)
+                    p.add(eevp(id, i));
             }
         }
 
@@ -900,32 +970,46 @@ class StateMachine extends BaseSM {
     }
 
     static allStates(id, state) {
-        if (state && id.startsWith(A.ain)) {
-            _D(3, `set "${id}" to: ${A.O(state)}`);
-            var sid = id.slice(A.ain.length);
-            if (sid === stateDebug)
-                A.debug = (StateMachine.debug = state.val) > 2 ? true : state.val > 0 ? false : undefined;
-            if (!state.ack && ids[sid] && ids[sid].execute)
-                ids[sid].execute(state).catch(e => A.W(`AllStates: ${id} err: ${e}`));
-            A.states[id] = state;
-            // A.D(`${id}: ${A.O(state)}`);
-        } else if (A.states[id]) {
-            // TOTO process changes
-            // A.D(`set "${id}" to: ${A.O(state)}`);
-            A.states[id] = state;
+        var s = new A.Sequence();
+        if (state) {
+            if (!state.ack && id.startsWith(A.ain)) {
+                _D(3, `set "${id}" to: ${A.O(state)}`);
+                var sid = id.slice(A.ain.length);
+                if (sid === stateDebug)
+                    A.debug = (StateMachine.debug = state.val) > 2 ? true : state.val > 0 ? false : undefined;
+                else if (sid.endsWith(stateDisabled)) {
+                    sid = sid.slice(0, -stateDisabled.length);
+                    if (ids[sid])
+                        ids[sid].disabled = state.val;
+                } else if (ids[sid] && ids[sid].execute)
+                    s.add(ids[sid].execute(state).catch(e => A.W(`AllStates: ${id} err: ${e}`)));
+                // A.D(`${id}: ${A.O(state)}`);
+            }
+
+            state = A.clone(state);
+            state.old = A.states[id];
+            state.fid = id;
+            if (state.old && state.old.old)
+                delete state.old.old;
+            else if (state.old)
+                A.states[id] = state;
+
+            if (eevents[id]) {
+                // _D(3, `"${id}" triggers eid with: ${A.O(state)}`);
+                s.add(eevents.fireAll(id, state));
+            }
+
+            for (var r in rids)
+                if (id.match(rids[r][0].event._regexp)) {
+                    // _D(3, `"${id}" triggers rid with: ${A.O(state)}`);
+                    s.add(rids.fireAll(r, state));
+                }
         }
-        if (state && !id.startsWith('system.')) {
-            console.log(id + ': ', state);
-            if (eevents[id])
-                eevents.fireAll(id,state);
-        }
+        return s.p;
     }
 
     static get ids() {
         return ids;
-    }
-    static get folders() {
-        return this._folders;
     }
     static get debug() {
         return this._debug;
@@ -933,6 +1017,7 @@ class StateMachine extends BaseSM {
     static set debug(level) {
         level = parseInt(level);
         this._debug = A.debugLevel = level < 0 ? 0 : level > 3 ? 3 : level;
+        A.debug = level > 1;
         return this._debug;
     }
 }
@@ -940,11 +1025,10 @@ class StateMachine extends BaseSM {
 function _D(level, text, ret) {
     if (StateMachine.debug < level)
         return;
-    return level<2 ? A.I(text, ret) : A.D(text, ret);
+    return level < 3 ? A.I(text, ret) : A.D(text, ret);
 }
 
 // exports.Setter = Setter;
 // exports.CacheP = CacheP;
-// exports.ids = ids;
 exports.StateMachine = StateMachine;
 exports._D = _D;
