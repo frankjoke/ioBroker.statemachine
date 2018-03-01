@@ -19,9 +19,8 @@
     "url": "https://github.com/frankjoke/ioBroker.statemachine"
   },
   "dependencies": {
-    "moment": "^2.20.1",
     "node-schedule": "^1.2.5",
-    "vis": "^4.21.0"
+    "suncalc": "^1.8.0"
   },
   "devDependencies": {
     "grunt": "^1.0.1",
@@ -30,7 +29,9 @@
     "grunt-jscs": "^3.0.1",
     "grunt-http": "^2.2.0",
     "mocha": "^3.5.3",
-    "chai": "^4.1.2"
+    "chai": "^4.1.2",
+    "moment": "^2.20.1",
+    "vis": "^4.21.0"
   },
   "main": "statemachine.js",
   "scripts": {
