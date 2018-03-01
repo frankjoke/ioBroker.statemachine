@@ -15,7 +15,7 @@ Windows: [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/p
 ## Changelog
 
 #### 0.0.2
-* first public beta version
+* first public beta version working with adapter 2.0.9
 
 #### 0.0.1
 * initial commit
