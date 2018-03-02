@@ -3,7 +3,7 @@
 [![NPM version](http://img.shields.io/npm/v/iobroker.statemachine.svg)](https://www.npmjs.com/package/iobroker.statemachine)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.statemachine.svg)](https://www.npmjs.com/package/iobroker.statemachine)
 **Tests:** Linux/Mac: [![Travis-CI Build Status](https://travis-ci.org/frankjoke/ioBroker.statemachine.svg?branch=master)](https://travis-ci.org/frankjoke/ioBroker.statemachine)
-Windows: [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/pil6266rrtw6l5c0?svg=true)](https://ci.appveyor.com/project/frankjoke/iobroker-statemachine)
+Windows: [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/uq2vudo58jrs406h?svg=true)](https://ci.appveyor.com/project/frankjoke/iobroker-statemachine)
 [![NPM](https://nodei.co/npm/iobroker.statemachine.png?downloads=true)](https://nodei.co/npm/iobroker.statemachine/)
 
 ## Adapter implements a state or timing machine to act on states and executes commands
