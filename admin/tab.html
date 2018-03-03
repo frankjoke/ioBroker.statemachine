@@ -122,6 +122,18 @@
             height: 4em
         }
 
+        code {
+            background-color: LemonChiffon;
+            font-weight: 600;
+            padding: 3px 3px;
+        }
+
+        img.help {
+            margin: 2px 10px 2px -4px;
+            height: 26px;
+            width: 26px;
+        }
+
         #log-data,
         #event-span {
             height: 43vh;
@@ -599,24 +611,30 @@
                         var mach = idList[lname];
                         var oldst = mach[F_active];
                         var nst = mach[F_active] = getValue(lname);
-                        var oid = lname +'.' + oldst;
+                        var oid = lname + '.' + oldst;
                         var nid = lname + '.' + nst;
                         if (ndata && ndata.nodes) {
                             var on = ndata.nodes.get(oldst);
                             if (on) {
-                                on.shapeProperties =  { borderDashes: true };
+                                on.shapeProperties = {
+                                    borderDashes: true
+                                };
                                 ndata.nodes.update(on);
                             }
                             var on = ndata.nodes.get(nst);
                             if (on) {
-                                on.shapeProperties =  { borderDashes: false };
+                                on.shapeProperties = {
+                                    borderDashes: false
+                                };
                                 ndata.nodes.update(on);
                             }
                         }
-                        $('#table-data').find('[data-tt-id="'+oid+'"]').find('td.id-field').removeClass('lighten-4').removeClass('teal');
-                        $('#table-data').find('[data-tt-id="'+nid+'"]').find('td.id-field').addClass('teal').addClass('lighten-4');
-                    } 
-                    addVal(h[state.ts], lname,false);
+                        $('#table-data').find('[data-tt-id="' + oid + '"]').find('td.id-field').removeClass(
+                            'lighten-4').removeClass('teal');
+                        $('#table-data').find('[data-tt-id="' + nid + '"]').find('td.id-field').addClass('teal').addClass(
+                            'lighten-4');
+                    }
+                    addVal(h[state.ts], lname, false);
                 },
                 getHistory: function (id) {
                     var h = main.history[id];
@@ -1806,6 +1824,7 @@
                     $h.show();
             })
             $ia.show();
+            $('.input-table-help').data('shown',false).hide();
             // setDebug(workTree.debugLevel);
             offOn('a.input-rename', 'click', function () {
                 var $t = $(this);
@@ -1929,14 +1948,14 @@
             var wic = 0;
             var disabled = (obj && obj[F_disabled]) || dis;
             var type;
-            var mach; 
+            var mach;
             if (icon === I_State || icon === I_Timer) {
                 mach = parent;
-                mach = getValue(parent,false);
+                mach = getValue(parent, false);
                 obj[F_active] = mach;
             } else if (icon === I_Machine) {
-                obj[F_active] = getValue(id,false);
-            }  
+                obj[F_active] = getValue(id, false);
+            }
             var html =
                 `<tr data-tt-id="${id}"${parent ? ' data-tt-parent-id="' + parent +'"' : ''}><td  class="ft ${disabled ? ' disabled' : ''}" width="${wi[wic++]}"><span><i class="material-icons tiny right">${icon}</i>&nbsp;${name}</span>&nbsp;&nbsp;</td>`;
             html +=
@@ -1948,7 +1967,7 @@
             html += `</td><td class="fd" width="${wi[wic++]}">`;
             if ([I_Machine, I_Folder, I_Event, I_Scene].indexOf(icon) >= 0 && id !== '_init' && id !== '_debugLevel')
                 //                        html += `<span><input type="checkbox" id="d-${id}" ${disabled ? '' : 'checked="checked"'}/><label for="d-${id}">Enabled</label></span>`;
-            html +=
+                html +=
                 `<div class="switch left"><label>Off<input class="is-disabled" type="checkbox" ${disabled ? '' : 'checked="checked"'}><span class="lever"></span>On</label></div>`;
             html += '&nbsp;';
             if ([I_Machine, I_Event, I_Scene].indexOf(icon) >= 0)
@@ -2020,10 +2039,10 @@
                     return;
                 if (obj[F_expanded])
                     $table.treetable("expandNode", id);
-                for(var k of ownKeys(obj))
+                for (var k of ownKeys(obj))
                     if (k.match(/^[ \*]/))
                         continue;
-                    autoexpand(obj[k], id ? id + '.' + k : k);
+                autoexpand(obj[k], id ? id + '.' + k : k);
             }
             autoexpand(workTree.folders, '');
             // Highlight selected row
@@ -2575,8 +2594,8 @@
                                 border: 'darkblue'
                             }
                         };
-                        nn.shapeProperties =  {
-                            borderDashes: ido[F_active] !== nf 
+                        nn.shapeProperties = {
+                            borderDashes: ido[F_active] !== nf
                         };
                         nodes.push(nn);
                         if (it) {
@@ -3201,9 +3220,87 @@
                         <ul class="collapsible popout" data-collapsible="accordion">
                             <li>
                                 <div class="collapsible-header">
-                                    <i class="material-icons">help</i>Help on Events!</div>
+                                    <img class="help" src="lib/img/timer-icon-timelapse.png"> every:
+                                    <code>[#w][#d][#h][#m][#][s]</code>, # denotes any or multiple number(s) (0-9), at least one group of numbers must be present!</div>
                                 <div class="collapsible-body">
-                                    <span>Lorem ipsum dolor sit amet.</span>
+                                    Examples:
+                                    <code>100</code> or
+                                    <code>100s</code> => every 100 seconds,
+                                    <code>10m</code> => 10 minutes,
+                                    <code>2h30m</code> => every 2 hours and 30 minutes
+                                </div>
+                            </li>
+                            <li>
+                                <div class="collapsible-header">
+                                    <img class="help" src="lib/img/schedule_24h.png"> at:
+                                    <code>[*|*/#|#]:*|#|*/#[:*|#|*/#]</code> denotes hours:minutes[:seconds] with either
+                                    <code>*</code> = any,
+                                    <code>0-9+</code> = at or
+                                    <code>*/0-9+</code> = every (x), 24h only!</div>
+                                <div class="collapsible-body">
+                                    Examples:
+                                    <br>
+                                    <code>12:12</code> => every day at 12:12
+                                    <br>
+                                    <code>*:*:5</code> => at the 5th second every minute/hour
+                                    <br>
+                                    <code>*:*/2</code> => every two minutes #2
+                                </div>
+                            </li>
+                            <li>
+                                <div class="collapsible-header">
+                                    <img class="help" src="lib/img/timer-icon-schedule.png"> schedule:
+                                    <code>[*|#|#-#|*/#|#-#/#] *|#|#-#|*/#|#-#/#{5 times}</code> denotes [seconds] minutes hours day/month month day/week
+                                </div>
+                                <div class="collapsible-body">
+                                    <code>*</code> = any,
+                                    <code>0-9+</code> = #, at or
+                                    <code>*/0-9+</code> = every
+                                    <code>#a-#b/#x</code> = every x within a and b (do not write a/b/x) 
+                                    the first part for seconds is optional<br>
+                                    Examples:
+                                    <br>
+                                    <code>0 6 * * 2-6</code> => @ 06:00 on every 2nd to 6th day of the week
+                                    <br>
+                                    <code>*/2 * * * *</code> => every second (even) minute of the day
+                                    <code>1-59/2 * * * *</code> => every second (odd) minute of the day
+                                    <br>
+                                    <code>10 22 1 * * </code> => @22:10 on every 1st day of the month
+                                    <code>10 22 * 1 * </code> => @22:10 on every 1st day of the week
+                                </div>
+                            </li>
+                            <li>
+                                <div class="collapsible-header">
+                                    <img class="help" src="lib/img/astro.png"> at atro time:
+                                    <code>@astroname[+-#]</code> denotes astrotime <code>[+|-0-9+]</code> = minutes after or before this event</div>
+                                <div class="collapsible-body">
+                                    Astrotimes are <code>sunrise, solarNoon, sunset, sunriseEnd, sunsetStart, dawn, dusk, nauticalDawn, nauticalDusk, nadir, nightEnd, night, goldenHourEnd, goldenHour</code>
+                                    Examples:
+                                    <br>
+                                    <code>@sunrise</code> => every day at sunrise, 
+                                    <code>@sunset+20</code> => every day 20 min after sunset and
+                                    <code>@nadir-120</code> => every day two hours before astrological midnight (darkest time)
+                                </div>
+                            </li>
+                            <li>
+                                <div class="collapsible-header">
+                                        <img class="help" src="lib/img/flash.png"> id/name/Regexp: <code>[/]a-9.*+[/][&amp;|?|!][~][+|-|=|!=|>|>=|&lt;|&lt;=|?|^|$|#]</code></div>
+                                <div class="collapsible-body">
+                                    The first part is the name (if this is the only id having this name)  or an id. It can be also a regexp <coode>/.*/[i]</coode> or can include <code>*</code> which will be translater to regexp with <code.*/code> where the * was.<br>
+                                    After that is optional the ack code <code>&amp;</code> only with ack, <code>!</code> only without ack or <code>?</code> or nonexistant with any ack.<br> 
+                                    Thereafter can be the onchange flag <code>~</code>, if it exist the event fires only if value or ack was changed<br>
+                                    After that is either <code>+</code> for if value is true (or !=0) or <code>-</code> for a false (or ==0) value<br>
+                                    Instead of that there can be also comparisons like <code>=, !=, >, >=, &lt;, &lt;=</code> where the value is either the last value (if empty) or a string after the comparison operator.
+                                    Other operators are also available like <code>?</code> for includes or <code>#</code> for does not include<br>
+                                    as well as  <code>^</code> for starts with or <code>$</code> for ends with<br>
+                                    Examples:
+                                    <br> <code>BewegungsmelderEingang.BRIGHTNESS>10</code> => would fire on every change of the value bigger than 10
+                                    <br> <code>Timer.test!+</code> => would fire if Timer.test would go to true with no ack
+                                    <br> <code>Timer.test&amp;~</code> => would fire if Timer.test would would change with ack
+                                    <br> <code>Timer.test>=</code> => would fire if the new value of Timer.test >= the old value
+                                    <br> <code>Timer.test^No</code> => would fire if Timer.test will start with 'No'
+                                    <br> <code>*.LOWBAT+</code> => would fire if any id with '.LOWBAT' at the end would go true
+                                    <br> <code>/^radar\.0\.\w+\.here$/-</code> => would fire if any id of 'radar.0.*.here' would go to false
                                 </div>
                             </li>
                         </ul>
@@ -3245,44 +3342,59 @@
                 </div>
                 <div id="input-action-help" class="input-table input-table-help row">
                     <div class "col s12">
-                        <h6>Help on Actions: [] = optional, + = one or more, 1-9 = numbers, a-Z letters, a-9 = numbers or letters,
+                        <h6>Help on Actions: [] = optional, + = one or more, 1-9+ = # = numbers, a-Z letters, a-9 = numbers or letters,
                             * = all or '-' or '_'</h6>
                         <ul class="collapsible popout" data-collapsible="accordion">
                             <li>
                                 <div class="collapsible-header">
-                                    <i class="material-icons">hourglass_empty</i>delay: [0-9+m][0-9+s][0-9+][ms], at least one group of numbers must
+                                        <img class="help" src="lib/img/hourglass.png"> delay: <code>[#m][#s][#][ms]</code> at least one number group must exist!
                                     be present!</div>
                                 <div class="collapsible-body">
-                                    Examples: 100 or 100ms = 100ms, 10s = 10 seconds, 1m30s = 1 monute 30 seconds
+                                    Examples:
+                                    <code>100</code> or
+                                    <code>100ms</code> => 100ms,
+                                    <code>10s</code> => 10 seconds,
+                                    <code>1m30s</code> => 1 monute 30 seconds
                                 </div>
                             </li>
                             <li>
                                 <div class="collapsible-header">
-                                    <i class="material-icons">attach_money</i>command: $ * with @0-9 for args, @a-9+ for states or @(*) for eval</div>
+                                        <img class="help" src="lib/img/exe.png"> command: $ * with @0-9 for args, @a-9+ for states or @(*) for eval</div>
                                 <div class="collapsible-body">
                                     Examples:
-                                    <br> $ iobroker backup $ echo @(@0 ? 1 : 0) > /sys/class/leds/green_led/brightness
-                                    <br> $ echo @folder.state > wherever => would echo the value of folder.state
-                                    <br>$ echo @0,@1,@2 => would echo the new value of the event, and the inpit values #1 and
-                                    #2
+                                    <br>
+                                    <code>$ iobroker backup $ echo @(@0 ? 1 : 0) > /sys/class/leds/green_led/brightness</code>
+                                    => would switch on the green led on/off an orange-pi, use led0 for a raspi
+                                    <br>
+                                    <code>$ echo @folder.state > wherever</code> => would echo the value of folder.state
+                                    <br>
+                                    <code>$ echo @0,@1,@2</code> => would echo the new value of the event, and the inpit values
+                                    #1 and #2
                                 </div>
                             </li>
                             <li>
                                 <div class="collapsible-header">
-                                    <i class="material-icons">slideshow</i>eval: (*) with @0-9 for args or @a-9+ for states</div>
+                                        <img class="help" src="lib/img/js.png"> eval: (*) with @0-9 for args or @a-9+ for states</div>
                                 <div class="collapsible-body">
                                     Examples:
-                                    <br> (@0 ? 1 : 0) => return 1 if value is true and 0 if not
-                                    <br> (Math.round( (@1 + @2 + @3)/3)) => would calculate the average of 3 input values
-                                    <br> (!@folder.state) => would return the boolean inverse of folder.state
+                                    <br>
+                                    <code>(@0 ? 1 : 0)</code> => return 1 if value is true and 0 if not
+                                    <br>
+                                    <code>(Math.round( (@1 + @2 + @3)/3))</code> => would calculate the average of 3 input values
+                                    <br>
+                                    <code>(!@folder.state)</code> => would return the boolean inverse of folder.state
                                 </div>
                             </li>
                             <li>
                                 <div class="collapsible-header">
-                                    <i class="material-icons">flash_on</i>id/name: a-9+[&amp;][!][~|=+|=-|=!|=?|= value or (*)]</div>
+                                        <img class="help" src="lib/img/run.png"> id/name: a-9+[&amp;][!][/][~|=+|=-|=!|=?|= value or (*)]</div>
                                 <div class="collapsible-body">
                                     <code>&amp;</code>: queues the output with queue time (must be first) and
+                                    <br>
                                     <code>!</code>: sets ack (default no Ack) can be after the id as a modifier.
+                                    <br>
+                                    <code>/</code>: sets always (default only on change) can be after the id (and &amp; or !) as
+                                    a modifier.
                                     <br>
                                     <code>~</code>: toggle state (true/false),
                                     <code>=+, =-</code>: set output to true(+) or false(-),

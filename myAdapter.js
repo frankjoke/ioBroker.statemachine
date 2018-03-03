@@ -384,6 +384,10 @@ class MyAdapter {
         return adapter.config;
     }
 
+    static fullName(id) {
+        return this.ain + id;
+    }
+
     static parseLogic(obj) {
         return this.includes(['0', 'off', 'aus', 'false', 'inactive'], obj.toString().trim().toLowerCase()) ?
             false : this.includes(['1', '-1', 'on', 'ein', 'true', 'active'], obj.toString().trim().toLowerCase());

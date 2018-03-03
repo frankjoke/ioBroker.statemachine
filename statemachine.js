@@ -30,6 +30,7 @@ class List {
     }
 
     fireAll(name, val) {
+        // A.D(`fireAll: ${name}(${this[name]})= ${val}`)
         return A.seriesOf(this[name], (x) => x.fire(val), 1);
     }
 }
@@ -522,7 +523,8 @@ class Link extends BaseSM {
         super(obj[F_id], obj[F_type]);
         this._parent = parent;
         this._events = new Events(this, obj[F_fire]);
-        this._to = to;
+        if (to)
+            this._to = to;
     }
     execute(from) {
         from = new MState(from, this.id, this);
@@ -535,6 +537,10 @@ class Link extends BaseSM {
 
     get active() {
         return this._parent.active;
+    }
+
+    init() {
+        this._events.init();
     }
 }
 
@@ -618,11 +624,12 @@ class State extends Link {
     constructor(parent, obj) {
         super(parent, obj);
         this._list = [];
-        for (let k of A.ownKeysSorted(obj).filter(x => !x.startsWith(' '))) {
-            this._list.push(new Link(this, obj[k], k));
-        }
+        for (let k of A.ownKeysSorted(obj))
+            if (!k.startsWith(' '))
+                this._list.push(new Link(this, obj[k], k));
         this._onEnter = new Actions(this, obj[F_onEnter]);
         this._onExit = new Actions(this, obj[F_onExit]);
+        return this;
     }
     enter(from) {
         _D(3, `Enter ${this} from: ${from.sfrom}`);
@@ -641,12 +648,15 @@ class State extends Link {
         return this.parent.execute(from.val).catch(e => A.W(`Execute: ${this} err: ${e}`));
     }
     init() {
+        for (var k of this._list)
+            k.init();
         this._onEnter.init();
         this._onExit.init();
+        super.init();
     }
 
     get active() {
-        return this.parent.list[this.parent.val] === this;
+        return this.parent._list[this.parent.val] === this;
     }
 }
 
@@ -693,7 +703,7 @@ class Machine extends BaseSM {
         this._auto = [];
         this._names = [];
         this._state = obj[F_default];
-        this._val = undefined; // TODO
+        this._val = 0; // TODO
         for (let k of A.ownKeysSorted(obj).filter(x => !x.startsWith(' '))) {
             if (k.startsWith('*')) {
                 this._auto.push(new Link(this, obj[k], k.slice(1)));
@@ -754,12 +764,12 @@ class Machine extends BaseSM {
     init() {
         for (let f in this._list)
             this._list[f].init();
-        if (A.states[this.id])
-            this._val = A.states[this.id].val;
+        if (A.states[A.fullName(this.id)])
+            this._val = A.states[A.fullName(this.id)].val;
         else if (this._state) {
             this._state = this._names.indexOf(this._state);
             if (this._state >= 0)
-                A._setState(this.id, (this._val = this._state), true, true);
+                _setState(this.id, (this._val = this._state), true, true);
         }
     }
 }
@@ -781,6 +791,10 @@ class TheEvent {
         val.num = this.num;
         var val1 = val.fid ? new MState(val, A.idName(val.fid)) : val;
         return p.active && this.event.doFire(val) ? p.execute(val1) : Promise.resolve();
+    }
+
+    toString() {
+        return `TheEvent(${this.event}, ${this.num}) = ${this.id}`;
     }
 }
 
@@ -937,8 +951,8 @@ class StateMachine extends BaseSM {
 
         return (ids._init && ids._init.type === SCENE ? ids._init.execute('init') : A.resolve())
             .then(() => A.seriesIn(everys, (k) => {
-                setInterval((n) => everys.fireAll(n), parseInt(k) * 1000, k);
-                return everys.fireAll(k);
+                setInterval((n) => everys.fireAll(n,true), parseInt(k) * 1000, k);
+                return everys.fireAll(k,true);
             }, 1))
             .then(() => A.seriesIn(astros, (k) => {
                 function nextSunCalc(name, delay) {
@@ -957,7 +971,9 @@ class StateMachine extends BaseSM {
                 }
 
                 function nextSun(name, add) {
-                    setTimeout(nextSun, nextSunCalc(name, add), name, add);
+                    var ns = nextSunCalc(name, add);
+                    if (!isNaN(ns))
+                        setTimeout(nextSun, ns, name, add);
                     astros.fireAll(k);
                 }
                 let m = k.match(/^([A-Z]+)([+-]?\d+)?/i);
