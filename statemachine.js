@@ -594,7 +594,7 @@ class Event extends Scene {
         from = new MState(from, this.id, this);
         if (this.disabled || from.hasLast())
             return A.resolve();
-        var vold = this._vars[0];
+        // var vold = this._vars[0];
         if (from.num && this._vars.length > from.num)
             this._vars[from.num] = from.val;
         var that = this;
@@ -603,7 +603,7 @@ class Event extends Scene {
                 _D(2, `Set ${that}=${v} from: ${from.sfrom}`);
                 if (v !== undefined) {
                     from.val = that._vars[0] = v;
-                    if (v !== vold)
+                    // if (v !== vold)
                         return _setState(that.id, v, true, true);
                 }
             }).then(() => that._actions.execute(from).catch(e => A.W(`Execute: ${this} err: ${e}`)));
@@ -631,7 +631,8 @@ class State extends Link {
         this._onExit = new Actions(this, obj[F_onExit]);
         return this;
     }
-    enter(from) {
+    enter(from, doNotEx) {
+        if (doNotEx) return Promise.resolve();
         _D(3, `Enter ${this} from: ${from.sfrom}`);
         return this._onEnter.execute(from).catch(e => A.W(`Enter: ${this} err: ${e}`));
     }
@@ -675,7 +676,7 @@ class Timer extends State {
         this._time = ms;
         this._timer = null;
     }
-    enter(from) {
+    enter(from, doNotEx) {
         function timer(that) {
             that._timer = null;
             that._parent.execute({
@@ -686,7 +687,7 @@ class Timer extends State {
         if (this._timer)
             clearTimeout(this._timer);
         this._timer = setTimeout(timer, this._time, this);
-        return super.enter(from);
+        return doNotEx ?  Promise.resolve() : super.enter(from);
     }
     exit(from) {
         if (this._timer)
@@ -736,11 +737,11 @@ class Machine extends BaseSM {
         }, this._disabled, true, true);
 
     }
-    execute(from) {
+    execute(from, doNotEx) {
         from = new MState(from, this.id);
         if (this.disabled || from.hasLast())
             return A.resolve();
-        _D(1, 'should switch to state ' + from.val);
+        // _D(1, 'should switch to state ' + from.val);
         var ost = this._val;
         var nst = from.val;
         if (typeof nst === 'string') {
@@ -753,10 +754,10 @@ class Machine extends BaseSM {
             return A.resolve(A.W(`Invalid state name "${from.val}" for machine '${this.id}'`));
         this._val = nst;
         _D(1, `Execute ${this} statechange ${this._names[ost]}>${this._names[nst]} from: ${from.sfrom}`);
-        return (this._list[ost] && ost !== nst ? this._list[ost].exit(from) : A.resolve())
-            .then(() => this._list[nst].enter(from))
+        return (this._list[ost] && ost !== nst && !doNotEx ? this._list[ost].exit(from) : Promise.resolve())
+            .then(() => this._list[nst].enter(from,doNotEx))
             .then(() => A.makeState(this.id, nst, true, true))
-            .catch(e => A.W(`Machine e-err: ${this} err: ${e}`));
+            .then(() => this._state= this._names[nst], e => A.W(`Machine e-err: ${this} err: ${e}`));
     }
     get val() {
         return this._val;
@@ -767,10 +768,13 @@ class Machine extends BaseSM {
         if (A.states[A.fullName(this.id)])
             this._val = A.states[A.fullName(this.id)].val;
         else if (this._state) {
-            this._state = this._names.indexOf(this._state);
-            if (this._state >= 0)
-                _setState(this.id, (this._val = this._state), true, true);
+            this._val = this._names.indexOf(this._state);
+            if (this._val < 0)
+                this._val = 0;
+//                _setState(this.id, (this._val = this._state), true, true);
         }
+        this._state = this._names[this._val];
+        this.execute(this._state, true);
     }
 }
 
@@ -1074,6 +1078,11 @@ function main() {
         role: 'level',
         write: true
     }, StateMachine.debug, false);
+    for (var i of A.ownKeys(A.objects)) {
+        var o = A.objects[i];
+        if (o.common && o.common.smartName)
+            A.I(`${i} = ${A.O(o.common.smartName)}`);
+    }
     // s.p = A.makeState({
     //         id: 'Event3',
     //         state: 'state',
