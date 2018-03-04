@@ -559,7 +559,7 @@ class Scene extends BaseSM {
             write: true,
         }, undefined, true);
         if (this.id !== '_init' && this.id !== '_debugLevel')
-            A.addq = A.myGetState(this.id + stateDisabled).then((s) => s.val, () => this._disabled)
+            A.addq = A.myGetState(this.id + stateDisabled).then((s) => s && typeof s === 'object' ? s.val : false, () => this._disabled)
             .then(e => A.makeState({
                 id: this.id + stateDisabled,
                 type: 'boolean',
@@ -1078,11 +1078,23 @@ function main() {
         role: 'level',
         write: true
     }, StateMachine.debug, false);
+	/*
     for (var i of A.ownKeys(A.objects)) {
-        var o = A.objects[i];
-        if (o.common && o.common.smartName)
+        var o = A.clone(A.objects[i]);
+        if (o.common && o.common.smartName) {
             A.I(`${i} = ${A.O(o.common.smartName)}`);
+			var osn = o.common.smartName;
+			osn.smartType = 'SWITCH';
+			o.common.custom = {
+				"cloud.0": {
+					smartName: osn
+				}
+			};
+            A.I(`${i} = ${A.O(o.common.custom)}`);
+			s.p = A.extendForeignObject(i,o,null);
+		}
     }
+	*/
     // s.p = A.makeState({
     //         id: 'Event3',
     //         state: 'state',

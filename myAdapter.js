@@ -220,6 +220,7 @@ class MyAdapter {
         this.setObject = this.c2p(adapter.setObject);
         this.createState = this.c2p(adapter.createState);
         this.extendObject = this.c2p(adapter.extendObject);
+        this.extendForeignObject = this.c2p(adapter.extendForeignObject);
 
         adapter.removeAllListeners();
 
