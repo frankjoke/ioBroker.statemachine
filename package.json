@@ -19,6 +19,7 @@
     "url": "https://github.com/frankjoke/ioBroker.statemachine"
   },
   "dependencies": {
+    "@frankjoke/myadapter": "https://github.com/frankjoke/myAdapter/tarball/master",
     "node-schedule": "^1.2.5",
     "suncalc": "^1.8.0"
   },

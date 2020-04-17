@@ -145,7 +145,7 @@ class MyAdapter {
 
 
         this.D(`Adapter ${this.ains} starting.`);
-        this.getObjectList = this.c2p(adapter.objects.getObjectList);
+        this.getObjectList = adapter.objects.getObjectListAsync;
         this.getForeignState = this.c2p(adapter.getForeignState);
         this.setForeignState = this.c2p(adapter.setForeignState);
         this.getState = this.c2p(adapter.getState);
@@ -283,7 +283,7 @@ class MyAdapter {
         if (!inDebug || (curDebug>inDebug && typeof inDebug === 'number'))
             return val !== undefined ? val : str;
         return (inDebug ?
-            slog(adapter, 'info', `<span style="color:darkblue;">debug: ${str}</span>`) :
+            slog(adapter, 'info', `info: ${str}`) :
             slog(adapter, 'debug', str), val !== undefined ? val : str);
     }
     static F() {
