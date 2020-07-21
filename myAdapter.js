@@ -145,7 +145,7 @@ class MyAdapter {
 
 
         this.D(`Adapter ${this.ains} starting.`);
-        this.getObjectList = adapter.objects.getObjectListAsync;
+        this.getObjectList =  adapter.getObjectListAsync || adapter.objects.getObjectListAsync ;
         this.getForeignState = this.c2p(adapter.getForeignState);
         this.setForeignState = this.c2p(adapter.setForeignState);
         this.getState = this.c2p(adapter.getState);
